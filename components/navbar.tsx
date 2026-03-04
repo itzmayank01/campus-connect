@@ -21,35 +21,33 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden items-center gap-8 md:flex">
-          <Link
-            href="#features"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Features
-          </Link>
-          <Link
-            href="#how-it-works"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            How It Works
-          </Link>
-          <Link
-            href="#stats"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Stats
-          </Link>
-        </div>
+      <div className="hidden md:flex items-center gap-6">
+       <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+        Features
+       </Link>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-            Login
-          </Button>
-          <Button size="sm">
-            Get Started
-          </Button>
-        </div>
+        <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+          How It Works
+        </Link>
+
+        <Link href="#stats" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+        Stats
+        </Link>
+      </div>
+
+       <div className="hidden md:flex items-center gap-4">
+          <Link href="/login">
+            <Button variant="ghost" size="sm">
+              Login
+            </Button>
+          </Link>
+
+          <Link href="/login">
+            <Button size="sm">
+              Get Started
+            </Button>
+          </Link>
+      </div>
 
         {/* Mobile Menu Button */}
         <button
@@ -87,12 +85,19 @@ export function Navbar() {
               Stats
             </Link>
             <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
-              <Button variant="ghost" size="sm" className="justify-start text-muted-foreground">
-                Login
-              </Button>
-              <Button size="sm">
-                Get Started
-              </Button>
+          
+          <Link href="/login">
+            <Button variant="ghost" size="sm" className="justify-start text-muted-foreground">
+              Login
+            </Button>
+          </Link>
+
+          <Link href="/login">
+            <Button size="sm">
+              Get Started
+            </Button>
+          </Link>
+
             </div>
           </div>
         </div>

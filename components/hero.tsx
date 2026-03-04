@@ -1,7 +1,7 @@
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
-
+import Link from "next/link"
 export function Hero() {
   return (
     <section className="relative overflow-hidden px-6 py-20 lg:py-32">
@@ -33,10 +33,11 @@ export function Hero() {
           </p>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-            <Button size="lg" className="gap-2 px-8 text-base">
-              Get Started
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <Link href="/login">
+              <Button size="lg">
+                Get Started →
+              </Button>
+            </Link>
             <Button variant="outline" size="lg" className="px-8 text-base">
               Learn More
             </Button>
