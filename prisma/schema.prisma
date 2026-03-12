@@ -14,14 +14,68 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(uuid())
-  supabaseId String?  @unique @map("supabase_id")
+  id         String     @id @default(uuid())
+  supabaseId String?    @unique @map("supabase_id")
   name       String?
-  email      String   @unique
+  email      String     @unique
   password   String?
   image      String?
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  notes      Note[]     @relation("UploadedNotes")
+  bookmarks  Bookmark[]
 
   @@map("users")
+}
+
+model Semester {
+  id       String    @id @default(uuid())
+  number   Int       @unique
+  year     String?
+  subjects Subject[]
+
+  @@map("semesters")
+}
+
+model Subject {
+  id         String   @id @default(uuid())
+  name       String
+  code       String   @unique
+  semesterId String   @map("semester_id")
+  semester   Semester @relation(fields: [semesterId], references: [id])
+  notes      Note[]
+
+  @@map("subjects")
+}
+
+model Note {
+  id           String     @id @default(uuid())
+  title        String
+  type         String     @default("notes") // notes, question_papers, videos, reference
+  format       String     @default("PDF")
+  fileUrl      String?    @map("file_url")
+  fileSize     String?    @map("file_size")
+  downloads    Int        @default(0)
+  subjectId    String     @map("subject_id")
+  subject      Subject    @relation(fields: [subjectId], references: [id])
+  uploadedById String     @map("uploaded_by_id")
+  uploadedBy   User       @relation("UploadedNotes", fields: [uploadedById], references: [id])
+  bookmarks    Bookmark[]
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@map("notes")
+}
+
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  noteId    String   @map("note_id")
+  note      Note     @relation(fields: [noteId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, noteId])
+  @@map("bookmarks")
 }
