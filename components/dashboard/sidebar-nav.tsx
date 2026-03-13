@@ -40,18 +40,21 @@ export function DashboardSidebar() {
   const pathname = usePathname()
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-[rgba(0,0,0,0.06)] bg-white/80 backdrop-blur-xl"
+    >
       {/* Logo / Brand */}
       <SidebarHeader className="p-4 pb-2">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-sm">
-            <span className="text-sm font-bold text-primary-foreground">CC</span>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4F8EF7] shadow-lg shadow-[#4F8EF7]/20">
+            <span className="text-sm font-bold text-white">CC</span>
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="text-base font-bold tracking-tight text-sidebar-foreground leading-tight">
+            <span className="font-display text-base font-bold tracking-tight text-[#0F1117] leading-tight">
               Campus
             </span>
-            <span className="text-base font-bold tracking-tight text-sidebar-foreground leading-tight">
+            <span className="font-display text-base font-bold tracking-tight text-[#0F1117] leading-tight">
               Connect
             </span>
           </div>
@@ -59,9 +62,9 @@ export function DashboardSidebar() {
       </SidebarHeader>
 
       {/* Main Nav */}
-      <SidebarContent className="px-1">
+      <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-semibold mb-1">
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.15em] text-[#6B7280] font-semibold mb-1 px-3">
             Menu
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -75,13 +78,14 @@ export function DashboardSidebar() {
                       isActive={isActive}
                       tooltip={item.title}
                       size="default"
-                      className={isActive
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground font-semibold rounded-xl shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-xl"
+                      className={
+                        isActive
+                          ? "relative border-l-2 border-[#4F8EF7] bg-[#4F8EF7]/[0.06] text-[#4F8EF7] hover:bg-[#4F8EF7]/[0.1] hover:text-[#4F8EF7] font-semibold rounded-lg shadow-[0_0_12px_rgba(79,142,247,0.1)] transition-all duration-150 ease-out"
+                          : "text-[#6B7280] hover:text-[#0F1117] hover:bg-[rgba(0,0,0,0.03)] rounded-lg transition-all duration-150 ease-out"
                       }
                     >
                       <Link href={item.href}>
-                        <item.icon className="h-[18px] w-[18px]" />
+                        <item.icon className="h-5 w-5" strokeWidth={1.75} />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -92,11 +96,11 @@ export function DashboardSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator className="my-2" />
+        <SidebarSeparator className="my-2 bg-[rgba(0,0,0,0.06)]" />
 
         {/* Upload Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-semibold mb-1">
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.15em] text-[#6B7280] font-semibold mb-1 px-3">
             Actions
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -104,12 +108,12 @@ export function DashboardSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  tooltip="Upload Material"
-                  className="bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary font-medium rounded-xl"
+                  tooltip="Your Uploads"
+                  className="bg-[#4F8EF7]/[0.06] text-[#4F8EF7] hover:bg-[#4F8EF7]/[0.12] hover:text-[#4F8EF7] font-medium rounded-lg transition-all duration-150 ease-out"
                 >
                   <Link href="/dashboard/upload">
-                    <Upload className="h-[18px] w-[18px]" />
-                    <span>Upload Material</span>
+                    <Upload className="h-5 w-5" strokeWidth={1.75} />
+                    <span>Your Uploads</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -126,13 +130,14 @@ export function DashboardSidebar() {
               asChild
               isActive={pathname === "/dashboard/settings"}
               tooltip="Settings"
-              className={pathname === "/dashboard/settings"
-                ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground rounded-xl"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-xl"
+              className={
+                pathname === "/dashboard/settings"
+                  ? "border-l-2 border-[#4F8EF7] bg-[#4F8EF7]/[0.06] text-[#4F8EF7] hover:bg-[#4F8EF7]/[0.1] font-semibold rounded-lg transition-all duration-150 ease-out"
+                  : "text-[#6B7280] hover:text-[#0F1117] hover:bg-[rgba(0,0,0,0.03)] rounded-lg transition-all duration-150 ease-out"
               }
             >
               <Link href="/dashboard/settings">
-                <Settings className="h-[18px] w-[18px]" />
+                <Settings className="h-5 w-5" strokeWidth={1.75} />
                 <span>Settings</span>
               </Link>
             </SidebarMenuButton>

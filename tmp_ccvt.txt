@@ -1,0 +1,1440 @@
+--- PAGE 1 ---
+CONFIDENTIAL | 305  3. Cloud Computing And Virtualization Technology Track   
+ 
+Course Code Course name L T P C 
+CSVT2010P  Cloud Computing Fundamentals 
+ 4 0 0 4 
+Total Units to be Covered: 06 Total Contact Hours: 60 
+Prerequisite(s ): Computer Organization and Architecture,  Operating 
+System,   Syllabus version: 1.0  
+ 
+Course Objectives 
+1. To develop a strong foundation in virtualization and cloud computing, including 
+their key concepts, principles, benefits, and distinguishing characteristics. 
+2. To critically evaluate the role of Hypervisors in virtualization and compare and 
+contrast different types of virtualization, such as server, storage, and network 
+virtualization, highlighting their unique features and use cases. 
+3. To analyze the diverse deployment and delivery models in cloud computing, 
+assessing their advantages, disadvantages, and suitability for various scenarios, 
+enabling informed decision-making for cloud adoption. 
+4. To assess and analyze different types of cloud workloads, considering their specific 
+characteristics and suitability for cloud environments.  
+ 
+Course Outcomes 
+CO1. Understand the fundamental concepts and principles of virtualization and cloud 
+computing, including their benefits and characteristics.  
+CO2. Evaluate the role of Hypervisors in virtualization and compare different types of 
+virtualization, such as server, storage, and network virtualization. 
+CO3. Analyze the various deployment and delivery models in cloud computing and 
+assess their advantages, disadvantages, and suitability for different scenarios.  
+CO4. Assess and analyze different types of cloud workloads considering their 
+characteristics and suitability for cloud environments.  
+ 
+ 
+ 
+CO-PO Mapping 
+
+--- PAGE 2 ---
+CONFIDENTIAL | 306  Program 
+Outcomes  
+Course 
+Outcomes                 
+CO 1 1 - - - 1 - - - - - - 1 1 - 3 
+CO 2 1 - - - 1 - - - - - - 1 1 - 3 
+CO 3 1 - - - 1 - - - - - - 1 1 - 3 
+CO4 1 - - - 1 - - - - - - 1 1 - 3 
+Average  1 - - - 1 - - - - - - 1 1 - 3 
+ 
+ 
+1  Weakly Mapped (Low)  2  Moderately Mapped (Medium) 
+ 
+3  Strongly Mapped (High)                   
+ 
+ 
+ 
+ 
+Syllabus 
+ 
+ 
+Unit I: Introduction to Virtualization                                      10 Lecture Hours 
+Traditional IT Infrastructures, Shortcomings of physical infrastructures, Benefits and 
+characteristics of Virtualization, Comparison of traditional IT infrastructures with 
+virtualized infrastructures, Implementing Virtualization, Triggers for virtualization, 
+Preparation for virtualization: Server selection, Server sizing, Server criticality, 
+Provisioning, Proximity and Locality, Transition tools for virtualization, Cost Savings, 
+A typical hardware/software server stack, Logical Equivalence, Pre and Post 
+Virtualization Server Stacks, Types of Virtualization:  Area and technology based 
+classification, History of Virtualization, Time-sharing systems, IBM Mainframe 
+Virtualization, IBM PowerVM Virtualization, Extending Virtualization to x86, Hardware 
+support for x86 Virtualization, Impact of Virtualization: Cost Impact, Manageability 
+Impact (CAPEX and OPEX). 
+ 
+Unit II: Server and Storage Virtualization                 10 Lecture Hours 
+Types of Server Virtualization:  Process Level and system Level, Process Level: 
+Emulation, High-Level VM, Multiprogramming, System Level: Hardware assisted 
+Virtualization, Full Virtualization, Para Virtualization, Partial virtualization, Hybrid 
+Virtualization; Simulation 
+
+--- PAGE 3 ---
+CONFIDENTIAL | 307   
+Hypervisors:  Machine Reference model,  Ring levels on x86 processors, Types of 
+Hypervisors: Type 1 and Type II, Hypervisor modules, Goldberg  
+ 
+Other Types of Virtualization: Storage Virtualization, its benefits and types: Host level 
+storage virtualization, Host based mirroring, Storage level virtualization, Network 
+based storage Virtualization; Desktop Virtualization: its working, benefits, constraints 
+and types, Application Server Virtualization 
+ 
+Case Studies : Xen Hypervisor, Vmware and Microsoft Hyper-V 
+ 
+Unit III: Network and Application Virtualization   8 Lecture Hours 
+Network Virtualization: Network virtualization overview, Virtual Private Network (VPN): 
+VPN working, VPN types; Virtual LAN (VLAN), Advantages of VLAN 
+  
+Operating System Level Virtualization: Programming language-level virtualization, 
+Application-level virtualization.  Application virtualization overview: Challenges in 
+using applications in traditional install, use and update model, Solution for challenges, 
+Architecture, Benefits of application virtualization. Containerization: application 
+Containerization, Benefits, types, virtualization vs containerization 
+ 
+Unit IV: Introduction to Cloud Computing    12 Lecture Hours  
+Distributed vs Parallel computing, Elements of parallel and distributed computing, 
+Approaches to parallel computing, Levels of parallelism. 
+ 
+Cloud Computing:   Virtualization and Cloud, overlapping of virtualization and cloud, 
+Areas and relative savings, Cloud definitions, Vision of cloud computing, Cloud 
+computing value: Business and technological value, Market view point, Changes for 
+provider, Cloud and end user, Advantages and Disadvantages of cloud computing 
+model. Distributed computing: Client server, Peer to Peer, Grid vs cloud, Cluster vs 
+cloud. 
+Central ideas to cloud computing: Web 2.0, Utility Computing, Service Oriented 
+Architecture, Service level Agreements Characteristics of Cloud Computing: 
+Scalability and Elasticity, Availability and Reliability, Manageability and 
+Interoperability, Performance & Optimization, Accessibility and Portability, Cloud Open 
+challenges. Anatomy of a cloud: Cloud components, Cloud computing solution 
+components, Service Catalog, User self-service portal, Service request management, 
+Provisioning, Optimized infrastructure, Chargeback 
+ 
+ 
+ 
+ 
+
+--- PAGE 4 ---
+CONFIDENTIAL | 308  Unit V: Cloud Computing Service and Deployment Models   12 Lecture Hours 
+Cloud Service Models : Infrastructure as a service (IaaS), Platform as a service (PaaS), 
+Software as a service (SaaS),  Pure IaaS, Pure PaaS and Pure SaaS, IaaS: IaaS 
+features, Examples, Layers: Physical Infrastructure Layer, Infrastructure Management 
+Software, Web Based Management Interface, Cases where IaaS suitable or not 
+suitable,PaaS: PaaS features, Examples, Layers: Physical Infrastructure Layer, PaaS 
+Core Middleware, Web Based Management Interface, Cases where PaaS suitable or 
+not suitable, SaaS: SaaS features, Examples, Cases where IaaS suitable or not 
+suitable 
+Case Studies : AWS EC2, Salesforce and Social Media 
+ 
+Cloud Deployment Models: Private cloud, Public cloud, Hybrid cloud, Community 
+Cloud, Pros and cons of each deployment model, Cloud deployment decision factors, 
+Time to deploy, 
+Public cloud: Examples, Important points about public cloud, Factor Matrix, Public 
+cloud advantages, Public cloud disadvantages, Private cloud  Scenario, Key 
+observations from scenario, Factor matrix, Private cloud advantages, Private cloud 
+disadvantages, Hybrid cloud scenarios-Observations from Hybrid scenario, Factor 
+Matrix, Hybrid cloud advantages, Hybrid cloud disadvantages 
+Multi cloud: Value and benefits of multicloud, Multicloud management  
+ 
+Unit VI: Cloud Workloads                                8 Lecture Hours 
+Cloud Workloads Overview, Workload characterization, Factors that influence cloud 
+workload, Workloads analysis hierarchy for cloud suitability considering deployment 
+models, Types of workloads: Scientific data intensive workloads, Business and 
+Consumer Applications, Productivity, Social Networking, Media application, 
+Multiplayer Online Gaming.  
+ 
+Total lecture Hours 60 
+Textbooks 
+McGraw Hill Education, 2017.  
+ 
+Reference Books 
+1. 
+ 
+2. Kailash Jayaswal, Jagannath Kallakurchi, Donald J. Houde, Dr. Deven Shah, and 
+2014. 
+
+--- PAGE 5 ---
+CONFIDENTIAL | 309  Modes of Evaluation: Quiz/Assignment/ presentation/ extempore/ Written 
+Examination 
+ 
+Examination Scheme 
+Components IA MID SEM End Sem Total 
+Weightage (%)  50  20 30 100 
+ 
+Detailed breakup of Internal Assessment 
+Internal Assessment 
+Component  Weightage in calculation of Internal 
+Assessment (100 marks)  
+Quiz 1 15% 
+Quiz 2 15% 
+Class Test 1 15% 
+Class Test 2 15% 
+Assignment 1/Project 20% 
+Assignment 2/Project 20% 
+ 
+ 
+ 
+ 
+ 
+  
+
+--- PAGE 6 ---
+CONFIDENTIAL | 310  Course Code Course name L T P C 
+CSVT2109P  Cloud Computing Fundamentals Lab 0 0 2 1 
+Total Units to be Covered: 12 Total Contact Hours: 30 
+Prerequisite(s ): Computer System Architecture,  Operating System  Syllabus version: 1.0  
+ 
+Course Objectives 
+1. To equip students with the practical skills necessary for creating and managing 
+virtual machines (VMs) across diverse virtualization platforms, enabling effective 
+infrastructure deployment. 
+2. To empower students to apply their knowledge of virtualization and cloud 
+computing in real-world scenarios, demonstrating their ability to leverage cloud 
+technologies for developing applications on public cloud platforms  
+3. To foster proficiency in implementing server and storage virtualization on public 
+cloud platforms, enabling students to optimize resource utilization and drive 
+scalable infrastructure solutions through analysis and evaluation. 
+ 
+Course Outcomes 
+CO1: Demonstrate proficiency in creating and managing virtual machines (VMs) using 
+various virtualization platforms. 
+CO2: Apply their knowledge of virtualization and cloud computing to develop an 
+application using public cloud, showcasing their ability to leverage cloud technologies. 
+CO3: Exhibit proficiency in implementing server and storage virtualization on public 
+cloud platforms. 
+ 
+ 
+CO-PO Mapping 
+ 
+Program 
+Outcomes  
+Course 
+Outcomes                 
+CO 1 1 - - - 2 - - - - - - - - - 3 
+CO 2 1 - - - 2 - - - - - - - - - 3 
+CO 3 1 - - - 2 - - - - - - - - - 3 
+Average  1 - - - 2 - - - - - - - - - 3 
+ 
+
+--- PAGE 7 ---
+CONFIDENTIAL | 311   
+1  Weakly Mapped (Low)  2  Moderately Mapped (Medium) 
+ 
+3  Strongly Mapped (High)                   
+ 
+ 
+ 
+List of Experiments 
+Experiment No. 1 :  Install and configure hosted hypervisor (Type II): Oracle VM 
+VirtualBox 
+Experiment No. 2:   Create a Window 7 and Ubuntu VM over Oracle VM VirtualBox 
+Experiment No. 3:   Install and configure bare metal hypervisor (Type I): VMware 
+ESXI 
+Experiment No. 4:  Creating a virtual machine using QEMU/KVM on Ubuntu. 
+Experiment No. 5:  Creating a virtual machine using QEMU/KVM on CentOS. 
+Experiment No. 6 : A brief introduction to AWS. 
+Experiment No. 7:  Introduction to AWS EC2 instance and create an EC2 instance. 
+Experiment No. 8:  Attaching an EBS Volume to EC2 instance. 
+Experiment No. 9:  Create a S3 bucket and upload an object in it. 
+Experiment No. 10:  Launch Linux EC2 instance through AWS CLI 
+Experiment No. 11:  Connect S3 bucket with an EC2 instance. 
+Experiment No. 12:  Run a Serverless "Hello, World!" with AWS Lambda. 
+ 
+ 
+Total Lab hours 30  
+Textbooks 
+1. -On Guide to the 
+ 
+2. 
+Education, 2017. 
+ 
+Reference Books 
+1. 
+ 
+
+--- PAGE 8 ---
+CONFIDENTIAL | 312  2. Kailash Jayaswal, Jagannath Kallakurchi, Donald J. Houde, Dr. Deven Shah, 
+Press, 2014. 
+ 
+Modes of Evaluation: Quiz/Assignment/ presentation/ extempore/ Written 
+Examination 
+ 
+Examination Scheme:  Continuous Assessment 
+Components  Quiz & Viva  Performance & Lab Report  
+Weightage (%)  50 %  50 %  
+ 
+ 
+  
+
+--- PAGE 9 ---
+CONFIDENTIAL | 313  Course Code Course name L T P C 
+CSVT3029P  Cloud Computing Architecture and Deployment 
+Models 4 0 0 4 
+Total Units to be Covered: 05 Total Contact Hours: 60 
+Prerequisite(s ): Cloud Computing Fundamentals  Syllabus version: 1.0  
+ 
+Course Objectives 
+1. To understand the characteristics, benefits, and limitations of cloud service models 
+(IaaS, PaaS, SaaS) and evaluate their suitability for different organizational needs. 
+2. To examine the deployment models (public, private, hybrid) of cloud computing 
+and analyze their advantages, limitations, and considerations for effective cloud 
+infrastructure implementation. 
+3. To explore cloud computing reference architectures NIST, IBM & AWS and gain a 
+comprehensive understanding of their objectives, components, and control 
+mechanisms for designing robust cloud solutions. 
+4. To analyze and evaluate fundamental and advanced cloud architectures, including 
+workload distribution, scalability, resource pooling, and redundancy, to design 
+optimized cloud environments. 
+ 
+Course Outcomes 
+On completion of this course, the students will be able to 
+CO1: Analyze and compare the key characteristics, benefits, and limitations of IaaS, 
+PaaS, and SaaS cloud service models to effectively assess their suitability for different 
+organizational needs. 
+CO2: Analyze and assess the cloud deployment models (Public, Private, Hybrid) 
+demonstrating a deep understanding of their advantages, limitations, and challenges 
+to make informed decisions regarding the selection and management. 
+CO3: Analyze and evaluate NIST, IBM's and AWS cloud computing reference 
+architectures to make informed decisions about their adoption and implementation in 
+diverse usage scenarios. 
+CO4: Ability to apply fundamental as well as advanced cloud computing architectures 
+in various business scenarios. 
+ 
+ 
+
+--- PAGE 10 ---
+CONFIDENTIAL | 314  CO-PO Mapping 
+ 
+Program 
+Outcomes  
+Course 
+Outcomes                 
+CO 1 1 1 - 1 2 - - - - - - - 1 1 3 
+CO 2 1 1 - 1 2 - - - - - - - 1 1 3 
+CO 3 1 1 - 1 2 - - - - - - - 1 1 3 
+CO4 1 1 - 1 2 - - - - - - - 1 1 3 
+Average  1 1 - 1 2 - - - - - - - 1 1 3 
+ 
+ 
+1  Weakly Mapped (Low)  2  Moderately Mapped (Medium) 
+ 
+3  Strongly Mapped (High)                   
+ 
+ 
+ 
+ 
+Syllabus 
+ 
+ 
+Unit I: Service Models (IaaS, PaaS and SaaS)       13 Lecture Hours 
+Infrastructure as a Service (IaaS): Characteristics of IaaS, Comparing ISPs and IaaS, 
+IaaS case studies, IaaS enabling technology, the trusted cloud, IaaS as the best/not 
+best option, PaaS: Platform as a Service. 
+Platform as a Service: PaaS characteristics, Integrated lifecycle platforms, Anchored 
+lifecycle platforms, Enabling technologies as a platform, Case studies: Integrated 
+lifecycle platform, PaaS as the best/ not best option. 
+approach, Characteristics of Software as a Service (SaaS), SaaS economics and the 
+ecosystem, Types of SaaS platforms, SaaS: Providers, Collaboration as a service, 
+Enabling and management tools as a service, Monitoring and management tools as a 
+service, SaaS as the best/not best option. 
+ 
+Unit II: Deployment Models (Pubic, Private, Hybrid)               12 Lecture Hours 
+Private Cloud Deployment: Private Cloud, Illustration of Private Cloud, Advantages of 
+Private Cloud, Limitations of Private Cloud, Service Management, Journey into Private 
+Cloud, Planning and Strategy, Standardization, Virtualization, Automation, Cloud, 
+Case study  VMware vCloud, Case Study  IBM SmartCloud Entry, Private cloud.  
+ 
+Public Cloud Deployment:: Public Cloud, Illustration of Public Cloud, Why Public 
+Cloud, Advantages of Public Cloud, Limitations of Public Cloud: Low degree of security 
+and control, Lack of control on infrastructure, Configuration, Network latency and 
+
+--- PAGE 11 ---
+CONFIDENTIAL | 315  accessibility concerns, Highest long term cost; Public v/s Private: Journey into Public 
+Cloud, Revisit the idea of adopting public cloud: Cloud vendor selection, migrating to 
+Cloud, Cloud vendor selection, SLA  Service Level Agreements, 
+Credits/Compensation terms, Credit process, Disaster recovery plan, Exclusions, 
+Security and Privacy, Periodic upgrade and maintenance, Data location and 
+Jurisdiction, Pricing and Measurability, Interoperability and Lock-in, Exit 
+process/Termination policies, Proven track record; Public cloud vendors and Case 
+studies: AWS, Microsoft Azure, Google GCP 
+Hybrid Cloud deployment: Hybrid Cloud, Why Hybrid Cloud, Illustration of Hybrid 
+Cloud, Advantages of Hybrid Cloud, Challenges of Hybrid Cloud, Develop and 
+manage hybrid workloads, Developing applications for hybrid cloud, Develop 
+applications using PaaS, Managing hybrid workloads, Journey into Hybrid Cloud 
+ 
+OpenStack: Introduction, OpenStack Architecture, IBM SoftLayer, IBM Bluemix -
+Benefits of IBM Bluemix, -More Bluemix features, -Bluemix architecture. 
+ 
+ 
+Unit III: Cloud Computing Reference Architectures (NIST & IBM)   10 Lecture 
+Hours 
+NIST Cloud Computing Reference Architecture (CCRA): Objectives of NIST, The 
+conceptual reference model, Example: Usage scenarios, Cloud consumer, Cloud 
+provider, Cloud auditor, Cloud broker, Cloud carrier, Scope of control between 
+provider and consumer, CCRA: Architectural components, Service orchestration, 
+Cloud service management, Business support, Provisioning and configuration 
+Portability and interoperability, Security, Privacy, Cloud taxonomy. 
+ 
+Cloud services, Infrastructure, Common Cloud Management Platform (CCMP), CCMP 
+supports any level of virtualization, Business Support Services (BSS), Operational 
+Support Services (OSS), Security, resilience, performance and consumption, Cloud 
+service creator: Service development tools, IBM CCRA versions or CCRA evolution, 
+Adoption patterns, Adoption pattern in CCRA 3.0, Examples of cloud services. 
+ 
+Unit IV: Fundamental and Advanced Cloud Architectures      15 Lecture Hours 
+Fundamental Cloud Architectures: Workload distribution architecture,  Resource 
+pooling architecture, Dynamic scalability architecture, Elastic resource capacity 
+architecture, Service load balancing architecture, Cloud bursting architecture, Elastic 
+disk provisioning architecture, Redundant storage architecture.     
+ 
+Advanced Cloud Architectures: Overview of the advanced cloud architecture, 
+Hypervisor clustering architecture, Load balanced virtual server instances 
+architecture, Non-disruptive service relocation architecture, Zero downtime 
+architecture, Cloud balancing architecture, Resource reservation architecture, 
+Dynamic failure detection and recovery, Bare-metal provisioning architecture, Rapid 
+provisioning architecture, Components that can comprise the system, Automated 
+administration pattern, Storage workload management architecture, Live VM 
+migration. 
+
+--- PAGE 12 ---
+CONFIDENTIAL | 316  Unit V: Cloud Computing Reference Architecture (CCRA)  AWS  10 Lecture 
+Hours 
+What is amazon web services, Features of AWS, Web application hosting, Content 
+and media serving, Large scale computing and huge data sets, Disaster recovery for 
+local applications, Media sharing, Financial service grids, Time series data processing, 
+Backup and restore to VMware cloud on AWS, Pilot light on VMware cloud on AWS, 
+Microsoft share point on VMware cloud on AWS, Hybrid active directory trusted 
+domain, Hybrid active directory stretched domain, Oracle RAC on VMware cloud on 
+AWS, Batch processing, Advertisement serving, Asynchronous online gaming, 
+Ecommerce website: Web frontend, Ecommerce website: Checkout service, 
+Marketing and recommendations, Fault tolerance and high availability, File 
+synchronization service, Amazon services, Amazon Simple Storage Service (S3), 
+Amazon services developer tools, Amazon services developer tools, Amazon services 
+security, identity and compliance, Amazon service applications. 
+ 
+ 
+Total lecture Hours 60 
+Textbooks 
+1. Cloud Computing Architecture (IBM ICE Publication) 
+2. Cloud Computing Deployment Model (IBM ICE Publication)  
+3. Cloud Computing For Dummies Judith Hurwitz, Robin Bloor, Marcia Kaufman, 
+Fern Halper, For Dummies, Edition 1, Nov 2009. 
+4. Cloud Computing: Concepts, Technology & Architecture, Thomas Erl,Pearson 
+Education India, Jan 2014 
+5. OpenStack Essentials, Dan Radez, PackIT publication, publications , 2nd Edition, 
+Jan 2016 
+ 
+Reference Books 
+1. 
+ 
+2. Gautam 
+ 
+3. Kalyn Sehrt
+ 
+ 
+Modes of Evaluation: Quiz/Assignment/ presentation/ extempore/ Written 
+Examination 
+ 
+
+--- PAGE 13 ---
+CONFIDENTIAL | 317  Examination Scheme 
+Components IA MID SEM End Sem Total 
+Weightage (%)  50  20 30 100 
+ 
+ 
+Detailed breakup of Internal Assessment 
+Internal Assessment 
+Component  Weightage in calculation of Internal 
+Assessment (100 marks)  
+Quiz 1 15% 
+Quiz 2 15% 
+Class Test 1 15% 
+Class Test 2 15% 
+Assignment 1/Project 20% 
+Assignment 2/Project 20% 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- PAGE 14 ---
+CONFIDENTIAL | 318  Course Code Course name L T P C 
+CSVT3129P  Cloud Computing Architecture and Deployment 
+Models Lab 0 0 2 1 
+Total Units to be Covered: 12 Total Contact Hours: 30 
+Prerequisite(s ): Cloud Computing Fundamentals  and  Cloud 
+Computing Fundamentals  Lab  Syllabus version: 1.0  
+ 
+Course Objectives 
+1. To develop a comprehensive understanding of cloud computing architecture and 
+deployment models  
+2. To gain practical experience in creating and managing infrastructure on cloud 
+platforms, configuring and developing platforms as a service, and utilizing software 
+as a service (SaaS) solutions with the help of various tools and technologies. 
+3. To develop practical skills in OpenStack by successfully installing and deploying 
+virtual machines, exploring the components of OpenStack and its components. 
+ 
+Course Outcomes 
+At the end of this course student should be able to  
+CO1: Demonstrate proficiency in creating and managing virtual machine instances on 
+cloud platforms (AWS EC2, Azure, and GCP) and establishing secure connections to 
+them using appropriate key pairs and protocols. 
+CO2: Demonstrate advanced proficiency in AWS cloud management techniques like 
+storage management, server less computing, auto scaling, load balancing and identity 
+and access management for enhanced security and efficient resource utilization. 
+CO3: Demonstrate proficient hands-on skills in OpenStack by installing, deploying, 
+and managing virtual machines using Nova, Cinder, Glance, and Keystone 
+components, and utilize the monitoring tool Nagios to monitor and assess cloud 
+environment parameters effectively. 
+ 
+ 
+CO-PO Mapping 
+ 
+Program 
+Outcomes  
+Course 
+Outcomes                 
+
+--- PAGE 15 ---
+CONFIDENTIAL | 319  CO 1 1 - - 1 2 - - 1 1 - - 1 - - 3 
+CO 2 1 - - 1 2 - - 1 1 - - 1 - - 3 
+CO 3 1 - - 1 2 - - 1 1 - - 1 - - 3 
+Average  1 - - 1 2 - - 1 1 - - 1 - - 3 
+ 
+ 
+1  Weakly Mapped (Low)  2  Moderately Mapped (Medium) 
+ 
+3  Strongly Mapped (High)                   
+ 
+ 
+ 
+ 
+List of Experiments 
+Experiment-1: AWS EC2 (IaaS)  
+1.1. Creation of Windows instance on AWS EC2 and connecting to it through RDP 
+client and .pem key pair. 
+1.2 Creation of Linux Instance on AWS EC2 and connecting it to through .ppk 
+keypair using PuTTY. 
+ 
+Experiment-2: Azure & GCP (IaaS)  
+2.1. Create Windows and Ubuntu machine Virtual Machine in Azure and connect to 
+it. 
+2.2. Create a Windows Virtual machine instance in GCP and connect to it. 
+ 
+Experiment-3: AWS Autoscaling and Load Balancers (IaaS)  
+3.1. Autoscaling can be performed on EC2 instances (Scale manually & Scale on 
+demand) 
+3.2. Use Application Load Balancer in AWS 
+ 
+Experiment-4: AWS Storage (IaaS)  
+4.1.   EBS Volume creation and attaching it to EC2 instance  (Windows as well as 
+Linux instances) 
+4.2. Creating a S3 bucket 
+ 
+Experiment-5: AWS Storage (IaaS)  
+5.1 Changing S3 bucket access permissions, applying replication and lifecycle rules. 
+
+--- PAGE 16 ---
+CONFIDENTIAL | 320  5.2. Host a static website on S3  
+ 
+Experiment-6: Identity and Access Management /Security in AWS Cloud 
+Environment  
+6.1. Create user, role and policies and access it through Management console and 
+CLI. 
+6.2. Show how to use MFA in IAM 
+6.3. Adding a WAF to a Web application & its Load balancer and blocking access 
+ 
+Experiment-7: Serverless Computing (AWS Lambda)  
+7.1. Creating, starting and stopping EC2 instances using AWS Lambda.  
+ 
+Experiment-8: AWS ElasticBeanstalk (PaaS)  
+8.1 Create and manage a LAMP stack using Amazon EC2 Instance and host an html 
+file on it (Iaas+PaaS). 
+8.1. Deploy an application on Elastic Beanstalk 
+ 
+Experiment-9: Openstack Installation and VM deployment 
+9.1. Learn Hands-on OpenStack Installation: Install OpenStack on single node using 
+Packstack 
+9.2. Familiarize with OpenStack dashboard  Horizon: Go through each and every 
+component of the dashboard and understand the meaning of the sections and 
+components therein 
+9.3. Deploy a virtual machine instance [using OpenStack Nova]: Create, Deploy, Test 
+and Destroy a VM instance using OpenStack Nova component via Horizon 
+ 
+Experiment-10: Openstack  
+10.1. Deploy a Linux VM from an ISO image [OpenStack  Nova, Cinder and Glance]: 
+Create an image in OpenStack Glance, Create a VM with a volume and deploy the 
+image 
+10.2. Deploy a VM from an image snapshot [OpenStack  Nova, Cinder and Glance]: 
+Create a VM, take a snapshot of the VM and store the VM image in Glance and create 
+a new VM image in Nova from the created snapshot 
+
+--- PAGE 17 ---
+CONFIDENTIAL | 321  10.3. User and Project Management [OpenStack  Horizon advanced, Keystone]: 
+Explore PM functions in OpenStack and try basic settings 
+ 
+Experiment-11: Openstack and components 
+11.1. Common cloud management tasks [OpenStack  Horizon, Keystone] 
+Work with quotas in a Project  assign, increase, decrease quotas for compute and 
+storage 
+11.2. Adding a new compute node [OpenStack  Nova advanced] 
+Add a new compute note in Nova and create VMs on the new new node 
+ 
+Experiment-12: Overview of Nagios   
+12.1 Explore monitoring tool Nagios and check the parameters it can monitor 
+ 
+ 
+Total Lab hours 30  
+Textbooks 
+1. IBM Material Cloud Deployment Model Lab  
+2. 
+Published, 2020. 
+3. 
+rd Edition, Packt, 2015. 
+ 
+Reference Books 
+1. John Culkin, and Mike Zazon,  1st Edition, O'Reilly Media, 2021. 
+ 
+Modes of Evaluation: Quiz/Assignment/ presentation/ extempore/ Written 
+Examination 
+ 
+Examination Scheme:  Continuous Assessment 
+Components  Quiz & Viva  Performance & Lab Report  
+Weightage (%)  50 %  50 %  
+ 
+  
+
+--- PAGE 18 ---
+CONFIDENTIAL | 322  Course Code Course name L T P C 
+CSDV3018P  Containerization and DevOps 4 0 0 4 
+Total Units to be Covered: 06 Total Contact Hours: 60 
+Prerequisite(s ): Cloud Computing Fundamentals, Cloud Computing 
+Architecture and Deployment Models  Syllabus version: 1.0  
+ 
+Course Objectives 
+The objective of this course are 
+1. To understand Containerization with Docker, emphasizing automation and 
+orchestration. 
+2. To master DevOps fundamentals for collaborative and automated software delivery. 
+3. To gain practical knowledge of DevOps applications in real-world scenarios. 
+4. To explore DevOps principles, lifecycles, and essential tools for efficient software 
+development and deployment. 
+ 
+Course Outcomes 
+On completion of this course, the students will be able to 
+CO1: Comprehensive understanding of containerization and the principles of DevOps. 
+CO2: Apply Docker fundamentals by creating and managing Docker containers, 
+demonstrating comprehension and application of containerization concepts. 
+CO3: Demonstrate a deep understanding of container orchestration and apply it 
+practically by creating and managing services using container orchestration platforms. 
+CO4: Assess DevOps adoption strategies, analyze its impact on business, and 
+synthesize cross-functional team dynamics and tool selection within the DevOps 
+context. 
+ 
+ 
+CO-PO Mapping 
+ 
+Program 
+Outcomes  
+Course 
+Outcomes                 
+CO 1 - 1 - - 2 - - - - - - 1 - - 3 
+CO 2 - 1 - - 2 - - - - - - 1 2 1 3 
+CO 3 - 1 - - 2 - - - - - - 1 2 1 3 
+
+--- PAGE 19 ---
+CONFIDENTIAL | 323  CO4 - 1 - - 2 - - - - - - 1 1 1 3 
+Average  - 1 0.75 - 2 - - - - - - 1 1.25 0.75 3 
+ 
+ 
+1  Weakly Mapped (Low)  2  Moderately Mapped (Medium) 
+ 
+3  Strongly Mapped (High)                   
+ 
+ 
+ 
+ 
+Syllabus 
+ 
+ 
+Unit I: Introduction to Containerization and DevOps                   8 Lecture Hours 
+Virtualization and its types-Server Virtualization, Operating System Virtualization 
+Containers & DevOps: Introduction to Containers, Understanding DevOps Principles 
+and Practices, Benefits of Containerization in DevOps, Docker vs. Virtualization, 
+Different vendors for containers in the market,  
+Docker: 
+Docker editions, Installation of the Docker engine,  Docker terminology, Docker 
+community, Docker community edition, Docker enterprise edition, Build Kit features, 
+Docker compose, Docker architecture-Docker host, Docker Daemon, Docker Hub, 
+Docker API, Docker Objects, Docker and DevOps tools 
+Software Designing Architectural Approaches:  Server based and Serverless 
+architecture-Monolithic, Service Oriented Architecture, Microservices, Comparison of 
+different architectural approaches, Docker and Microservices-apart and together  
+ 
+Unit II: Docker Fundamentals                               12 Lecture Hours 
+Basic Commands : Docker container Lifecycle commands, Docker desktop , 
+Checking docker version, Running your first NGINX application, Docker repository, 
+Docker tags, Docker TAG examples, Docker TAG scenario, Tagging scheme, Docker 
+images, Layers, Docker file, Docker file instructions, Managing containers and images, 
+Creating Docker Images, Dockerfile Best Practices, Pushing Images to Docker Hub, 
+Running your own Docker container.h 
+
+--- PAGE 20 ---
+CONFIDENTIAL | 324  Data Management in Docker:  Persisting data in docker, Approaches: Volumes, bind 
+mount, Differences, Volumes-creation, listing, --mount flag, -v flag, removing, 
+inspecting bind mount- creation, --mount flag, -v flag, removing, tmpfs mount, Use 
+case scenarios volumes, bind mount and tmpfs mount. 
+Networking in Docker:  Networking in Docker, Docker network drivers- bridge, host, 
+overlay 
+ipvlan, macvlan, Publishing ports, IP address and host name, DNS services, Network 
+Drivers use case summary, creating and removing a user-defined bridge, managing a 
+user-defined bridge- connect a container to a user defined bridge, Disconnect a 
+container from a user-defined bridge, Connect a container to the default bridge 
+network. 
+Continuous Integration : Docker as a build environment, GitHub Actions, Building 
+CI/CD Pipleine using Git Hub actions. 
+ 
+Unit III: Automation and Orchestration        12 Lecture Hours 
+Container Orchestration need and Overview: Key concepts in orchestration, 
+popular orchestra platforms: Swarm Docker, Kubernetes, Apache mesos 
+Docker Compose: Features, use cases, history and using Docker Compose  
+Docker Swarm: Feature highlights, Swarm mode key concepts-swarm, nodes, 
+services & tasks, load balancing; Create a swarm, Add nodes to swarm, Deploy a 
+service, Inspect the service, Scale the service, Delete the service, Apply rolling 
+updates, Drain a node, Use swarm mode routing mesh 
+Kubernetes: Overview, Traditional deployment era, virtualized deployment era , 
+container deployment era, Need of Kubernetes, what Kubernetes is not?, Kubernetes 
+components: control plane components, Node components, Addons, Kubernetes API, 
+Cluster Architecture-Nodes, Communication between nodes and the control Plane, 
+Controllers, Leases, Cloud Controller Manager, Container runtime Interface, Garbage 
+Collection, Containers: Images, Container Environment, Runtime class, Container 
+Lifecycle hooks, Workloads- Pods and Workload Resources, Services, Load 
+balancing and Networking, Storage, Configuration, Policies and security 
+Case Study:  Docker Swarm vs Kubernetes 
+Case Study: Amazon ECS and EKS services  
+ 
+
+--- PAGE 21 ---
+CONFIDENTIAL | 325  Unit IV: DevOps: Principles and Practices                                     8 Lecture Hours 
+Overview, Working, Benefits, DevOps history, DevOps principles and lifecycle, 
+DevOps practice, DevOps adoption: Deming, lean manufacturing, and Kaizen, Lean 
+manufacturing, Lean standards of manufacturing, DevOps: IBM view, Four DevOps 
+adoption paths- Steer adoption path, Develop and test adoption path, Collaborative 
+development, Continuous testing, Way to deployment, Continuous customer feedback 
+and optimization,  
+DevOps architecture and resilience, Cloud resiliency, DevOps resiliency, Four stages 
+of the resilience process-Detect, DevOps style; Alert with a cloud and DevOps 
+mindset; Respond & recover using automation and appropriate failover strategy; 
+Refine & test, achieving incremental improvements 
+ 
+Unit V: DevOps Adoption and Business Patterns           8 Lecture Hours 
+Business needs for DevOps , DevOps teams and cross functioning of teams, Silos in 
+the world of software development and their role in project delivery, DevOps teams 
+and cross functioning of teams, Application team v/s. Platform team, System admins 
+and other stakeholders, Continuous integration vs continuous deployment vs 
+continuous delivery, DevOps tools- Continuous development, Continuous integration, 
+Continuous Testing, Continuous Deployment, Continuous Monitoring, Lean Thinking 
+and Methods  Kaizen, Agile Vs DevOps, DevOps impact on developers, DevOps 
+impact on operations, Successful DevOps adoption, Challenges of DevOps adoption, 
+Introduction to Kanban, Types of kanban board, create a kanban board, Kanban with 
+IBM tools. Scrum application delivery pipeline and support team, an orchestration 
+framework for continuous delivery, Software release plan, Feedback and learning from 
+feedback and improving the delivery, DevOps toolchain, DevSecOps, DevOps vs 
+SRE. Select the right tool for DevOps: Docker, Kubernetes, Puppet, Ansible, Other 
+tools, DevOps monitoring tools, Version control, and code repository 
+ 
+Unit VI: DevOps Tools                                                                    12 Lecture Hours 
+Version Control Tools: GitHub-GitLab-BitBucket, GitHub-CLI, Desktop, Branches, 
+forks, and Pull requests, Repositories, GitHub actions, GitHub packages, Webhooks, 
+API 
+
+--- PAGE 22 ---
+CONFIDENTIAL | 326  Continuous Integration Tools:  Jenkins, TravisCI, Jenkins- Introduction to Jenkins, 
+Jenkins architecture and components: Installation and setup of Jenkins, Creating and 
+Configuring Jenkins Jobs Jenkins Pipelines Source Code Management (SCM) 
+Integration Building and Testing with Jenkins 
+Infrastructure as Code (IaC) Tools:  Understanding IaC, Popular IaC tools-
+Terraform, Ansible 
+Monitoring and Logging Tools: Monitoring and logging in DevOps , Popular 
+monitoring and logging tools- Prometheus, ELK stack  
+Collaboration in a DevOps Team:  Popular collaboration and communication tools- 
+Slack, Microsoft Teams, Integrating tools into the DevOps workflow  
+Case study:  CI/CD technique.  
+ 
+Total lecture Hours 60 
+Textbooks 
+1. Container Orchestration & Infrastructure Automation, IBM ICE Publications. 
+2. 
+Edition, Shroff Publishers, 2019. 
+3. -
+published, 2021. 
+4. 
+Wiley, 2019. 
+Reference Books 
+1. nd Edition , Manning 
+Publications, 2019. 
+ 
+Modes of Evaluation: Quiz/Assignment/ presentation/ extempore/ Written 
+Examination 
+Examination Scheme 
+Components IA MID SEM End Sem Total 
+Weightage (%)  50  20 30 100 
+ 
+ 
+Detailed breakup of Internal Assessment 
+
+--- PAGE 23 ---
+CONFIDENTIAL | 327  Internal Assessment 
+Component  Weightage in calculation of Internal 
+Assessment (100 marks)  
+Quiz 1 15% 
+Quiz 2 15% 
+Class Test 1 15% 
+Class Test 2 15% 
+Assignment 1/Project 20% 
+Assignment 2/Project 20% 
+ 
+ 
+ 
+ 
+ 
+  
+
+--- PAGE 24 ---
+CONFIDENTIAL | 328   
+Course Code Course name L T P C 
+CSDV3118P  Containerization and DevOps Lab 0  0  2  1  
+Total Units to be Covered: 12 Total Contact Hours: 30 
+Prerequisite(s ): Cloud Computing Fundamentals Lab , Cloud 
+Computing Architecture and Deployment Lab  Syllabus version: 1.0  
+ 
+Course Objectives 
+1. To demonstrate on Containerization technology and use of Docker container 
+automation and orchestration.  
+2. To gain practical knowledge and hands-on experience on DevOps tools, their 
+roles and importance in the DevOps lifecycle, including continuous integration, 
+infrastructure provisioning, configuration management, and code quality analysis.  
+Course Outcomes 
+At the end of this course student should be able to  
+CO1. Demonstrate the usage of Docker Containers.  
+CO2. Demonstrate orchestration of Containers images and microservices.  
+CO3. Apply DevOps tools to effectively implement DevOps practices, including 
+continuous integration, infrastructure provisioning, configuration management, and 
+code quality analysis.  
+ 
+ 
+CO-PO Mapping 
+ 
+Program 
+Outcomes  
+Course 
+Outcomes                 
+CO 1 1  - - 1  2  - - 1  1  - - 1  - - 3  
+CO 2 1  - - 1  2  - - 1  1  - - 1  - - 3  
+CO 3 1  - - 1  2  - - 1  1  - - 1  - - 3  
+Average  1  - - 1  2  - - 1  1  - - 1  - - 3  
+ 
+ 
+1  Weakly Mapped (Low)  2  Moderately Mapped (Medium) 
+ 
+3  Strongly Mapped (High)                   
+List of Experiments 
+
+--- PAGE 25 ---
+CONFIDENTIAL | 329   
+Experiment 1:  Introduction to Dockers  
+a. Setup & Running a Container  
+b. Performance evaluation of Virtual box machine deployment and Dockers 
+containers deployment.  
+Experiment 2:  Docker Installation, configuration, Running Images  
+Experiment 3:  Deploying web applications with Docker  
+Experiment 4:  Dockerfile - Containerizing application, Building Images, Tagging, 
+Publishing  
+Experiment 5 : Docker - Volumes, Env, Monitoring (Docker stats), Docker Networks 
+Experiment 6:  Docker Compose - Installation, Creating Compose files, Running 
+Images using Docker-compose  
+Experiment 7:  Create a CI CD pipeline for deploying web application using jenkins  
+Experiment 8:  Ansible  
+Experiment 9 : Chef  
+Experiment 10:  Install, setup and run SonarQube for a local scan.  
+Experiment 11 : Orchestration using Docker compose on multi container applications.  
+Experiment 12:  Study and Analyse container orchestration using Kubernetes.  
+Total Lab hours 30  
+ 
+Text Books  
+1. IBM ICE Publications  
+2. The Docker Book: Containerization is the new virtualization by James Turnbull, 
+Shroff Publishers, First Edition, 2019 
+3. Docker: A Project-Based Approach to Learning by Jason Cannon, September 
+2021 
+4. DevOps Tools from Practitioner's Viewpoint, by Deepak Gaikwad, Viral Thakkar, 
+Wiley, Jan 2019  
+
+--- PAGE 26 ---
+CONFIDENTIAL | 330  Reference Books 
+1. nd Edition , Manning 
+Publications, 2019. 
+ 
+Modes of Evaluation: Quiz/Assignment/ presentation/ extempore/ Written 
+Examination 
+ 
+Examination Scheme:  Continuous Assessment 
+Components  Quiz & Viva  Performance & Lab Report  
+Weightage (%)  50 %  50 %  
+ 
+  
+
+--- PAGE 27 ---
+CONFIDENTIAL | 331  Course Code Course name L T P C 
+CSVT4018P Cloud Application Development         4 0 0 4 
+Total Units to be Covered: 05 Total Contact Hours: 60 
+Prerequisite(s ): Object Oriented Programming, Python Programming, 
+Cloud Computing Architecture and Deployment 
+Models,  Containerization and DevOps  Syllabus version: 1.0  
+ 
+Course Objectives 
+1. Student should be able to get solid theoretical background of high computing 
+paradigms.  
+2. Students get adequate conceptual understanding of cloud application development 
+platform and framework.  
+3. Student can explore cloud applications and identify applications suitable for 
+implementation on cloud. 
+ 
+Course Outcomes 
+On completion of this course, the students will be able to 
+CO1: Correlate the underlying technologies for cloud application development with 
+basic programming skills  
+CO2: Apply the concepts of high throughput, data intensive applications and Task 
+programming 
+CO3: Discover various cloud computing platforms for application development  
+CO4: Analyse the use of automation in cloud application development and 
+understand the real time use cases 
+ 
+ 
+CO-PO Mapping 
+ 
+Program 
+Outcomes  
+Course 
+Outcomes                 
+CO 1 1 - 2 - - - - - - - - 1 1 2 3 
+CO 2 1 1 2 - 2 - - - - - - 1 1 2 3 
+CO 3 1 1 2 1 2 - - - - - - 1 1 2 3 
+CO4 1 1 2 1  - - - - - - - 1 2 3 
+
+--- PAGE 28 ---
+CONFIDENTIAL | 332  Average  1 0.6 2 0.5 2 - - - - - - 0.75 1 2 3 
+ 
+ 
+1  Weakly Mapped (Low)  2  Moderately Mapped (Medium) 
+ 
+3  Strongly Mapped (High)                   
+ 
+ 
+ 
+ 
+Syllabus 
+ 
+ 
+Unit I: Basics of Cloud Computing and introduction                 12 Lecture Hours 
+to MapReduce programming for application development   
+Business case for implementing cloud application, Requirements collection for cloud 
+application development, Cloud service models and deployment models, Open 
+challenges in Cloud Computing: Cloud inter-operability and standards, scalability and 
+fault tolerance, security, trust and privacy, Data intensive computing: MapReduce 
+programming, what is data-intensive computing? Characterizing data-intensive 
+computations, Data intensive research issues, Historical perspective, The early age: 
+High-speed wide area networking, The early age, Data grids, Data clouds and big 
+data,  
+Unit II: Understanding basic Task Programming skills            12 Lecture Hours 
+and MapReduce Programming   
+Understanding the basics of HTML, javascript, Client-side web scripting: DOM and 
+AJAX, Server-side applications: node.js, Introduction to task programming, High-
+throughput computing: Task programming, Task computing, Task-based application 
+models, MPI reference scenario, MPI program structure, Workflow applications with 
+task dependencies, Workflow technologies abstract model of workflow system, Cloud 
+application platform task-based programming, Task programming model scenario, 
+iTask and cloud application platform task, iTask interface, Wrapping an iTask into an 
+cloud application platform instance, Controlling task execution, Dynamic task 
+submission. Databases and data-intensive computing, Technologies for data intensive 
+computing, High performance distributed file systems and storage clouds, Not only 
+SQL (NoSQL) systems, Prominent implementations supporting data: Intensive 
+applications, Amazon dynamo architecture, Google bigtable architecture, Apache 
+Cassandra, Hadoop HBase, Programming platforms, The MapReduce programming 
+model, MapReduce computation workflow, Google MapReduce infrastructure 
+overview, Variations and extensions of MapReduce 
+ 
+
+--- PAGE 29 ---
+CONFIDENTIAL | 333  Unit III: Application Development: Google and Microsoft Azure       12 Lecture 
+Hours 
+Accessing the clouds: Web application vs Cloud Application, Frameworks: Model View 
+Controller (MVC), Struts, Spring, Maven, Gradle. Cloud platforms in Industry  Google 
+AppEngine (serverless platform for build scalable web and mobile back ends in any 
+programming language), Microsoft Azure, Openshift (building containerized 
+applications), CloudFoundry (provides a highly efficient, modern model for cloud native 
+application delivery on top of Kubernetes)  
+ 
+Unit IV: Application Development on AWS and DevOps tools     12 Lecture 
+Hours 
+Best practices in architecture cloud applications in AWS cloud, Elastic Beanstalk 
+(Deploy and Provision web applications), Amazon Simple Queue Service (SQS), 
+RabbitMQ, Cloud applications: Amazon Simple Notification Service (Amazon SNS), 
+multi-player online game hosting on cloud resources, building content delivery 
+networks using clouds. Puppet and Chef  steps for automation: Introduction, files and 
+packages, services and subscriptions, exec and notify, facts, conditional statements 
+and logging, configuration management tools, automation, configuration orchestration 
+ 
+Unit V: APIs for cloud application development and     12 Lecture Hours 
+ real time use cases   
+RESTful API Usage, RESTful API Design & Implementation, Add Functionality to 
+REST API, storing objects in the Cloud, Session management, Working with third party 
+APIs: Overview of interconnectivity in Cloud ecosystems. Facebook API, Twitter API, 
+Google API. Use cases of cloud applications, Scientific applications, Healthcare: ECG 
+analysis in the cloud, Biology: Protein structure prediction, Gene expression data 
+analysis for cancer diagnosis, GeoScience : Satellite image processing, Business and 
+consumer applications, SalesForce.com, Productivity, DropBox, Google Docs, 
+EyeOS, Social networking : Facebook, Media applications: animoto, 3D rendering on 
+private clouds, Video encoding on the cloud: Encoding.com, Multiplayer online gaming 
+scalable processing of logs for network games.             
+ 
+Total lecture Hours 60   
+ 
+Textbooks 
+3. 
+ 
+
+--- PAGE 30 ---
+CONFIDENTIAL | 334  4. -on Application Development using Spring Boot: Building 
+Modern Cloud Native Applications by Learning RESTFul API, Microservices, 
+st Edition, BPB Publications, 
+2021. 
+ 
+Reference Books 
+ 
+Modes of Evaluation: Quiz/Assignment/ presentation/ extempore/ Written 
+Examination 
+ 
+Examination Scheme 
+Components IA MID SEM End Sem Total 
+Weightage (%)  50  20 30 100 
+ 
+Detailed breakup of Internal Assessment 
+Internal Assessment 
+Component  Weightage in calculation of Internal 
+Assessment (100 marks)  
+Quiz 1 15% 
+Quiz 2 15% 
+Class Test 1 15% 
+Class Test 2 15% 
+Assignment 1/Project 20% 
+Assignment 2/Project 20% 
+ 
+  
+
+--- PAGE 31 ---
+CONFIDENTIAL | 335  Course Code Course name L T P C 
+CSVT4118P  Cloud Application Development Lab   0  0  2  1  
+Total Units to be Covered: 12 Total Contact Hours: 30 
+Prerequisite(s ): Object Oriented Programming, Python Programming, 
+Cloud Computing architecture and Deployment 
+Models, DevOps ad Containerization  Syllabus version: 1.0  
+ 
+Course Objectives 
+1. To equip students with the skills to effectively set up a cloud application 
+development platform, showcasing their ability to configure and deploy the 
+necessary infrastructure and tools. 
+2. To demonstrate the capability to leverage advanced computing capabilities for the 
+development and deployment of cloud applications,  
+3. To analyze the implementation processes and challenges involved in deploying 
+cloud applications across different domains. 
+ 
+Course Outcomes 
+At the end of this course student should be able to   
+CO1: Demonstrate proficiency in setting up a cloud application development platform, 
+showcasing the ability to configure and deploy the necessary infrastructure and tools 
+for cloud application development. 
+CO2: Demonstrate ability to leverage advanced computing capabilities to develop and 
+deploy cloud applications. 
+CO3: Analyzing the implementation processes and criticalities involved in the 
+deployment of cloud applications across various domains. 
+ 
+ 
+CO-PO Mapping 
+ 
+Program 
+Outcomes  
+Course 
+Outcomes  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+CO 1 1 - 2 - - - - - - - - 1 1 2 3 
+CO 2 1 1 2 - 2 - - - - - - 1 1 2 3 
+
+--- PAGE 32 ---
+CONFIDENTIAL | 336  CO 3 1 1 2 1 2 - - - - - - 1 1 2 3 
+Average  1 0.67 2 0.33 1.33 - - - - - - 1 1 2 3 
+ 
+ 
+1  Weakly Mapped (Low)  2  Moderately Mapped (Medium) 
+ 
+3  Strongly Mapped (High)                   
+ 
+ 
+  
+List of Experiments 
+Experiment 1:  Installation of Single Node Hadoop Cluster on Ubuntu and run simple 
+program like wordcount. 
+Experiment 2:  Install Google App Engine. Create Hello World App and other Simple 
+Web Applications. 
+Experiment 3 : Build Apps at Scale with Google App Engine. 
+Experiment 4:  Setup and Configure Cloud application development platform (Like 
+Amazon application development platform). 
+Experiment 5:  Using cloud Platform API develop and deploy prototype application. 
+Experiment 6:    Generate high volume workloads of applications on cloud platform 
+Experiment 7:    Data Intensive Computing: Map-Reduce Programming implement a 
+sample Map-Reduce procedure using cloud platform 
+Experiment 8: Developing Message-Based Applications with RabbitMQ  
+Experiment 9:  Implement data analytics for some application using cloud platform 
+Experiment 10: Implement Machine Learning model/s on cloud platform like Sage 
+Maker, Amazon Polly etc. 
+Experiment 11: Install apache http server, enable and start the services using Chef 
+Cookbook. 
+Experiment 12 : Create a CI/CD pipeline using scratch for deploying application (using 
+Git and Jenkins) 
+ 
+Total Lab hours 30  
+
+--- PAGE 33 ---
+CONFIDENTIAL | 337   
+Textbooks 
+1. Cloud Application Development Lab Manual (IBM ICE Publications) 
+2.  
+ 
+Reference Books 
+2. 
+ O'Reilly Media, 2011. 
+Modes of Evaluation: Quiz/Assignment/ presentation/ extempore/ Written 
+Examination 
+ 
+Examination Scheme:  Continuous Assessment 
+Components  Quiz & Viva  Performance & Lab Report  
+Weightage (%)  50 %  50 %  
+ 
+ 
+  
+
+--- PAGE 34 ---
+CONFIDENTIAL | 338  Course Code Course name L T P C 
+CSVT4019P  Cloud Computing Security and Management 3 0 0 3 
+Total Units to be Covered: 06 Total Contact Hours: 45 
+Prerequisite(s ): Data communication and Networks , Cloud 
+Computing Architecture and Deployment Models 
+ Syllabus version: 1.0  
+ 
+Course Objectives 
+1. Develop a comprehensive understanding of cloud security fundamentals, 
+2. Analyze the importance of data security in the cloud and its principles, 
+3. Evaluate the role of IAM in cloud security and its components, goals, and 
+principles. 
+4. Apply network security fundamentals and CIA principles in cloud environments. 
+5. Apply secure coding practices, including input validation, authentication, and error 
+handling in cloud applications. 
+Course Outcomes 
+CO1: Assess the security challenges and vulnerabilities specific to cloud 
+infrastructure, including physical security measures and virtualization technology 
+CO2: Identify and define key data security concepts and mechanisms used to protect 
+data in transit, at rest, and during processing in cloud environments. 
+CO3: Implement and assess IAM components and policies in cloud environments, 
+CO4: Evaluate the importance of network and application security in cloud computing, 
+demonstrating an understanding of security fundamentals 
+ 
+CO-PO Mapping 
+ 
+Program 
+Outcomes  
+Course 
+Outcomes                 
+CO 1 1 - - - 1 - - - - - - 1 - 1 3 
+CO 2 1 - - - 1 - - - - - - 1 - 1 3 
+CO 3 1 - - - 1 - - - - - - 1 - 1 3 
+CO4 1 - - - 1 - - - - - - 1 - 1 3 
+Average  1 - - - 1 - - - - - - 1 - 1 3 
+ 
+
+--- PAGE 35 ---
+CONFIDENTIAL | 339   
+1  Weakly Mapped (Low)  2  Moderately Mapped (Medium) 
+ 
+3  Strongly Mapped (High)                   
+ 
+ 
+ 
+Syllabus 
+ 
+ 
+Unit I: Security Overview             8 Lecture Hours 
+Overview of cloud security- Security Services - Confidentiality, Integrity, 
+Authentication, Nonrepudiation, Access Control - Basic of cryptography - Conventional 
+and public-key cryptography, hash functions, authentication, and digital signatures. 
+   
+ Common security risks in cloud environments, Threat modeling in the cloud, Security 
+considerations for different cloud deployment models,  Cloud security: Physical 
+Security, Network Security, Data Security, Identity and Access Management (IAM), 
+Application Security, Virtualization Security, Operating System Security, Security 
+Compliance and Governance, Cloud Access Security Broker (CASB) , Logging and 
+Monitoring, Incident Response and Forensics, Encryption Key Management, Multi-
+Factor Authentication (MFA), Backup and Recovery, Security Training and 
+Awareness, Zero Trust Security, Shared responsibility model, Cloud Security Alliance 
+ 
+Unit II: Infrastructure security & Virtualization Security             12 Lecture Hours 
+Introduction to Physical and Infrastructure Security in the Cloud: Role of physical 
+security in cloud computing, Key physical security components and objectives, Cloud 
+infrastructure and data center architecture, Security challenges in shared data center 
+environments, Data center architecture and design considerations, Redundancy and 
+fault tolerance, Environmental controls (temperature, humidity, fire suppression), 
+Physical access control and monitoring, Intrusion detection systems (IDS) and 
+intrusion prevention systems (IPS), Video surveillance and access control systems, 
+Visitor management and access logging, Data center personnel and roles (e.g., NOC, 
+SOC), Security awareness and training for data center staff, Change management and 
+incident response in data center operations, Asset management and tracking Data 
+replication and backup strategies, Failover and high availability configurations, Testing 
+and simulating disaster scenarios 
+Virtualization security threats and vulnerabilities, Isolation and segmentation of VMs, 
+VM escape attacks and mitigation, Security for containerized applications 
+OS-Level Security: Hardening operating systems in the cloud, Patch management and 
+vulnerability assessment, Anti-malware and intrusion detection for OS instances, OS-
+level access controls and permissions Secure OS Configuration: Secure boot and 
+integrity verification, Network security configurations for OS instances, Secure shell 
+(SSH) and remote access security, Application and service hardening OS Security 
+Best Practices: OS security baseline standards, Security updates and patch 
+
+--- PAGE 36 ---
+CONFIDENTIAL | 340  management policies, Security information and event management (SIEM) 
+integration, Monitoring and auditing OS-level activities 
+Case Studies: VM escape attack mitigation in a cloud service provider environment, 
+OS-level security in a containerized application deployment 
+Unit III: Data Security                                  7 Lecture Hours 
+Importance of data security in the cloud, Data security principles: CIA (Confidentiality, 
+Integrity, Availability). Shared responsibility model in cloud security,  
+Data Classification and Protection: Data classification and sensitivity assessment, 
+Data protection requirements (e.g., PII, PHI), Data masking and anonymization, Data 
+retention policies and disposal  Encryption Techniques: Encryption fundamentals, 
+Data encryption at rest using disk and database encryption, Encryption in transit with 
+TLS/SSL, Encryption for data during processing (homomorphic encryption) 
+Compliance and Regulatory Requirements: Secure Data Sharing and Collaboration, 
+Secure file sharing and collaboration tools, Secure data exchange with external 
+parties, Data leakage prevention (DLP) and protection mechanisms, Implementing 
+secure data sharing policies Data Security in Multi-Cloud Environments: Challenges 
+and considerations for multi-cloud data security, Data replication and synchronization, 
+Data governance in multi-cloud architectures, Data compliance frameworks (e.g., 
+GDPR, HIPAA), Auditing and monitoring for compliance, Cloud provider compliance 
+certifications, Privacy and data protection in the cloud 
+ 
+Unit IV: Network Security               7 Lecture Hours 
+Importance of network security in the cloud, Network security fundamentals: CIA 
+(Confidentiality, Integrity, Availability), Network security in a shared responsibility 
+model 
+Cloud Network Architecture and Components: Cloud network models (VPC, VNet), 
+Subnetting and IP addressing in the cloud, Load balancers and content delivery 
+networks (CDNs), Virtual private clouds (VPCs) and security groups Network 
+Protocols and Encryption: Transport layer security (TLS/SSL), VPNs and encryption 
+for data in transit, Secure tunneling protocols (IPsec), Securing DNS and BGP 
+Network Security Controls and Policies: Firewall fundamentals and best practices, 
+Intrusion detection and prevention systems (IDS/IPS), Network access control lists 
+(NACLs) and security policies, Security groups and network segmentation Secure 
+Data Transmission and VPNs: Site-to-site VPNs for hybrid cloud environments, 
+Remote access VPNs and secure connectivity, VPN protocols (PPTP, L2TP, 
+OpenVPN), VPN client configuration and security considerations Network Monitoring 
+and Security Analytics: Network monitoring tools and techniques, Real-time traffic 
+analysis and anomaly detection, Logging and alerting for network security incidents, 
+Security information and event management (SIEM) integration Cloud Network 
+Security Best Practices: Implementing network security policies and procedures, 
+Security groups and firewall rule management, Network security automation and 
+orchestration, Network security in serverless and containerized environments  
+
+--- PAGE 37 ---
+CONFIDENTIAL | 341  Case Studies: DDoS mitigation in a cloud-hosted e-commerce platform, Securing 
+microservices communication in a cloud-native applications 
+ 
+Unit V: Identity and Access Management (IAM) in the Cloud      6 Lecture Hours 
+The role of IAM in cloud security, IAM components and stakeholders, IAM goals and 
+principles, IAM trends and challenges 
+Authentication and authorization in the cloud, Authorization models (RBAC, ABAC), 
+Role-based access control (RBAC), Identity federation and single sign-on (SSO), IAM 
+Technologies and Protocols: LDAP and Active Directory, OAuth 2.0 and OpenID 
+Connect, SAML (Security Assertion Markup Language), OAuth and API security, Multi-
+factor authentication (MFA), IAM Policy and Governance: Creating IAM policies and 
+procedures, IAM policy lifecycle management, Policy enforcement and compliance, 
+IAM auditing and reporting 
+Case Studies:  AWS IAM and Azure AD 
+ 
+Unit VI: Application Security               5 Lecture Hours 
+Importance of application security in the cloud, Application security fundamentals, 
+OWASP Top Ten and common vulnerabilities 
+Secure Coding Practices: Secure coding principles and best practices, Input validation 
+and output encoding, Authentication and authorization in cloud applications, Error 
+handling and logging for security Data Security in Cloud Applications: Data protection 
+and encryption, Handling sensitive data (PII, PHI), Data access controls and role-
+based access control (RBAC), Data leakage prevention (DLP) in applications API 
+Security: API security considerations and challenges, OAuth 2.0 and OpenID Connect 
+for authentication and authorization, Rate limiting and throttling, Securing API 
+endpoints and data transmission Application Security Testing: Static application 
+security testing (SAST), Dynamic application security testing (DAST), Interactive 
+application security testing (IAST), Continuous integration/continuous deployment 
+(CI/CD) pipeline security testing Cloud Application Security Best Practices: Secure 
+application development life cycle (SDLC), Security by design in cloud-native 
+applications, Web application firewalls (WAFs) and application security policies, 
+Secure application deployment strategies 
+Case Studies: Securing a SaaS-based customer portal, API security challenges in a 
+cloud-native fintech application 
+ 
+Total lecture Hours 45 
+ 
+Textbooks 
+
+--- PAGE 38 ---
+CONFIDENTIAL | 342  1. Ronald L. Krutz, and Russell Dean Vines, "Cloud Security: A Comprehensive 
+Guide to Secure Cloud Computing", Wiley Publishing, 2010. 
+2. 
+ 
+ 
+Modes of Evaluation: Quiz/Assignment/ presentation/ extempore/ Written 
+Examination 
+ 
+Examination Scheme 
+Components IA MID SEM End Sem Total 
+Weightage (%)  50  20 30 100 
+ 
+Detailed breakup of Internal Assessment 
+Internal Assessment 
+Component  Weightage in calculation of Internal 
+Assessment (100 marks)  
+Quiz 1 15% 
+Quiz 2 15% 
+Class Test 1 15% 
+Class Test 2 15% 
+Assignment 1/Project 20% 
+Assignment 2/Project 20% 
+ 
+  
+
+--- PAGE 39 ---
+CONFIDENTIAL | 343  Course Code Course name L T P C 
+CSVT4119P  Cloud Computing Security and Management Lab 0  0  2  1  
+Total Units to be Covered: 12 Total Contact Hours: 30 
+Prerequisite(s ): Cloud Computing Architecture and Deployment 
+Models Lab and Cloud Application Development Lab  Syllabus version: 1.0  
+ 
+Course Objectives 
+1. To empower students to proficiently implement and manage access control 
+strategies across various cloud platforms, ensuring data and resource security. 
+2. To enable students to effectively design and deploy security measures such as 
+attribute-based access control (ABAC), multi-factor authentication (MFA), and role-
+based access control (RBAC) to safeguard cloud environments in real-world 
+scenarios. 
+Course Outcomes 
+On completion of this course, the students will be able to 
+CO1: Demonstrate the ability to design and deploy secure cloud infrastructures across 
+various cloud computing platforms. 
+CO2: Evaluate and compare access control mechanisms across various cloud 
+computing platforms. 
+CO3: Create and manage customer-managed policies in AWS to enforce security and 
+compliance standards. 
+ 
+ 
+CO-PO Mapping 
+ 
+Program 
+Outcomes  
+Course 
+Outcomes                 
+CO 1 1 - - 1 2 - - - 1 - - 1 - - 3 
+CO 2 1 - - 1 2 - - - 1 - - 1 - - 3 
+CO 3 1 - - 1 2 - - - 1 - - 1 - - 3 
+Average  1 - - 1 2 - - - 1 - - 1 - - 3 
+ 
+ 
+1  Weakly Mapped (Low)  2  Moderately Mapped (Medium) 
+ 
+
+--- PAGE 40 ---
+CONFIDENTIAL | 344  3  Strongly Mapped (High)                   
+ 
+ 
+ 
+List of Experiments 
+ 
+Experiment 1:  Building your first Virtual Private Cloud-AWS  
+Experiment 2: Delegate access across AWS accounts using roles-AWS  
+Experiment 3: Create a customer managed policy-AWS 
+Experiment 4: Use attribute-based access control (ABAC)-AWS  
+Experiment 5: Permit users to manage their credentials and MFA settings (AWS) 
+Experiment 6 : Implement Azure key vault 
+Experiment 7: Manage Access to Azure with Role-Based Access Control  
+Experiment 8: Manage Identity and Access- MFA, and Conditional Access (Azure) 
+Experiment 9: Manage Identity and Access- Implement Directory Synchronization 
+(Azure) 
+Experiment 10: Smart Access Control on GCP: Web, programmatic, and command-
+line access  
+Experiment 11: Write an IAM policy by using client libraries (GCP) 
+Experiment 12:  Using AWS WAF to control access to your content (AWS) 
+ 
+Total Lab hours 30  
+ 
+Textbooks 
+1. Comprehensive 
+ 
+2. 
+ 
+3.  
+ 
+
+--- PAGE 41 ---
+CONFIDENTIAL | 345  Reference Books 
+ 
+Modes of Evaluation: Quiz/Assignment/ presentation/ extempore/ Written 
+Examination 
+ 
+Examination Scheme:  Continuous Assessment 
+Components  Quiz & Viva  Performance & Lab Report  
+Weightage (%)  50 %  50 %  
+ 
+  
+

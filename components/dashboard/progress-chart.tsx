@@ -16,23 +16,23 @@ export function ProgressChart() {
   const growthPercent = Math.round(((totalHours - prevTotal) / prevTotal) * 100)
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm h-fit">
-      <h2 className="font-semibold text-foreground mb-1">Progress Overview</h2>
+    <div className="rounded-2xl bg-white border border-[rgba(0,0,0,0.06)] p-5 shadow-sm h-fit">
+      <h2 className="font-semibold text-[#0F1117] mb-1 font-display">Progress Overview</h2>
 
-      {/* Line-style dots chart */}
+      {/* Chart */}
       <div className="mt-4 relative">
         <svg viewBox="0 0 200 80" className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
           {/* Grid lines */}
-          <line x1="20" y1="10" x2="190" y2="10" stroke="currentColor" strokeOpacity="0.06" strokeWidth="0.5" />
-          <line x1="20" y1="30" x2="190" y2="30" stroke="currentColor" strokeOpacity="0.06" strokeWidth="0.5" />
-          <line x1="20" y1="50" x2="190" y2="50" stroke="currentColor" strokeOpacity="0.06" strokeWidth="0.5" />
-          <line x1="20" y1="70" x2="190" y2="70" stroke="currentColor" strokeOpacity="0.06" strokeWidth="0.5" />
+          <line x1="20" y1="10" x2="190" y2="10" stroke="currentColor" strokeOpacity="0.05" strokeWidth="0.5" />
+          <line x1="20" y1="30" x2="190" y2="30" stroke="currentColor" strokeOpacity="0.05" strokeWidth="0.5" />
+          <line x1="20" y1="50" x2="190" y2="50" stroke="currentColor" strokeOpacity="0.05" strokeWidth="0.5" />
+          <line x1="20" y1="70" x2="190" y2="70" stroke="currentColor" strokeOpacity="0.05" strokeWidth="0.5" />
 
           {/* Area fill */}
           <defs>
             <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="oklch(0.55 0.2 260)" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="oklch(0.55 0.2 260)" stopOpacity="0.02" />
+              <stop offset="0%" stopColor="#4F8EF7" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#4F8EF7" stopOpacity="0.01" />
             </linearGradient>
           </defs>
           <path
@@ -46,7 +46,7 @@ export function ProgressChart() {
               .map((d, i) => `${20 + i * 56.6},${70 - (d.hours / maxHours) * 60}`)
               .join(" ")}
             fill="none"
-            stroke="oklch(0.55 0.2 260)"
+            stroke="#4F8EF7"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -59,9 +59,9 @@ export function ProgressChart() {
               cx={20 + i * 56.6}
               cy={70 - (d.hours / maxHours) * 60}
               r="3.5"
-              fill="oklch(0.55 0.2 260)"
+              fill="#4F8EF7"
               stroke="white"
-              strokeWidth="1.5"
+              strokeWidth="2"
             />
           ))}
 
@@ -72,8 +72,8 @@ export function ProgressChart() {
               x={20 + i * 56.6}
               y={80}
               textAnchor="middle"
-              fill="currentColor"
-              fillOpacity="0.4"
+              fill="#6B7280"
+              fillOpacity="0.7"
               fontSize="6"
               fontFamily="inherit"
             >
@@ -84,12 +84,12 @@ export function ProgressChart() {
       </div>
 
       {/* Growth indicator */}
-      <div className="mt-3 flex items-center gap-2 pt-3 border-t border-border/60">
-        <div className="flex items-center gap-1.5 text-emerald-600">
+      <div className="mt-3 flex items-center gap-2 pt-3 border-t border-[rgba(0,0,0,0.06)]">
+        <div className="flex items-center gap-1.5 text-[#059669]">
           <TrendingUp className="h-4 w-4" />
-          <span className="text-lg font-bold">+{growthPercent}%</span>
+          <span className="text-lg font-bold font-mono-cc">+{growthPercent}%</span>
         </div>
-        <span className="text-xs text-muted-foreground">Study Growth</span>
+        <span className="text-xs text-[#6B7280]">Study Growth</span>
       </div>
     </div>
   )

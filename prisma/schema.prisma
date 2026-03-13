@@ -5,12 +5,37 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
+  provider   = "prisma-client-js"
+  output     = "../lib/generated/prisma"
+  engineType = "library"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum ResourceType {
+  NOTES
+  QUESTION_PAPERS
+  VIDEOS
+  REFERENCE
+}
+
+enum ActivityType {
+  LOGIN
+  UPLOAD
+  DOWNLOAD
+  LIKE_RECEIVED
+  BOOKMARK_RECEIVED
+  RATING_RECEIVED
+  FIRST_SUBJECT_UPLOAD
+  STUDY_GOAL_MET
 }
 
 model User {
@@ -20,11 +45,20 @@ model User {
   email      String     @unique
   password   String?
   image      String?
+  role       Role       @default(STUDENT)
   createdAt  DateTime   @default(now()) @map("created_at")
   updatedAt  DateTime   @updatedAt @map("updated_at")
 
-  notes      Note[]     @relation("UploadedNotes")
-  bookmarks  Bookmark[]
+  notes              Note[]              @relation("UploadedNotes")
+  bookmarks          Bookmark[]
+  resources          Resource[]          @relation("UploadedResources")
+  resourceFolders    ResourceFolder[]    @relation("UploadedFolders")
+  resourceRatings    ResourceRating[]
+  resourceDownloads  ResourceDownload[]
+  streak             UserStreak?
+  dailyActivities    DailyActivity[]
+  activityEvents     ActivityEvent[]
+  resourceLikes      ResourceLike[]
 
   @@map("users")
 }
@@ -33,18 +67,40 @@ model Semester {
   id       String    @id @default(uuid())
   number   Int       @unique
   year     String?
+  credits  Int?
   subjects Subject[]
+  exams    Exam[]
 
   @@map("semesters")
 }
 
+model Specialization {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  code     String    @unique
+  subjects Subject[]
+
+  @@map("specializations")
+}
+
 model Subject {
-  id         String   @id @default(uuid())
-  name       String
-  code       String   @unique
-  semesterId String   @map("semester_id")
-  semester   Semester @relation(fields: [semesterId], references: [id])
-  notes      Note[]
+  id               String          @id @default(uuid())
+  name             String
+  code             String          @unique
+  credits          Int             @default(0)
+  lectureHours     Int             @default(0) @map("lecture_hours")
+  tutorialHours    Int             @default(0) @map("tutorial_hours")
+  practicalHours   Int             @default(0) @map("practical_hours")
+  category         String          @default("MC") // MC, SCI, ENGG, ME, LSC, EC, PRJ
+  isLab            Boolean         @default(false) @map("is_lab")
+  semesterId       String          @map("semester_id")
+  semester         Semester        @relation(fields: [semesterId], references: [id])
+  specializationId String?         @map("specialization_id")
+  specialization   Specialization? @relation(fields: [specializationId], references: [id])
+  notes            Note[]
+  exams            Exam[]
+  resources        Resource[]
+  resourceFolders  ResourceFolder[]
 
   @@map("subjects")
 }
@@ -78,4 +134,163 @@ model Bookmark {
 
   @@unique([userId, noteId])
   @@map("bookmarks")
+}
+
+model Exam {
+  id         String   @id @default(uuid())
+  name       String
+  subjectId  String   @map("subject_id")
+  subject    Subject  @relation(fields: [subjectId], references: [id])
+  semesterId String   @map("semester_id")
+  semester   Semester @relation(fields: [semesterId], references: [id])
+  date       DateTime
+  type       String   @default("endterm") // midterm, endterm, quiz, lab
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("exams")
+}
+
+model Resource {
+  id               String             @id @default(uuid())
+  uploaderId       String             @map("uploader_id")
+  uploader         User               @relation("UploadedResources", fields: [uploaderId], references: [id])
+  s3Key            String             @map("s3_key")
+  originalFilename String             @map("original_filename")
+  fileSize         Int                @map("file_size")
+  mimeType         String             @map("mime_type")
+  subjectId        String             @map("subject_id")
+  subject          Subject            @relation(fields: [subjectId], references: [id])
+  semester         Int
+  resourceType     ResourceType       @map("resource_type")
+  folderId         String?            @map("folder_id")
+  folder           ResourceFolder?    @relation(fields: [folderId], references: [id])
+  description      String?
+  tags             String[]           @default([])
+  isPublic         Boolean            @default(true) @map("is_public")
+  downloadCount    Int                @default(0) @map("download_count")
+  likeCount        Int                @default(0) @map("like_count")
+  averageRating    Float              @default(0) @map("average_rating")
+  ratingCount      Int                @default(0) @map("rating_count")
+  isVerified       Boolean            @default(false) @map("is_verified")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  deletedAt        DateTime?          @map("deleted_at")
+  ratings          ResourceRating[]
+  downloads        ResourceDownload[]
+  likes            ResourceLike[]
+
+  @@map("resources")
+}
+
+model ResourceFolder {
+  id           String       @id @default(uuid())
+  uploaderId   String       @map("uploader_id")
+  uploader     User         @relation("UploadedFolders", fields: [uploaderId], references: [id])
+  folderName   String       @map("folder_name")
+  subjectId    String       @map("subject_id")
+  subject      Subject      @relation(fields: [subjectId], references: [id])
+  semester     Int
+  resourceType ResourceType @map("resource_type")
+  fileCount    Int          @map("file_count")
+  s3Prefix     String       @map("s3_prefix")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  resources    Resource[]
+
+  @@map("resource_folders")
+}
+
+model ResourceRating {
+  id         String   @id @default(uuid())
+  resourceId String   @map("resource_id")
+  resource   Resource @relation(fields: [resourceId], references: [id])
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id])
+  rating     Int
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([resourceId, userId])
+  @@map("resource_ratings")
+}
+
+model ResourceDownload {
+  id           String   @id @default(uuid())
+  resourceId   String   @map("resource_id")
+  resource     Resource @relation(fields: [resourceId], references: [id])
+  userId       String   @map("user_id")
+  user         User     @relation(fields: [userId], references: [id])
+  downloadedAt DateTime @default(now()) @map("downloaded_at")
+
+  @@map("resource_downloads")
+}
+
+model UserStreak {
+  id                String    @id @default(uuid())
+  userId            String    @unique @map("user_id")
+  user              User      @relation(fields: [userId], references: [id])
+  currentStreak     Int       @default(0) @map("current_streak")
+  longestStreak     Int       @default(0) @map("longest_streak")
+  flameScore        Int       @default(0) @map("flame_score")
+  flameLevel        String    @default("Starter Flame") @map("flame_level")
+  pointsToday       Int       @default(0) @map("points_today")
+  pointsThisWeek    Int       @default(0) @map("points_this_week")
+  pointsThisMonth   Int       @default(0) @map("points_this_month")
+  pointsAllTime     Int       @default(0) @map("points_all_time")
+  passiveStreakDays  Int       @default(0) @map("passive_streak_days")
+  lastActivityDate  DateTime? @map("last_activity_date")
+  streakFreezes     Int       @default(2) @map("streak_freezes")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@map("user_streaks")
+}
+
+model DailyActivity {
+  id                          String   @id @default(uuid())
+  userId                      String   @map("user_id")
+  user                        User     @relation(fields: [userId], references: [id])
+  activityDate                DateTime @map("activity_date") @db.Date
+  pointsFromLogin             Int      @default(0) @map("points_from_login")
+  pointsFromUploads           Int      @default(0) @map("points_from_uploads")
+  pointsFromDownloads         Int      @default(0) @map("points_from_downloads")
+  pointsFromLikesReceived     Int      @default(0) @map("points_from_likes_received")
+  pointsFromBookmarksReceived Int      @default(0) @map("points_from_bookmarks_received")
+  pointsFromRatingsReceived   Int      @default(0) @map("points_from_ratings_received")
+  pointsFromBonuses           Int      @default(0) @map("points_from_bonuses")
+  totalPointsToday            Int      @default(0) @map("total_points_today")
+  isPassiveDay                Boolean  @default(false) @map("is_passive_day")
+  loginCount                  Int      @default(0) @map("login_count")
+  uploadCount                 Int      @default(0) @map("upload_count")
+  downloadCount               Int      @default(0) @map("download_count")
+  likesReceivedCount          Int      @default(0) @map("likes_received_count")
+  bookmarksReceivedCount      Int      @default(0) @map("bookmarks_received_count")
+  ratingsReceivedCount        Int      @default(0) @map("ratings_received_count")
+
+  @@unique([userId, activityDate])
+  @@map("daily_activity")
+}
+
+model ActivityEvent {
+  id                String       @id @default(uuid())
+  userId            String       @map("user_id")
+  user              User         @relation(fields: [userId], references: [id])
+  eventType         ActivityType @map("event_type")
+  pointsEarned      Int          @map("points_earned")
+  referenceId       String?      @map("reference_id")
+  referenceType     String?      @map("reference_type")
+  triggeredByUserId String?      @map("triggered_by_user_id")
+  activityDate      DateTime     @map("activity_date") @db.Date
+  createdAt         DateTime     @default(now()) @map("created_at")
+
+  @@map("activity_events")
+}
+
+model ResourceLike {
+  id            String   @id @default(uuid())
+  resourceId    String   @map("resource_id")
+  resource      Resource @relation(fields: [resourceId], references: [id])
+  likedByUserId String   @map("liked_by_user_id")
+  likedByUser   User     @relation(fields: [likedByUserId], references: [id])
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@unique([resourceId, likedByUserId])
+  @@map("resource_likes")
 }

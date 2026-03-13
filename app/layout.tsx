@@ -1,14 +1,22 @@
-import type { Metadata, Viewport } from 'next'
-import { Inter, Space_Grotesk } from 'next/font/google'
+import type { Metadata } from 'next'
+import { DM_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 
-const _inter = Inter({ subsets: ["latin"] });
-const _spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: 'Campus Connect - Smarter Academic Resource Platform for Engineers',
   description: 'AI-powered academic platform helping engineering students access semester-wise study materials, AI-based recommendations, mentorship, and secure cloud storage.',
-  generator: 'v0.app',
   icons: {
     icon: [
       {
@@ -34,8 +42,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${dmSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>
