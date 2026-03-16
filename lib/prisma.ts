@@ -4,7 +4,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-const connectionString = process.env.DATABASE_URL!;
+const connectionString = process.env.DATABASE_URL ?? "";
 
 // Strip sslmode from connection string to avoid pg deprecation warning,
 // and pass ssl config directly to the Pool constructor instead.
