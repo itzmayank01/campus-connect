@@ -6,6 +6,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  serverExternalPackages: [
+    '@prisma/client',
+    '@prisma/client-runtime-utils',
+    '@prisma/adapter-neon',
+    '@prisma/adapter-pg',
+  ],
 }
 
 export default nextConfig
