@@ -12,6 +12,7 @@ import {
   Upload,
   BarChart3,
   Trophy,
+  Sparkles,
 } from "lucide-react"
 import {
   Sidebar,
@@ -35,6 +36,7 @@ const navItems = [
   { title: "Semesters", href: "/dashboard/semesters", icon: Calendar },
   { title: "Bookmarks", href: "/dashboard/bookmarks", icon: Bookmark },
   { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+  { title: "Smart Feed", href: "/dashboard/smart-feed", icon: Sparkles, hasNewBadge: true },
   { title: "Leaderboard", href: "/dashboard/leaderboard", icon: Trophy, hasLiveBadge: true },
 ]
 
@@ -74,7 +76,7 @@ export function DashboardSidebar() {
               {navItems.map((item) => {
                 const isActive = pathname === item.href
                 return (
-                  <SidebarMenuItem key={item.href}>
+                  <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}

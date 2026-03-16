@@ -3,6 +3,8 @@ import { StatsCards } from "@/components/dashboard/stats-cards"
 import { SemesterCards } from "@/components/dashboard/semester-cards"
 import { StudyMaterials } from "@/components/dashboard/study-materials"
 import { UpcomingExams } from "@/components/dashboard/upcoming-exams"
+import { ForYouFeed } from "@/components/dashboard/for-you-feed"
+import { TrendingResources } from "@/components/dashboard/trending-resources"
 import { Upload } from "lucide-react"
 import { prisma } from "@/lib/prisma"
 import { RealtimeRefresh } from "@/components/dashboard/realtime-refresh"
@@ -141,12 +143,18 @@ export default async function DashboardPage() {
           {/* Row 2: Study Materials — full width */}
           <StudyMaterials initialMaterials={formattedNotes} />
 
-          {/* Row 3: Semester Resources */}
+          {/* Row 3: For You — AI Recommendations */}
+          <ForYouFeed />
+
+          {/* Row 4: Semester Resources */}
           <SemesterCards initialSemesters={formattedSemesters} />
         </div>
 
-        {/* Right: Upcoming Exams panel — dynamic from DB */}
-        <UpcomingExams exams={formattedExams} />
+        {/* Right: Upcoming Exams + Trending */}
+        <div className="space-y-5">
+          <UpcomingExams exams={formattedExams} />
+          <TrendingResources />
+        </div>
       </div>
     </div>
   )

@@ -12,7 +12,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -62,6 +61,8 @@ model User {
   leaderboardWinsR1  LeaderboardHistory[] @relation("Rank1Winner")
   leaderboardWinsR2  LeaderboardHistory[] @relation("Rank2Winner")
   leaderboardWinsR3  LeaderboardHistory[] @relation("Rank3Winner")
+  reputation         UserReputation?
+  behaviorProfile    UserBehaviorProfile?
 
   @@map("users")
 }
@@ -173,8 +174,12 @@ model Resource {
   isPublic         Boolean            @default(true) @map("is_public")
   downloadCount    Int                @default(0) @map("download_count")
   likeCount        Int                @default(0) @map("like_count")
+  bookmarkCount    Int                @default(0) @map("bookmark_count")
   averageRating    Float              @default(0) @map("average_rating")
   ratingCount      Int                @default(0) @map("rating_count")
+  qualityScore     Float              @default(0) @map("quality_score")
+  trendingScore    Float              @default(0) @map("trending_score")
+  lastScoredAt     DateTime?          @map("last_scored_at")
   isVerified       Boolean            @default(false) @map("is_verified")
   createdAt        DateTime           @default(now()) @map("created_at")
   deletedAt        DateTime?          @map("deleted_at")
@@ -312,4 +317,31 @@ model LeaderboardHistory {
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("leaderboard_history")
+}
+
+model UserReputation {
+  id                   String   @id @default(uuid())
+  userId               String   @unique @map("user_id")
+  user                 User     @relation(fields: [userId], references: [id])
+  trustScore           Float    @default(0.5) @map("trust_score")
+  avgResourceQuality   Float    @default(0) @map("avg_resource_quality")
+  totalVerifiedUploads Int      @default(0) @map("total_verified_uploads")
+  helpfulnessScore     Float    @default(0) @map("helpfulness_score")
+  reputationLevel      String   @default("Newcomer") @map("reputation_level")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("user_reputations")
+}
+
+model UserBehaviorProfile {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique @map("user_id")
+  user                   User     @relation(fields: [userId], references: [id])
+  preferredSubjects      String[] @default([]) @map("preferred_subjects")
+  preferredResourceTypes String[] @default([]) @map("preferred_resource_types")
+  avgSessionHour         Float?   @map("avg_session_hour")
+  totalInteractions      Int      @default(0) @map("total_interactions")
+  lastProfileUpdate      DateTime @default(now()) @map("last_profile_update")
+
+  @@map("user_behavior_profiles")
 }

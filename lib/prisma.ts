@@ -6,15 +6,21 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 const connectionString = process.env.DATABASE_URL!;
 
-// Append sslmode if not already specified, to silence pg SSL deprecation warning
-const dbUrl = connectionString.includes("sslmode=")
-  ? connectionString
-  : `${connectionString}${connectionString.includes("?") ? "&" : "?"}sslmode=verify-full`;
+// Strip sslmode from connection string to avoid pg deprecation warning,
+// and pass ssl config directly to the Pool constructor instead.
+// After removing sslmode param, fix the query string: if `?` was removed
+// but `&` remains, replace the first `&` after the path with `?`.
+const cleanUrl = connectionString
+  .replace(/[?&]sslmode=[^&]*/gi, "")
+  .replace(/\/([^/?]+)&/, "/$1?");
 
 export const prisma = (() => {
   if (globalForPrisma.prisma) return globalForPrisma.prisma;
   
-  const pool = new Pool({ connectionString: dbUrl });
+  const pool = new Pool({
+    connectionString: cleanUrl,
+    ssl: { rejectUnauthorized: false },
+  });
   const adapter = new PrismaPg(pool);
   const client = new PrismaClient({ adapter });
   
