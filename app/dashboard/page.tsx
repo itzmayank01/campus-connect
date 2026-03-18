@@ -15,11 +15,31 @@ export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [totalSubjects, totalNotes, totalResources, semesters, allNotes, allResources] = await Promise.all([
-    prisma.subject.count(),
-    prisma.note.count(),
-    prisma.resource.count({ where: { isPublic: true, deletedAt: null } }),
-    prisma.semester.findMany({
+  // Fetch data with graceful fallbacks — handles missing columns / migration not yet applied
+  let totalSubjects = 0
+  let totalNotes = 0
+  let totalResources = 0
+  let semesters: any[] = []
+  let allNotes: any[] = []
+  let allResources: any[] = []
+
+  try {
+    [totalSubjects, totalNotes] = await Promise.all([
+      prisma.subject.count(),
+      prisma.note.count(),
+    ])
+  } catch {
+    // DB query failed — use defaults
+  }
+
+  try {
+    totalResources = await prisma.resource.count({ where: { isPublic: true, deletedAt: null } })
+  } catch {
+    totalResources = 0
+  }
+
+  try {
+    semesters = await prisma.semester.findMany({
       include: {
         subjects: {
           where: { specializationId: null },
@@ -28,25 +48,32 @@ export default async function DashboardPage() {
             _count: {
               select: {
                 notes: true,
-                // @ts-ignore — Prisma supports filtered relation counts but types don't reflect it
-                resources: {
-                  where: { isPublic: true, deletedAt: null }
-                }
+                resources: true,
               }
             }
           }
         }
       },
       orderBy: { number: "asc" },
-    }),
-    prisma.note.findMany({
+    })
+  } catch {
+    semesters = []
+  }
+
+  try {
+    allNotes = await prisma.note.findMany({
       take: 10,
       orderBy: { createdAt: "desc" },
       include: {
         subject: true
       }
-    }),
-    prisma.resource.findMany({
+    })
+  } catch {
+    allNotes = []
+  }
+
+  try {
+    allResources = await prisma.resource.findMany({
       take: 10,
       where: { isPublic: true, deletedAt: null },
       orderBy: { createdAt: "desc" },
@@ -55,7 +82,9 @@ export default async function DashboardPage() {
         uploader: { select: { name: true, email: true } }
       }
     })
-  ])
+  } catch {
+    allResources = []
+  }
 
   // Fetch upcoming exams from DB (graceful fallback if table doesn't exist yet)
   let formattedExams: { subject: string; date: string; daysLeft: number; totalDays: number; type: string }[] = []
