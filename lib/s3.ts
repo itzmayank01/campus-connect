@@ -3,7 +3,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 // Initialize the S3 client — reads from environment variables
 export const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "ap-south-1",
+  region: (process.env.AWS_REGION || "ap-south-1").toLowerCase().replace(/\s+/g, '-'),
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
