@@ -50,10 +50,11 @@ export function Hero() {
             <Image
               src="/images/dashboard-mockup.jpg"
               alt="Campus Connect dashboard showing study materials and analytics"
-              width={2000}
-              height={1650}
+              width={960}
+              height={640}
               className="rounded-xl"
               priority
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
         </div>

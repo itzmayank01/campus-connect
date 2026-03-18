@@ -9,9 +9,11 @@ export function ProblemSection() {
           <Image
             src="/images/problem-banner.jpg"
             alt="Students struggling to find resources"
-            width={3000}
-            height={350}
+            width={960}
+            height={386}
             className="rounded-2xl shadow-xl"
+            loading="lazy"
+            sizes="(max-width: 768px) 100vw, 80vw"
           />
         </div>
 
