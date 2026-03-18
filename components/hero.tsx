@@ -54,6 +54,7 @@ export function Hero() {
               height={640}
               className="rounded-xl"
               priority
+              fetchPriority="high"
               sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
