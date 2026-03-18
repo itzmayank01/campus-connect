@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
         uploader: {
           select: {
             id: true, name: true, email: true, image: true,
-            reputation: { select: { reputationLevel: true } },
           },
         },
       },
@@ -51,7 +50,7 @@ export async function GET(request: NextRequest) {
       uploader: {
         name: resource.uploader.name || resource.uploader.email.split("@")[0],
         image: resource.uploader.image,
-        reputationLevel: resource.uploader.reputation?.reputationLevel || "Newcomer",
+        reputationLevel: "Newcomer",
       },
       createdAt: resource.createdAt,
     }))

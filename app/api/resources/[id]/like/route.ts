@@ -8,6 +8,20 @@ function computeTrendingScore(resource: { likeCount: number; downloadCount: numb
   return (resource.likeCount * 3) + (resource.downloadCount * 1) + (resource.averageRating * 2) + recencyBoost
 }
 
+async function findOrCreateUser(supabaseUser: { id: string; email?: string; user_metadata?: any }) {
+  let dbUser = await prisma.user.findUnique({ where: { supabaseId: supabaseUser.id } })
+  if (!dbUser) {
+    dbUser = await prisma.user.create({
+      data: {
+        supabaseId: supabaseUser.id,
+        email: supabaseUser.email || "",
+        name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split("@")[0],
+      },
+    })
+  }
+  return dbUser
+}
+
 // POST /api/resources/[id]/like — toggle like
 export async function POST(
   request: NextRequest,
@@ -19,8 +33,12 @@ export async function POST(
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     const { id } = await params
-    const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
-    if (!dbUser) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+    // Verify resource exists
+    const resource = await prisma.resource.findUnique({ where: { id } })
+    if (!resource) return NextResponse.json({ error: "Resource not found" }, { status: 404 })
+
+    const dbUser = await findOrCreateUser(user)
 
     // Check if already liked
     const existing = await prisma.resourceLike.findUnique({
@@ -30,30 +48,30 @@ export async function POST(
     if (existing) {
       // Unlike
       await prisma.resourceLike.delete({ where: { id: existing.id } })
-      const resource = await prisma.resource.update({
+      const updated = await prisma.resource.update({
         where: { id },
         data: { likeCount: { decrement: 1 } },
       })
       // Recompute trending score
       await prisma.resource.update({
         where: { id },
-        data: { trendingScore: computeTrendingScore(resource) },
+        data: { trendingScore: computeTrendingScore(updated) },
       })
-      return NextResponse.json({ liked: false, likeCount: resource.likeCount })
+      return NextResponse.json({ liked: false, likeCount: updated.likeCount })
     } else {
       // Like
       await prisma.resourceLike.create({
         data: { resourceId: id, likedByUserId: dbUser.id },
       })
-      const resource = await prisma.resource.update({
+      const updated = await prisma.resource.update({
         where: { id },
         data: { likeCount: { increment: 1 } },
       })
       await prisma.resource.update({
         where: { id },
-        data: { trendingScore: computeTrendingScore(resource) },
+        data: { trendingScore: computeTrendingScore(updated) },
       })
-      return NextResponse.json({ liked: true, likeCount: resource.likeCount })
+      return NextResponse.json({ liked: true, likeCount: updated.likeCount })
     }
   } catch (error: unknown) {
     console.error("Like error:", error)
@@ -70,7 +88,7 @@ export async function GET(
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (!user) return NextResponse.json({ liked: false, likeCount: 0 })
 
     const { id } = await params
     const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })

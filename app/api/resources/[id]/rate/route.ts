@@ -8,6 +8,20 @@ function computeTrendingScore(resource: { likeCount: number; downloadCount: numb
   return (resource.likeCount * 3) + (resource.downloadCount * 1) + (resource.averageRating * 2) + recencyBoost
 }
 
+async function findOrCreateUser(supabaseUser: { id: string; email?: string; user_metadata?: any }) {
+  let dbUser = await prisma.user.findUnique({ where: { supabaseId: supabaseUser.id } })
+  if (!dbUser) {
+    dbUser = await prisma.user.create({
+      data: {
+        supabaseId: supabaseUser.id,
+        email: supabaseUser.email || "",
+        name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split("@")[0],
+      },
+    })
+  }
+  return dbUser
+}
+
 // POST /api/resources/[id]/rate — submit or update a 1-5 star rating
 export async function POST(
   request: NextRequest,
@@ -22,8 +36,11 @@ export async function POST(
     const body = await request.json()
     const rating = Math.min(5, Math.max(1, Math.round(body.rating)))
 
-    const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
-    if (!dbUser) return NextResponse.json({ error: "User not found" }, { status: 404 })
+    // Verify resource exists
+    const resource = await prisma.resource.findUnique({ where: { id } })
+    if (!resource) return NextResponse.json({ error: "Resource not found" }, { status: 404 })
+
+    const dbUser = await findOrCreateUser(user)
 
     // Upsert the rating
     await prisma.resourceRating.upsert({
@@ -42,7 +59,7 @@ export async function POST(
     const avgRating = Math.round((agg._avg.rating || 0) * 10) / 10
     const ratingCount = agg._count.rating || 0
 
-    const resource = await prisma.resource.update({
+    const updated = await prisma.resource.update({
       where: { id },
       data: { averageRating: avgRating, ratingCount },
     })
@@ -50,7 +67,7 @@ export async function POST(
     // Recompute trending score
     await prisma.resource.update({
       where: { id },
-      data: { trendingScore: computeTrendingScore(resource) },
+      data: { trendingScore: computeTrendingScore(updated) },
     })
 
     return NextResponse.json({
@@ -73,7 +90,7 @@ export async function GET(
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (!user) return NextResponse.json({ averageRating: 0, ratingCount: 0, userRating: 0 })
 
     const { id } = await params
     const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
