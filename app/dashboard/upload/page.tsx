@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { FileText, Download, Eye, Upload, Loader2, Plus, Calendar, BookOpen, Trash2, CheckSquare, Square, XCircle } from "lucide-react"
+import { FileText, Download, Eye, Upload, Loader2, Plus, Calendar, BookOpen, Trash2, CheckSquare, Square, XCircle, RefreshCw } from "lucide-react"
 
 interface UploadedFile {
   id: string
@@ -48,15 +48,23 @@ export default function YourUploadsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; type: "single" | "bulk" } | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const fetchUploads = async (showSpinner = true) => {
+    if (showSpinner) setRefreshing(true)
+    try {
+      const r = await fetch("/api/upload")
+      const data = await r.json()
+      setUploads(Array.isArray(data) ? data : [])
+    } catch {}
+    finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
 
   useEffect(() => {
-    fetch("/api/upload")
-      .then((r) => r.json())
-      .then((data) => {
-        setUploads(Array.isArray(data) ? data : [])
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    fetchUploads(false)
   }, [])
 
   const formatDate = (dateStr: string) => {
@@ -187,13 +195,24 @@ export default function YourUploadsPage() {
             {uploads.length} file{uploads.length !== 1 ? "s" : ""} uploaded
           </p>
         </div>
-        <button
-          onClick={() => router.push("/dashboard/upload/new")}
-          className="flex items-center gap-2 rounded-xl bg-[#4F8EF7] text-white font-semibold px-5 py-2.5 shadow-lg shadow-[#4F8EF7]/20 hover:bg-[#3B7AE0] transition-all duration-200"
-        >
-          <Plus className="h-4 w-4" />
-          Upload New File
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => fetchUploads(true)}
+            disabled={refreshing}
+            className="flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white text-[#475569] font-medium px-4 py-2.5 hover:bg-[#F8FAFC] hover:border-[#CBD5E1] transition-all duration-200"
+            title="Refresh uploads list"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+          <button
+            onClick={() => router.push("/dashboard/upload/new")}
+            className="flex items-center gap-2 rounded-xl bg-[#4F8EF7] text-white font-semibold px-5 py-2.5 shadow-lg shadow-[#4F8EF7]/20 hover:bg-[#3B7AE0] transition-all duration-200"
+          >
+            <Plus className="h-4 w-4" />
+            Upload New File
+          </button>
+        </div>
       </div>
 
       {/* ── Bulk Delete Toolbar ── */}
