@@ -75,18 +75,56 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
   const [activeTab, setActiveTab] = useState("all")
   const [youtubeModal, setYoutubeModal] = useState<ResourceData | null>(null)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({})
+  const [ratingMap, setRatingMap] = useState<Record<string, number>>({})
+  const [hoverRating, setHoverRating] = useState<Record<string, number>>({})
 
   useEffect(() => {
     fetch(`/api/subjects/${resolvedParams.subjectId}/resources`)
       .then((r) => r.json())
       .then((data) => {
         if (data.subject) setSubject(data.subject)
-        if (Array.isArray(data.resources)) setResources(data.resources)
+        if (Array.isArray(data.resources)) {
+          setResources(data.resources)
+          // Fetch like/rate status for each resource
+          data.resources.forEach((r: ResourceData) => {
+            fetch(`/api/resources/${r.id}/like`).then(res => res.json()).then(d => {
+              setLikedMap(prev => ({ ...prev, [r.id]: d.liked }))
+            }).catch(() => {})
+            fetch(`/api/resources/${r.id}/rate`).then(res => res.json()).then(d => {
+              setRatingMap(prev => ({ ...prev, [r.id]: d.userRating }))
+            }).catch(() => {})
+          })
+        }
         if (Array.isArray(data.notes)) setNotes(data.notes)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [resolvedParams.subjectId])
+
+  const handleLike = async (resourceId: string) => {
+    try {
+      const res = await fetch(`/api/resources/${resourceId}/like`, { method: "POST" })
+      if (!res.ok) return
+      const data = await res.json()
+      setLikedMap(prev => ({ ...prev, [resourceId]: data.liked }))
+      setResources(prev => prev.map(r => r.id === resourceId ? { ...r, likeCount: data.likeCount } : r))
+    } catch {}
+  }
+
+  const handleRate = async (resourceId: string, rating: number) => {
+    try {
+      const res = await fetch(`/api/resources/${resourceId}/rate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating }),
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setRatingMap(prev => ({ ...prev, [resourceId]: data.userRating }))
+      setResources(prev => prev.map(r => r.id === resourceId ? { ...r, averageRating: data.averageRating, ratingCount: data.ratingCount } : r))
+    } catch {}
+  }
 
   const handleDownload = async (resourceId: string) => {
     setDownloadingId(resourceId)
@@ -305,9 +343,37 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
                         <Clock className="h-3 w-3" /> Pending verification
                       </span>
                     )}
-                    <span className="flex items-center gap-1 text-[11px] text-[#94A3B8]">
-                      <Heart className="h-3 w-3" /> {resource.likeCount}
-                    </span>
+                    <button
+                      onClick={() => handleLike(resource.id)}
+                      className={`flex items-center gap-1 text-[11px] rounded-md px-2 py-1 transition-all duration-200 ${
+                        likedMap[resource.id]
+                          ? "text-rose-500 bg-rose-50 border border-rose-200"
+                          : "text-[#94A3B8] hover:text-rose-500 hover:bg-rose-50 border border-transparent"
+                      }`}
+                    >
+                      <Heart className={`h-3.5 w-3.5 ${likedMap[resource.id] ? "fill-rose-500" : ""}`} />
+                      {resource.likeCount}
+                    </button>
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => handleRate(resource.id, star)}
+                          onMouseEnter={() => setHoverRating(prev => ({ ...prev, [resource.id]: star }))}
+                          onMouseLeave={() => setHoverRating(prev => ({ ...prev, [resource.id]: 0 }))}
+                          className="p-0 border-none bg-transparent cursor-pointer transition-transform hover:scale-125"
+                        >
+                          <Star className={`h-3.5 w-3.5 transition-colors ${
+                            star <= (hoverRating[resource.id] || ratingMap[resource.id] || 0)
+                              ? "text-amber-400 fill-amber-400"
+                              : "text-gray-300 hover:text-amber-300"
+                          }`} />
+                        </button>
+                      ))}
+                      {resource.averageRating > 0 && (
+                        <span className="text-[10px] text-amber-600 ml-1 font-medium">{resource.averageRating.toFixed(1)}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 mt-3">
                     <button
@@ -358,17 +424,40 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
                         <Clock className="h-3 w-3" /> Pending verification
                       </span>
                     )}
+                    <button
+                      onClick={() => handleLike(resource.id)}
+                      className={`flex items-center gap-1 text-[11px] rounded-md px-2 py-1 transition-all duration-200 ${
+                        likedMap[resource.id]
+                          ? "text-rose-500 bg-rose-50 border border-rose-200"
+                          : "text-[#94A3B8] hover:text-rose-500 hover:bg-rose-50 border border-transparent"
+                      }`}
+                    >
+                      <Heart className={`h-3.5 w-3.5 ${likedMap[resource.id] ? "fill-rose-500" : ""}`} />
+                      {resource.likeCount}
+                    </button>
                     <span className="flex items-center gap-1 text-[11px] text-[#94A3B8]">
-                      <Heart className="h-3 w-3" /> {resource.likeCount}
+                      <Download className="h-3 w-3" /> {resource.downloadCount}
                     </span>
-                    <span className="flex items-center gap-1 text-[11px] text-[#94A3B8]">
-                      <Download className="h-3 w-3" /> {resource.downloadCount} downloads
-                    </span>
-                    {resource.averageRating > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-[#F5A623]">
-                        <Star className="h-3 w-3" /> {resource.averageRating.toFixed(1)}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => handleRate(resource.id, star)}
+                          onMouseEnter={() => setHoverRating(prev => ({ ...prev, [resource.id]: star }))}
+                          onMouseLeave={() => setHoverRating(prev => ({ ...prev, [resource.id]: 0 }))}
+                          className="p-0 border-none bg-transparent cursor-pointer transition-transform hover:scale-125"
+                        >
+                          <Star className={`h-3.5 w-3.5 transition-colors ${
+                            star <= (hoverRating[resource.id] || ratingMap[resource.id] || 0)
+                              ? "text-amber-400 fill-amber-400"
+                              : "text-gray-300 hover:text-amber-300"
+                          }`} />
+                        </button>
+                      ))}
+                      {resource.averageRating > 0 && (
+                        <span className="text-[10px] text-amber-600 ml-1 font-medium">{resource.averageRating.toFixed(1)}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">

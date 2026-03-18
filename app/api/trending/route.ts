@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { getTrendingResources } from "@/lib/intelligence/contextual-signals"
 import { prisma } from "@/lib/prisma"
 
-// GET /api/trending?period=24h|7d&subject=xxx&limit=20
+// GET /api/trending?limit=5 — top resources sorted by likes + downloads
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -13,54 +12,56 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const limit = parseInt(request.nextUrl.searchParams.get("limit") || "20", 10)
-    const subjectId = request.nextUrl.searchParams.get("subject") || undefined
+    const limit = parseInt(request.nextUrl.searchParams.get("limit") || "10", 10)
 
-    const trending = await getTrendingResources(limit, subjectId)
-
-    // Enrich with subject and uploader data
-    const resourceIds = trending.map((r) => r.id)
+    // Get top resources sorted by trendingScore (computed from likes + downloads + rating)
     const resources = await prisma.resource.findMany({
-      where: { id: { in: resourceIds } },
+      where: { isPublic: true, deletedAt: null },
+      orderBy: [
+        { trendingScore: "desc" },
+        { likeCount: "desc" },
+        { downloadCount: "desc" },
+      ],
+      take: limit,
       include: {
         subject: { select: { id: true, name: true, code: true } },
         uploader: {
           select: {
             id: true, name: true, email: true, image: true,
-            reputation: { select: { reputationLevel: true, trustScore: true } },
+            reputation: { select: { reputationLevel: true } },
           },
         },
       },
     })
 
-    const enriched = resources.map((resource) => {
-      const trendData = trending.find((t) => t.id === resource.id)
-      return {
-        id: resource.id,
-        filename: resource.originalFilename,
-        subject: resource.subject,
-        resourceType: resource.resourceType,
-        downloadCount: resource.downloadCount,
-        likeCount: resource.likeCount,
-        qualityScore: resource.qualityScore,
-        trendingScore: trendData?.trendingScore || 0,
-        uploader: {
-          name: resource.uploader.name || resource.uploader.email.split("@")[0],
-          image: resource.uploader.image,
-          reputationLevel: resource.uploader.reputation?.reputationLevel || "Newcomer",
-        },
-        createdAt: resource.createdAt,
-      }
-    })
-
-    // Sort by trending score descending
-    enriched.sort((a, b) => b.trendingScore - a.trendingScore)
+    const enriched = resources.map((resource) => ({
+      id: resource.id,
+      filename: resource.originalFilename,
+      subject: resource.subject,
+      resourceType: resource.resourceType,
+      downloadCount: resource.downloadCount,
+      likeCount: resource.likeCount,
+      averageRating: resource.averageRating,
+      ratingCount: resource.ratingCount,
+      qualityScore: resource.qualityScore,
+      trendingScore: resource.trendingScore,
+      isYoutube: resource.mimeType === "youtube",
+      youtubeThumbnail: resource.youtubeThumbnail,
+      youtubeTitle: resource.youtubeTitle,
+      uploader: {
+        name: resource.uploader.name || resource.uploader.email.split("@")[0],
+        image: resource.uploader.image,
+        reputationLevel: resource.uploader.reputation?.reputationLevel || "Newcomer",
+      },
+      createdAt: resource.createdAt,
+    }))
 
     return NextResponse.json({ trending: enriched })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Trending error:", error)
+    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to fetch trending", details: error.message },
+      { error: "Failed to fetch trending", details: message },
       { status: 500 }
     )
   }

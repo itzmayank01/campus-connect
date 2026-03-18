@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { TrendingUp, Download, Heart, Flame, Clock } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { TrendingUp, Download, Heart, Star, Flame } from "lucide-react"
 import { motion } from "framer-motion"
+import Link from "next/link"
 
 interface TrendingResource {
   id: string
@@ -11,8 +12,13 @@ interface TrendingResource {
   resourceType: string
   downloadCount: number
   likeCount: number
+  averageRating: number
+  ratingCount: number
   qualityScore: number
   trendingScore: number
+  isYoutube: boolean
+  youtubeThumbnail: string | null
+  youtubeTitle: string | null
   uploader: {
     name: string
     image: string | null
@@ -32,9 +38,9 @@ const reputationEmojis: Record<string, string> = {
 
 function TrendingBadge({ rank }: { rank: number }) {
   const colors = [
-    { bg: "linear-gradient(135deg, #FEF3C7, #FDE68A)", text: "#92400E", border: "#F59E0B" }, // #1
-    { bg: "linear-gradient(135deg, #F1F5F9, #E2E8F0)", text: "#475569", border: "#94A3B8" }, // #2
-    { bg: "linear-gradient(135deg, #FFF7ED, #FED7AA)", text: "#9A3412", border: "#FB923C" }, // #3
+    { bg: "linear-gradient(135deg, #FEF3C7, #FDE68A)", text: "#92400E", border: "#F59E0B" },
+    { bg: "linear-gradient(135deg, #F1F5F9, #E2E8F0)", text: "#475569", border: "#94A3B8" },
+    { bg: "linear-gradient(135deg, #FFF7ED, #FED7AA)", text: "#9A3412", border: "#FB923C" },
   ]
   const style = colors[rank - 1] || { bg: "#F8FAFC", text: "#64748B", border: "#E2E8F0" }
 
@@ -54,26 +60,44 @@ function TrendingBadge({ rank }: { rank: number }) {
   )
 }
 
+function StarRating({ rating, size = 10 }: { rating: number; size?: number }) {
+  return (
+    <span className="flex items-center gap-px">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={star <= Math.round(rating) ? "text-amber-400 fill-amber-400" : "text-gray-300"}
+          style={{ width: size, height: size }}
+        />
+      ))}
+    </span>
+  )
+}
+
 export function TrendingResources() {
   const [trending, setTrending] = useState<TrendingResource[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function fetchTrending() {
-      try {
-        const res = await fetch("/api/trending?limit=5")
-        if (res.ok) {
-          const data = await res.json()
-          setTrending(data.trending || [])
-        }
-      } catch {
-        // Graceful fallback
-      } finally {
-        setLoading(false)
+  const fetchTrending = useCallback(async () => {
+    try {
+      const res = await fetch("/api/trending?limit=5")
+      if (res.ok) {
+        const data = await res.json()
+        setTrending(data.trending || [])
       }
+    } catch {
+      // Graceful fallback
+    } finally {
+      setLoading(false)
     }
-    fetchTrending()
   }, [])
+
+  useEffect(() => {
+    fetchTrending()
+    // Auto-refresh every 30 seconds for live updates
+    const interval = setInterval(fetchTrending, 30000)
+    return () => clearInterval(interval)
+  }, [fetchTrending])
 
   if (loading) {
     return (
@@ -139,33 +163,42 @@ export function TrendingResources() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25, delay: index * 0.06 }}
-              className="group flex items-center gap-2.5 rounded-lg p-2 transition-all duration-150 hover:bg-[#FFF7ED] cursor-pointer"
             >
-              <TrendingBadge rank={index + 1} />
+              <Link
+                href={`/dashboard/subjects/${resource.subject.id}`}
+                className="group flex items-center gap-2.5 rounded-lg p-2 transition-all duration-150 hover:bg-[#FFF7ED] cursor-pointer"
+              >
+                <TrendingBadge rank={index + 1} />
 
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-[#0F1117] truncate leading-tight">
-                  {resource.filename}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[10px] font-semibold text-[#F97316] bg-[#F97316]/8 rounded px-1 py-px">
-                    {resource.subject.code}
-                  </span>
-                  <span className="text-[10px] text-[#94A3B8]">
-                    {uploaderEmoji} {resource.uploader.name}
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-[#0F1117] truncate leading-tight group-hover:text-[#F97316] transition-colors">
+                    {resource.isYoutube && resource.youtubeTitle ? resource.youtubeTitle : resource.filename}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[10px] font-semibold text-[#F97316] bg-[#F97316]/8 rounded px-1 py-px">
+                      {resource.subject.code}
+                    </span>
+                    <span className="text-[10px] text-[#94A3B8]">
+                      {uploaderEmoji} {resource.uploader.name}
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Stats */}
-              <div className="flex flex-col items-end gap-0.5 shrink-0">
-                <span className="text-[10px] text-[#64748B] flex items-center gap-0.5">
-                  <Download className="h-2.5 w-2.5" />{resource.downloadCount}
-                </span>
-                <span className="text-[10px] text-[#F97316] flex items-center gap-0.5 font-semibold">
-                  <Flame className="h-2.5 w-2.5" />{Math.round(resource.trendingScore * 100)}
-                </span>
-              </div>
+                {/* Stats */}
+                <div className="flex flex-col items-end gap-0.5 shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-rose-500 flex items-center gap-0.5 font-semibold">
+                      <Heart className="h-2.5 w-2.5 fill-rose-500" />{resource.likeCount}
+                    </span>
+                    <span className="text-[10px] text-[#64748B] flex items-center gap-0.5">
+                      <Download className="h-2.5 w-2.5" />{resource.downloadCount}
+                    </span>
+                  </div>
+                  {resource.averageRating > 0 && (
+                    <StarRating rating={resource.averageRating} size={8} />
+                  )}
+                </div>
+              </Link>
             </motion.div>
           )
         })}
