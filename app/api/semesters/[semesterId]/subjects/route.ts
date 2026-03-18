@@ -42,7 +42,7 @@ export async function GET(
 
     // Also get resource breakdown per subject
     const subjectsWithCounts = await Promise.all(
-      subjects.map(async (subject) => {
+      subjects.map(async (subject: any) => {
         const resourceCounts = await prisma.resource.groupBy({
           by: ["resourceType"],
           where: {
@@ -64,7 +64,7 @@ export async function GET(
         })
 
         const typeCounts: Record<string, number> = {}
-        resourceCounts.forEach((rc: any) => {
+        resourceCounts.forEach((rc: { resourceType: string; _count: { id: number } }) => {
           typeCounts[rc.resourceType] = rc._count.id
         })
 
@@ -84,12 +84,13 @@ export async function GET(
       semester,
       subjects: subjectsWithCounts,
       totalSubjects: subjects.length,
-      totalResources: subjectsWithCounts.reduce((acc, s) => acc + s.totalResources, 0),
+      totalResources: subjectsWithCounts.reduce((acc: number, s: { totalResources: number }) => acc + s.totalResources, 0),
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Semester subjects error:", error)
+    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to fetch semester subjects", details: error.message },
+      { error: "Failed to fetch semester subjects", details: message },
       { status: 500 }
     )
   }

@@ -28,9 +28,10 @@ export default async function DashboardPage() {
             _count: {
               select: {
                 notes: true,
+                // @ts-ignore — Prisma supports filtered relation counts but types don't reflect it
                 resources: {
                   where: { isPublic: true, deletedAt: null }
-                } as any
+                }
               }
             }
           }

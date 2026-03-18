@@ -53,10 +53,11 @@ export async function GET(
       type: resource.mimeType?.includes("pdf") ? "pdf" : "file",
       resource,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Preview error:", error)
+    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to generate preview URL", details: error.message },
+      { error: "Failed to generate preview URL", details: message },
       { status: 500 }
     )
   }

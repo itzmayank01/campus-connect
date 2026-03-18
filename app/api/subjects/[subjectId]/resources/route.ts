@@ -63,10 +63,11 @@ export async function GET(
       notes,
       totalCount: resources.length + notes.length,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Subject resources error:", error)
+    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to fetch resources", details: error.message },
+      { error: "Failed to fetch resources", details: message },
       { status: 500 }
     )
   }

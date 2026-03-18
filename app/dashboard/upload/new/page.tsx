@@ -199,9 +199,9 @@ export default function UploadNewPage() {
         setTitle("")
 
         setTimeout(() => router.push("/dashboard/upload"), 1500)
-      } catch (error: any) {
+      } catch (error: unknown) {
         setUploadStatus("error")
-        setUploadMessage(error.message || "Failed to add YouTube resource")
+        setUploadMessage(error instanceof Error ? error.message : "Failed to add YouTube resource")
       } finally {
         setUploading(false)
       }
@@ -258,9 +258,9 @@ export default function UploadNewPage() {
 
       // Redirect to Your Uploads after 1.5s
       setTimeout(() => router.push("/dashboard/upload"), 1500)
-    } catch (error: any) {
+    } catch (error: unknown) {
       setUploadStatus("error")
-      setUploadMessage(error.message || "Upload failed")
+      setUploadMessage(error instanceof Error ? error.message : "Upload failed")
     } finally {
       setUploading(false)
     }

@@ -141,10 +141,11 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(resource)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("YouTube resource error:", error)
+    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to save YouTube resource", details: error.message },
+      { error: "Failed to save YouTube resource", details: message },
       { status: 500 }
     )
   }
