@@ -20,11 +20,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Missing noteId" }, { status: 400 })
     }
 
-    // Fetch the note from DB
-    const note = await prisma.note.findUnique({ where: { id: noteId } })
+    // Fetch the note (resource) from DB
+    const resource = await prisma.resource.findUnique({ where: { id: noteId } })
 
-    if (!note || !note.fileUrl) {
+    if (!resource || !resource.resourceUrl) {
       return NextResponse.json({ error: "File not found" }, { status: 404 })
+    }
+    
+    // Quick handle for youtube
+    if (resource.mimeType === "youtube") {
+      return NextResponse.json({ url: resource.resourceUrl })
     }
 
     // Extract the S3 key from the stored fileUrl
@@ -32,11 +37,11 @@ export async function GET(request: NextRequest) {
     const bucketPrefix = `https://${S3_BUCKET}.s3.amazonaws.com/`
     let s3Key = ""
 
-    if (note.fileUrl.startsWith(bucketPrefix)) {
-      s3Key = note.fileUrl.substring(bucketPrefix.length)
+    if (resource.resourceUrl.startsWith(bucketPrefix)) {
+      s3Key = resource.resourceUrl.substring(bucketPrefix.length)
     } else {
       // Fallback: try to extract key after the bucket domain
-      const url = new URL(note.fileUrl)
+      const url = new URL(resource.resourceUrl)
       s3Key = url.pathname.startsWith("/") ? url.pathname.substring(1) : url.pathname
     }
 

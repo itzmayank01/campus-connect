@@ -29,15 +29,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    // Fetch the notes that belong to this user
-    const notes = await prisma.note.findMany({
+    // Fetch the resources that belong to this user
+    const resources = await prisma.resource.findMany({
       where: {
         id: { in: noteIds },
-        uploadedById: dbUser.id,
+        uploaderId: dbUser.id,
       },
     })
 
-    if (notes.length === 0) {
+    if (resources.length === 0) {
       return NextResponse.json(
         { error: "No matching files found or you don't own these files" },
         { status: 404 }
@@ -48,36 +48,29 @@ export async function POST(request: NextRequest) {
     const deletedIds: string[] = []
     const errors: string[] = []
 
-    for (const note of notes) {
+    for (const res of resources) {
       try {
         // Try to delete from S3 (don't block DB deletion if S3 fails)
-        if (note.fileUrl) {
+        if (res.s3Key) {
           try {
-            // Extract the S3 key from the URL — handles multiple formats:
-            // https://bucket.s3.amazonaws.com/key
-            // https://bucket.s3.region.amazonaws.com/key
-            const url = new URL(note.fileUrl)
-            const s3Key = url.pathname.startsWith("/")
-              ? url.pathname.slice(1)
-              : url.pathname
-            if (s3Key) {
-              await deleteS3Object(s3Key)
-            }
+            await deleteS3Object(res.s3Key)
           } catch (s3Err) {
-            console.warn(`S3 delete failed for note ${note.id}, continuing with DB delete:`, s3Err)
+            console.warn(`S3 delete failed for resource ${res.id}, continuing with DB delete:`, s3Err)
           }
         }
 
-        // Delete associated bookmarks first (foreign key constraint)
-        await prisma.bookmark.deleteMany({ where: { noteId: note.id } })
+        // Delete associated relational fields before resource drop due to foreign key constraints
+        await prisma.resourceLike.deleteMany({ where: { resourceId: res.id } })
+        await prisma.resourceRating.deleteMany({ where: { resourceId: res.id } })
+        await prisma.resourceDownload.deleteMany({ where: { resourceId: res.id } })
 
-        // Delete the note record
-        await prisma.note.delete({ where: { id: note.id } })
+        // Delete the resource record
+        await prisma.resource.delete({ where: { id: res.id } })
 
-        deletedIds.push(note.id)
+        deletedIds.push(res.id)
       } catch (err: any) {
-        console.error(`Failed to delete note ${note.id}:`, err)
-        errors.push(note.id)
+        console.error(`Failed to delete resource ${res.id}:`, err)
+        errors.push(res.id)
       }
     }
 

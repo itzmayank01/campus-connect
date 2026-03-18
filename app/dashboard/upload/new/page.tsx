@@ -227,36 +227,21 @@ export default function UploadNewPage() {
     setUploadStatus("idle")
 
     try {
-      // Step 1: Get presigned URL
+      const formData = new FormData()
+      formData.append("file", selectedFile)
+      formData.append("title", title)
+      formData.append("subjectId", selectedSubject)
+      formData.append("semester", selectedSemester)
+      formData.append("type", fileType)
+
       const res = await fetch("/api/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: selectedFile.name,
-          contentType: selectedFile.type || "application/octet-stream",
-          subjectId: selectedSubject,
-          semester: Number(selectedSemester),
-          title,
-          type: fileType,
-        }),
+        body: formData,
       })
 
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.error || "Failed to initiate upload")
-      }
-
-      const { presignedUrl } = await res.json()
-
-      // Step 2: Upload to S3
-      const uploadRes = await fetch(presignedUrl, {
-        method: "PUT",
-        body: selectedFile,
-        headers: { "Content-Type": selectedFile.type || "application/octet-stream" },
-      })
-
-      if (!uploadRes.ok) {
-        throw new Error("Failed to upload file to S3")
+        throw new Error(err.details || err.error || "Failed to upload file")
       }
 
       setUploadStatus("success")

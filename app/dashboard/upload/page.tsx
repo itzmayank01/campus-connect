@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { FileText, Download, Eye, Upload, Loader2, Plus, Calendar, BookOpen, Trash2, CheckSquare, Square, XCircle, RefreshCw } from "lucide-react"
+import { FileText, Download, Eye, Upload, Loader2, Plus, Calendar, BookOpen, Trash2, CheckSquare, Square, XCircle, RefreshCw, Play } from "lucide-react"
 
 interface UploadedFile {
   id: string
@@ -14,6 +14,7 @@ interface UploadedFile {
   downloads: number
   createdAt: string
   subject: { name: string; code: string } | null
+  mimeType?: string
 }
 
 const typeLabels: Record<string, string> = {
@@ -31,6 +32,7 @@ const typeColors: Record<string, string> = {
 }
 
 const formatColors: Record<string, string> = {
+  YT: "bg-red-50 text-red-600 border-red-200",
   PDF: "bg-red-50 text-red-600 border-red-100",
   DOC: "bg-blue-50 text-blue-600 border-blue-100",
   DOCX: "bg-blue-50 text-blue-600 border-blue-100",
@@ -333,7 +335,11 @@ export default function YourUploadsPage() {
 
                   {/* File icon */}
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#F1F3F9] group-hover:bg-[#E8EBF3] transition-colors">
-                    <FileText className="h-6 w-6 text-[#6B7280]" strokeWidth={1.75} />
+                    {file.mimeType === "youtube" ? (
+                      <Play className="h-6 w-6 text-red-500 fill-red-500" strokeWidth={1.75} />
+                    ) : (
+                      <FileText className="h-6 w-6 text-[#6B7280]" strokeWidth={1.75} />
+                    )}
                   </div>
 
                   {/* File info */}
@@ -387,7 +393,7 @@ export default function YourUploadsPage() {
                       </button>
                     )}
                     {/* Download */}
-                    {file.fileUrl && (
+                    {file.fileUrl && file.mimeType !== "youtube" && (
                       <button
                         onClick={() => handleDownload(file.id, file.title)}
                         disabled={!!actionLoading[file.id]}
