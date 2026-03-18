@@ -57,6 +57,7 @@ export default function UploadNewPage() {
   const router = useRouter()
   const [subjects, setSubjects] = useState<SubjectOption[]>([])
 
+  const [selectedSemester, setSelectedSemester] = useState("")
   const [selectedSubject, setSelectedSubject] = useState("")
   const [title, setTitle] = useState("")
   const [fileType, setFileType] = useState("notes")
@@ -68,10 +69,16 @@ export default function UploadNewPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // YouTube state
-  const [videoMode, setVideoMode] = useState<"file" | "youtube">("file")
   const [youtubeUrl, setYoutubeUrl] = useState("")
   const [youtubeMetadata, setYoutubeMetadata] = useState<YoutubeMetadata | null>(null)
   const [fetchingMetadata, setFetchingMetadata] = useState(false)
+  
+  const filteredSubjects = selectedSemester 
+    ? subjects.filter((s) => s.semesterNumber?.toString() === selectedSemester)
+    : []
+  
+  const isVideoType = fileType === "videos"
+
 
   useEffect(() => {
     fetch("/api/subjects")
@@ -87,7 +94,7 @@ export default function UploadNewPage() {
 
   // Fetch YouTube metadata when URL changes
   useEffect(() => {
-    if (!youtubeUrl || videoMode !== "youtube") return
+    if (!youtubeUrl || fileType !== "videos") return
 
     const ytInfo = extractYouTubeInfo(youtubeUrl)
     if (!ytInfo) {
@@ -126,7 +133,7 @@ export default function UploadNewPage() {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [youtubeUrl, videoMode])
+  }, [youtubeUrl, fileType])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -158,8 +165,8 @@ export default function UploadNewPage() {
 
   const handleUpload = async () => {
     // YouTube upload
-    if (fileType === "videos" && videoMode === "youtube") {
-      if (!youtubeUrl || !selectedSubject || !title) {
+    if (fileType === "videos") {
+      if (!youtubeUrl || !selectedSemester || !selectedSubject || !title) {
         setUploadStatus("error")
         setUploadMessage("Please fill all fields and paste a valid YouTube URL")
         return
@@ -183,6 +190,7 @@ export default function UploadNewPage() {
             url: youtubeUrl,
             title,
             subjectId: selectedSubject,
+            semester: Number(selectedSemester),
             type: fileType,
           }),
         })
@@ -209,7 +217,7 @@ export default function UploadNewPage() {
     }
 
     // File upload
-    if (!selectedFile || !selectedSubject || !title) {
+    if (!selectedFile || !selectedSemester || !selectedSubject || !title) {
       setUploadStatus("error")
       setUploadMessage("Please fill all fields and select a file")
       return
@@ -227,6 +235,7 @@ export default function UploadNewPage() {
           filename: selectedFile.name,
           contentType: selectedFile.type || "application/octet-stream",
           subjectId: selectedSubject,
+          semester: Number(selectedSemester),
           title,
           type: fileType,
         }),
@@ -266,8 +275,6 @@ export default function UploadNewPage() {
     }
   }
 
-  const isVideoType = fileType === "videos"
-
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Back link */}
@@ -304,16 +311,42 @@ export default function UploadNewPage() {
             />
           </div>
 
+          {/* Semester */}
+          <div>
+            <label className="block text-xs font-semibold text-[#374155] mb-1.5">Semester</label>
+            <select
+              value={selectedSemester}
+              onChange={(e) => {
+                setSelectedSemester(e.target.value)
+                setSelectedSubject("")
+                setFileType("notes")
+              }}
+              className={`w-full rounded-xl border ${!selectedSemester ? "border-red-500" : "border-[#E2E8F0]"} bg-white px-4 py-2.5 text-sm text-[#0F1117] focus:outline-none focus:ring-2 focus:ring-[#4F8EF7]/40 focus:border-[#4F8EF7] transition-all cursor-pointer`}
+            >
+              <option value="" disabled>Select your semester</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                <option key={num} value={num.toString()}>Semester {num}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Subject */}
           <div>
             <label className="block text-xs font-semibold text-[#374155] mb-1.5">Subject</label>
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              className="w-full rounded-xl border border-[#E2E8F0] bg-white px-4 py-2.5 text-sm text-[#0F1117] focus:outline-none focus:ring-2 focus:ring-[#4F8EF7]/40 focus:border-[#4F8EF7] transition-all cursor-pointer"
+              disabled={!selectedSemester}
+              className="w-full rounded-xl border border-[#E2E8F0] bg-white px-4 py-2.5 text-sm text-[#0F1117] focus:outline-none focus:ring-2 focus:ring-[#4F8EF7]/40 focus:border-[#4F8EF7] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {subjects.length === 0 && <option value="">Loading subjects...</option>}
-              {subjects.map((s) => (
+              {!selectedSemester ? (
+                <option value="">Select semester first</option>
+              ) : filteredSubjects.length === 0 ? (
+                <option value="">No subjects found</option>
+              ) : (
+                <option value="" disabled>Select a subject</option>
+              )}
+              {filteredSubjects.map((s) => (
                 <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
               ))}
             </select>
@@ -333,7 +366,6 @@ export default function UploadNewPage() {
                   key={opt.value}
                   onClick={() => {
                     setFileType(opt.value)
-                    if (opt.value !== "videos") setVideoMode("file")
                   }}
                   className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-150 ${
                     fileType === opt.value
@@ -347,39 +379,10 @@ export default function UploadNewPage() {
             </div>
           </div>
 
-          {/* Video Mode Toggle (only shown when Video type is selected) */}
-          {isVideoType && (
-            <div>
-              <label className="block text-xs font-semibold text-[#374155] mb-1.5">Source</label>
-              <div className="flex gap-1 bg-[#F1F5F9] rounded-xl p-1">
-                <button
-                  onClick={() => setVideoMode("file")}
-                  className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all duration-150 ${
-                    videoMode === "file"
-                      ? "bg-white text-[#0F1117] shadow-sm"
-                      : "text-[#64748B] hover:text-[#334155]"
-                  }`}
-                >
-                  <Upload className="h-4 w-4" />
-                  Upload File
-                </button>
-                <button
-                  onClick={() => setVideoMode("youtube")}
-                  className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all duration-150 ${
-                    videoMode === "youtube"
-                      ? "bg-white text-[#0F1117] shadow-sm"
-                      : "text-[#64748B] hover:text-[#334155]"
-                  }`}
-                >
-                  <Play className="h-4 w-4 text-red-500" />
-                  YouTube Link
-                </button>
-              </div>
-            </div>
-          )}
 
-          {/* YouTube URL Input (shown when Video type + YouTube mode) */}
-          {isVideoType && videoMode === "youtube" ? (
+
+          {/* YouTube URL Input (shown when Video type) */}
+          {isVideoType ? (
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-[#374155] mb-1.5">
@@ -451,7 +454,7 @@ export default function UploadNewPage() {
               )}
             </div>
           ) : (
-            /* File Drop Zone (for non-video types or file mode) */
+            /* File Drop Zone (for non-video types) */
             <div>
               <label className="block text-xs font-semibold text-[#374155] mb-1.5">File</label>
               <div
@@ -472,7 +475,7 @@ export default function UploadNewPage() {
                   type="file"
                   onChange={handleFileSelect}
                   className="hidden"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4,.mkv,.zip,.rar,.txt,.jpg,.png"
+                  accept={fileType === "question_papers" ? ".pdf,.zip" : ".pdf,.doc,.docx,.ppt,.pptx,.zip"}
                 />
                 {selectedFile ? (
                   <>
@@ -488,7 +491,9 @@ export default function UploadNewPage() {
                     <p className="text-sm font-medium text-[#64748B]">
                       Drop your file here or <span className="text-[#4F8EF7] font-semibold">browse</span>
                     </p>
-                    <p className="text-[11px] text-[#94A3B8]">PDF, DOC, PPT, MP4, ZIP — up to 50 MB</p>
+                    <p className="text-[11px] text-[#94A3B8]">
+                      {fileType === "question_papers" ? "PDF, ZIP" : "PDF, DOC, PPT, ZIP"} — up to 50 MB
+                    </p>
                   </>
                 )}
               </div>
@@ -514,7 +519,8 @@ export default function UploadNewPage() {
               uploading ||
               !title ||
               !selectedSubject ||
-              (isVideoType && videoMode === "youtube"
+              !selectedSemester ||
+              (isVideoType
                 ? !youtubeUrl || !extractYouTubeInfo(youtubeUrl)
                 : !selectedFile)
             }
@@ -523,11 +529,11 @@ export default function UploadNewPage() {
             {uploading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {isVideoType && videoMode === "youtube" ? "Adding YouTube Resource..." : "Uploading to S3..."}
+                {isVideoType ? "Adding YouTube Resource..." : "Uploading to S3..."}
               </>
             ) : (
               <>
-                {isVideoType && videoMode === "youtube" ? (
+                {isVideoType ? (
                   <>
                     <Play className="h-4 w-4" />
                     Add YouTube Resource
