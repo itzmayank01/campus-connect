@@ -159,9 +159,9 @@ model Resource {
   id               String             @id @default(uuid())
   uploaderId       String             @map("uploader_id")
   uploader         User               @relation("UploadedResources", fields: [uploaderId], references: [id])
-  s3Key            String             @map("s3_key")
+  s3Key            String?            @map("s3_key")
   originalFilename String             @map("original_filename")
-  fileSize         Int                @map("file_size")
+  fileSize         Int                @default(0) @map("file_size")
   mimeType         String             @map("mime_type")
   subjectId        String             @map("subject_id")
   subject          Subject            @relation(fields: [subjectId], references: [id])
@@ -183,6 +183,14 @@ model Resource {
   isVerified       Boolean            @default(false) @map("is_verified")
   createdAt        DateTime           @default(now()) @map("created_at")
   deletedAt        DateTime?          @map("deleted_at")
+  // YouTube fields
+  resourceUrl      String?            @map("resource_url")
+  resourceUrlType  String?            @map("resource_url_type") // youtube_video, youtube_playlist, external_link
+  youtubeVideoId   String?            @map("youtube_video_id")
+  youtubePlaylistId String?           @map("youtube_playlist_id")
+  youtubeThumbnail String?            @map("youtube_thumbnail")
+  youtubeTitle     String?            @map("youtube_title")
+  youtubeChannel   String?            @map("youtube_channel")
   ratings          ResourceRating[]
   downloads        ResourceDownload[]
   likes            ResourceLike[]

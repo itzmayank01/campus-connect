@@ -15,9 +15,10 @@ export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [totalSubjects, totalNotes, semesters, allNotes] = await Promise.all([
+  const [totalSubjects, totalNotes, totalResources, semesters, allNotes, allResources] = await Promise.all([
     prisma.subject.count(),
     prisma.note.count(),
+    prisma.resource.count({ where: { isPublic: true, deletedAt: null } }),
     prisma.semester.findMany({
       include: {
         subjects: {
@@ -25,7 +26,12 @@ export default async function DashboardPage() {
           orderBy: { name: "asc" },
           include: {
             _count: {
-              select: { notes: true }
+              select: {
+                notes: true,
+                resources: {
+                  where: { isPublic: true, deletedAt: null }
+                } as any
+              }
             }
           }
         }
@@ -37,6 +43,15 @@ export default async function DashboardPage() {
       orderBy: { createdAt: "desc" },
       include: {
         subject: true
+      }
+    }),
+    prisma.resource.findMany({
+      take: 10,
+      where: { isPublic: true, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      include: {
+        subject: true,
+        uploader: { select: { name: true, email: true } }
       }
     })
   ])
@@ -74,27 +89,50 @@ export default async function DashboardPage() {
   }
 
   const stats = {
-    totalResources: totalSubjects + totalNotes,
+    totalResources: totalNotes + totalResources,
     totalSubjects,
-    totalNotes
+    totalNotes: totalNotes + totalResources
   }
 
-  const formattedSemesters = semesters.map(sem => ({
+  const formattedSemesters = semesters.map((sem: any) => ({
     number: sem.number,
-    subjects: sem.subjects.map(s => ({ name: s.name, code: s.code })),
-    notesCount: sem.subjects.reduce((acc, s) => acc + s._count.notes, 0)
+    subjects: sem.subjects.map((s: any) => ({
+      name: s.name,
+      code: s.code,
+      id: s.id,
+    })),
+    notesCount: sem.subjects.reduce((acc: number, s: any) => {
+      const notesCount = s._count?.notes || 0
+      const resourcesCount = s._count?.resources || 0
+      return acc + notesCount + resourcesCount
+    }, 0)
   }))
 
-  const formattedNotes = allNotes.map(note => ({
-    id: note.id,
-    title: note.title,
-    subject: note.subject.code,
-    type: note.type.toLowerCase() as any,
-    format: (note.fileUrl || "").split('.').pop()?.toUpperCase() || "PDF",
-    size: "0.5 MB",
-    semester: note.subject.semesterId,
-    downloads: 0
-  }))
+  // Merge notes and resources into a unified materials list
+  const formattedNotes = [
+    ...allNotes.map((note: any) => ({
+      id: note.id,
+      title: note.title,
+      subject: note.subject.code,
+      type: note.type.toLowerCase() as any,
+      format: (note.fileUrl || "").split('.').pop()?.toUpperCase() || "PDF",
+      size: "0.5 MB",
+      semester: note.subject.semesterId,
+      downloads: 0
+    })),
+    ...allResources.map((resource: any) => ({
+      id: resource.id,
+      title: resource.originalFilename,
+      subject: resource.subject.code,
+      type: resource.resourceType.toLowerCase() as any,
+      format: resource.mimeType === 'youtube' ? 'YT' : resource.originalFilename.split('.').pop()?.toUpperCase() || "FILE",
+      size: resource.fileSize > 0 ? `${(resource.fileSize / (1024 * 1024)).toFixed(1)} MB` : "—",
+      semester: resource.semester,
+      downloads: resource.downloadCount,
+      uploaderName: resource.uploader?.name || "Unknown",
+      isYoutube: resource.mimeType === 'youtube',
+    }))
+  ]
 
   const displayName =
     user?.user_metadata?.name ||

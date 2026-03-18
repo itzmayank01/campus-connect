@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 interface Subject {
   name: string
   code: string
+  id?: string
 }
 
 interface SemesterData {
@@ -92,8 +93,9 @@ function SemesterCard({ sem, accent }: { sem: SemesterData; accent: { color: str
       onMouseLeave={handleMouseLeave}
     >
       {/* Main Card */}
-      <div
-        className="relative overflow-hidden rounded-2xl bg-white border border-[rgba(0,0,0,0.06)] shadow-sm select-none transition-all duration-200 hover:shadow-xl hover:-translate-y-1 hover:border-[rgba(0,0,0,0.1)] h-full flex flex-col"
+      <Link
+        href={`/dashboard/semesters/${sem.number}`}
+        className="relative overflow-hidden rounded-2xl bg-white border border-[rgba(0,0,0,0.06)] shadow-sm select-none transition-all duration-200 hover:shadow-xl hover:-translate-y-1 hover:border-[rgba(0,0,0,0.1)] h-full flex flex-col no-underline block"
       >
         <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: accent.color }} />
 
@@ -148,7 +150,7 @@ function SemesterCard({ sem, accent }: { sem: SemesterData; accent: { color: str
             </span>
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* Hover Board — appears instantly on hover, with invisible bridge to prevent flicker */}
       {hoverOpen && sem.subjects.length > 0 && (
@@ -175,7 +177,7 @@ function SemesterCard({ sem, accent }: { sem: SemesterData; accent: { color: str
                 {sem.subjects.map((sub) => (
                   <Link
                     key={sub.code}
-                    href="/dashboard/subjects"
+                    href={sub.id ? `/dashboard/subjects/${sub.id}` : `/dashboard/subjects`}
                     className="group/item flex items-center gap-3 w-full p-2.5 rounded-xl text-left transition-all hover:bg-[#F1F3F9] no-underline"
                   >
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F1F3F9] border border-[rgba(0,0,0,0.04)] group-hover/item:border-[#4F8EF7]/20 transition-colors">

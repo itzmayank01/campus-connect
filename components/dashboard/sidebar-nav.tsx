@@ -31,7 +31,7 @@ import {
 
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Study Materials", href: "/dashboard/materials", icon: BookOpen },
+  { title: "Study Materials", href: "/dashboard/study-materials", icon: BookOpen },
   { title: "Subjects", href: "/dashboard/subjects", icon: GraduationCap },
   { title: "Semesters", href: "/dashboard/semesters", icon: Calendar },
   { title: "Bookmarks", href: "/dashboard/bookmarks", icon: Bookmark },
