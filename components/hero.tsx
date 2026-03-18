@@ -52,7 +52,7 @@ export function Hero() {
               alt="Campus Connect dashboard showing study materials and analytics"
               width={960}
               height={640}
-              className="rounded-xl"
+              className="w-full h-auto object-cover rounded-xl"
               priority
               fetchPriority="high"
               sizes="(max-width: 768px) 100vw, 50vw"
