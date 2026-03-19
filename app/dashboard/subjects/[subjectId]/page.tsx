@@ -18,6 +18,8 @@ interface ResourceData {
   likeCount: number
   averageRating: number
   isVerified: boolean
+  verificationCount?: number
+  uploaderRole?: string
   createdAt: string
   s3Key?: string | null
   resourceUrl?: string | null
@@ -338,9 +340,31 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
                     <span className="text-[11px] text-[#94A3B8]">• {formatDate(resource.createdAt)}</span>
                   </div>
                   <div className="flex items-center gap-3 mt-2">
-                    {!resource.isVerified && (
-                      <span className="rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#94A3B8] px-2 py-0.5 text-[10px] font-medium flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> Pending verification
+                    {(() => {
+                      const vc = resource.verificationCount || 0
+                      if (vc >= 3) return (
+                        <span className="rounded-md bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] px-2 py-0.5 text-[10px] font-medium flex items-center gap-1">
+                          🏆 Verified by {vc} faculty
+                        </span>
+                      )
+                      if (vc >= 1) return (
+                        <span className="rounded-md bg-[#ECFDF5] border border-[#86EFAC] text-[#15803D] px-2 py-0.5 text-[10px] font-medium flex items-center gap-1">
+                          ✅ Verified by {vc} faculty
+                        </span>
+                      )
+                      return (
+                        <span className="rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#94A3B8] px-2 py-0.5 text-[10px] font-medium flex items-center gap-1">
+                          ⏳ Pending verification
+                        </span>
+                      )
+                    })()}
+                    {resource.uploaderRole === "faculty" ? (
+                      <span className="rounded-md bg-[#F0FDF4] border border-[#86EFAC] text-[#22C55E] px-2 py-0.5 text-[10px] font-medium">
+                        👨‍🏫 Faculty Upload
+                      </span>
+                    ) : (
+                      <span className="rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] px-2 py-0.5 text-[10px] font-medium">
+                        👤 Student Upload
                       </span>
                     )}
                     <button
@@ -419,9 +443,31 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
                     </span>
                   </div>
                   <div className="flex items-center gap-3 mt-1.5">
-                    {!resource.isVerified && (
-                      <span className="rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#94A3B8] px-2 py-0.5 text-[10px] font-medium flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> Pending verification
+                    {(() => {
+                      const vc = resource.verificationCount || 0
+                      if (vc >= 3) return (
+                        <span className="rounded-md bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] px-2 py-0.5 text-[10px] font-medium flex items-center gap-1">
+                          🏆 Verified by {vc} faculty
+                        </span>
+                      )
+                      if (vc >= 1) return (
+                        <span className="rounded-md bg-[#ECFDF5] border border-[#86EFAC] text-[#15803D] px-2 py-0.5 text-[10px] font-medium flex items-center gap-1">
+                          ✅ Verified by {vc} faculty
+                        </span>
+                      )
+                      return (
+                        <span className="rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#94A3B8] px-2 py-0.5 text-[10px] font-medium flex items-center gap-1">
+                          ⏳ Pending verification
+                        </span>
+                      )
+                    })()}
+                    {resource.uploaderRole === "faculty" ? (
+                      <span className="rounded-md bg-[#F0FDF4] border border-[#86EFAC] text-[#22C55E] px-2 py-0.5 text-[10px] font-medium">
+                        👨‍🏫 Faculty Upload
+                      </span>
+                    ) : (
+                      <span className="rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] px-2 py-0.5 text-[10px] font-medium">
+                        👤 Student Upload
                       </span>
                     )}
                     <button

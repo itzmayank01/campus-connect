@@ -36,7 +36,18 @@ export function LoginForm() {
       return
     }
 
-    router.push("/dashboard")
+    // Check user role for routing
+    try {
+      const res = await fetch("/api/auth/me")
+      const data = await res.json()
+      if (data.role === "faculty") {
+        router.push("/faculty/dashboard")
+      } else {
+        router.push("/dashboard")
+      }
+    } catch {
+      router.push("/dashboard")
+    }
     router.refresh()
   }
 
