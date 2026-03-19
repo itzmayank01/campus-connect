@@ -21,19 +21,44 @@ export async function GET(request: Request) {
       let redirectPath = next || "/dashboard";
       
       if (user && !next) {
-        // Check if user exists in DB and has a role
-        const dbUser = await prisma.user.findUnique({
+        // Check if user exists in DB
+        let dbUser = await prisma.user.findUnique({
           where: { supabaseId: user.id },
           select: { role: true },
         });
 
         if (!dbUser) {
-          // First-time user — needs role selection
-          redirectPath = "/auth/role-select";
-        } else if (dbUser.role === "FACULTY") {
-          redirectPath = "/faculty/dashboard";
-        } else {
-          redirectPath = "/dashboard";
+          // User doesn't exist in DB yet — check Supabase metadata for role
+          const metaRole = user.user_metadata?.role; // "student" or "faculty"
+          const metaFacultyId = user.user_metadata?.faculty_id;
+          const metaName = user.user_metadata?.name || user.user_metadata?.full_name || null;
+
+          if (metaRole) {
+            // Email signup — role was already selected, auto-create user
+            dbUser = await prisma.user.create({
+              data: {
+                supabaseId: user.id,
+                email: user.email || "",
+                name: metaName,
+                image: user.user_metadata?.avatar_url || null,
+                role: metaRole === "faculty" ? "FACULTY" : "STUDENT",
+                facultyId: metaRole === "faculty" ? metaFacultyId : null,
+              },
+              select: { role: true },
+            });
+          } else {
+            // Google OAuth — no role in metadata, go to role-select
+            redirectPath = "/auth/role-select";
+          }
+        }
+
+        // Route based on role
+        if (dbUser) {
+          if (dbUser.role === "FACULTY") {
+            redirectPath = "/faculty/dashboard";
+          } else {
+            redirectPath = "/dashboard";
+          }
         }
       }
 

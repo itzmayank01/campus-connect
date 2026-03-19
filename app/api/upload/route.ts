@@ -38,11 +38,15 @@ export async function POST(request: NextRequest) {
     // Find or create the user in our DB
     let dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
     if (!dbUser) {
+      const metaRole = user.user_metadata?.role; // "student" or "faculty"
       dbUser = await prisma.user.create({
         data: {
           supabaseId: user.id,
           email: user.email || "",
           name: user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split("@")[0],
+          image: user.user_metadata?.avatar_url || null,
+          role: metaRole === "faculty" ? "FACULTY" : "STUDENT",
+          facultyId: metaRole === "faculty" ? (user.user_metadata?.faculty_id || null) : null,
         },
       })
     }
@@ -84,6 +88,7 @@ export async function POST(request: NextRequest) {
         semester: semesterNumber,
         resourceType: (resourceTypeMap[type] || "NOTES") as any,
         isPublic: true,
+        uploaderRole: dbUser.role === "FACULTY" ? "faculty" : "student",
         resourceUrl: `https://${S3_BUCKET}.s3.amazonaws.com/${s3Key}`,
       },
       include: { subject: true },
