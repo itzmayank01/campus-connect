@@ -6,6 +6,8 @@ import { s3Client, S3_BUCKET } from "@/lib/s3"
 import { GetObjectCommand } from "@aws-sdk/client-s3"
 import { extractTextFromBuffer } from "@/lib/pdf-extractor"
 
+export const maxDuration = 60;
+
 // GET /api/subjects/[subjectId]/exam-predictor — predict exam questions
 export async function GET(
   request: NextRequest,

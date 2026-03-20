@@ -6,6 +6,8 @@ import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
 import { callAI, isAiConfigured } from "@/lib/anthropic"
 import { generateTags } from "@/lib/ai/tag-generator"
 
+export const maxDuration = 60;
+
 // Allowed MIME types
 const ALLOWED_MIMES: Record<string, string[]> = {
   "application/pdf": [".pdf"],
@@ -178,24 +180,12 @@ export async function POST(request: NextRequest) {
     } | null = null
 
     // Extract content for AI analysis
-    if (contentType === "application/pdf" || ext === ".pdf") {
-      try {
-        const pdfParse = require("pdf-parse")
-        const data = await pdfParse(buffer)
-        extractedText = data.text.slice(0, 2000)
-      } catch {
-        extractedText = `PDF file: ${filename}`
+    try {
+      extractedText = await extractTextFromBuffer(buffer, filename, contentType)
+      if (extractedText.length > 2000) {
+        extractedText = extractedText.slice(0, 2000)
       }
-    } else if (contentType === "application/zip" || ext === ".zip") {
-      try {
-        const JSZip = (await import("jszip")).default
-        const zip = await JSZip.loadAsync(buffer)
-        const fileNames = Object.keys(zip.files)
-        extractedText = `ZIP archive containing: ${fileNames.join(", ")}`
-      } catch {
-        extractedText = `ZIP file: ${filename}`
-      }
-    } else {
+    } catch {
       extractedText = `File: ${filename} (${contentType})`
     }
 

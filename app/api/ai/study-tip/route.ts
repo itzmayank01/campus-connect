@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { callAI, isAiConfigured } from "@/lib/anthropic"
 
+export const maxDuration = 60;
+
 // POST /api/ai/study-tip — generate personalized study tip
 export async function POST(request: NextRequest) {
   try {
