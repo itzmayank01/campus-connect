@@ -111,7 +111,7 @@ export function SearchRecommendations({ query }: SearchRecommendationsProps) {
         if (!res.ok) throw new Error("Failed to fetch")
         const data = await res.json()
 
-        if (data.searchCount >= 2 && data.resources.length > 0) {
+        if (data) {
           setResources(data.resources)
           setTypeCounts(data.typeCounts || {})
           setSearchCount(data.searchCount)

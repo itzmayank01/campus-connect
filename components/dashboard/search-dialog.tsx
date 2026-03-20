@@ -13,6 +13,7 @@ import {
   HelpCircle,
   Video,
   ArrowRight,
+  Sparkles,
 } from "lucide-react"
 import {
   CommandDialog,
@@ -152,12 +153,51 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
       <CommandInput placeholder="Search subjects, notes, semesters..." onValueChange={setSearchInput} />
       <CommandList>
         <CommandEmpty>
-          <div className="flex flex-col items-center gap-2 py-4">
-            <FileText className="h-10 w-10 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">No results found.</p>
-            <p className="text-xs text-muted-foreground/60">Try searching for a subject or topic name</p>
+          <div className="flex flex-col items-center gap-3 py-6 px-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F59E0B]/20 to-[#F97316]/20">
+              <Sparkles className="h-6 w-6 text-[#F59E0B]" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-[#0F1117]">No direct matches found</p>
+              <p className="text-xs text-[#64748B] mt-1">But our AI can help you find what you need!</p>
+            </div>
+            {searchInput && (
+              <button
+                onClick={() => runCommand(() => router.push(`/dashboard/smart-feed?q=${encodeURIComponent(searchInput)}`), searchInput)}
+                className="mt-2 flex items-center gap-2 rounded-xl bg-[#4F8EF7] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3B7AE0] transition-colors"
+              >
+                <Sparkles className="h-4 w-4" />
+                Ask Campus AI for &quot;{searchInput}&quot;
+              </button>
+            )}
           </div>
         </CommandEmpty>
+
+        {/* AI Smart Search (Always available when typing) */}
+        {searchInput.length > 1 && (
+          <>
+            <CommandGroup heading="Campus AI">
+              <CommandItem
+                onSelect={() => runCommand(() => router.push(`/dashboard/smart-feed?q=${encodeURIComponent(searchInput)}`), searchInput)}
+                className="gap-3 rounded-xl bg-gradient-to-r from-[#EFF6FF] to-[#DBEAFE] hover:from-[#DBEAFE] hover:to-[#BFDBFE] transition-colors py-3"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#4F8EF7]/20">
+                  <Sparkles className="h-4 w-4 text-[#4F8EF7]" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-[#1E3A8A]">
+                    Ask Campus AI for &quot;{searchInput}&quot;
+                  </span>
+                  <span className="text-[11px] font-medium text-[#3B82F6]">
+                    Get personalized resources and study tips
+                  </span>
+                </div>
+                <ArrowRight className="ml-auto h-4 w-4 text-[#4F8EF7]" />
+              </CommandItem>
+            </CommandGroup>
+            <CommandSeparator />
+          </>
+        )}
 
         {/* Quick Actions */}
         <CommandGroup heading="Quick Actions">
