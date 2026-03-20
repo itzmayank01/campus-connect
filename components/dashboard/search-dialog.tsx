@@ -112,13 +112,33 @@ interface SearchDialogProps {
 
 export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   const router = useRouter()
+  const [searchInput, setSearchInput] = useState("")
+
+  // Track search silently in the background
+  const trackSearch = useCallback((query: string) => {
+    if (!query || query.length < 2) return
+    const normalizedQuery = query.toLowerCase().trim()
+    // Signal smart feed to show recommendations
+    if (typeof window !== "undefined") {
+      localStorage.setItem("lastSearchQuery", normalizedQuery)
+      window.dispatchEvent(new Event("searchTracked"))
+    }
+    // Track in backend silently
+    fetch("/api/behavior/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: normalizedQuery }),
+    }).catch(() => {})
+  }, [])
 
   const runCommand = useCallback(
-    (command: () => void) => {
+    (command: () => void, searchContext?: string) => {
+      const query = searchContext || searchInput
+      if (query) trackSearch(query)
       onOpenChange(false)
       command()
     },
-    [onOpenChange]
+    [onOpenChange, searchInput, trackSearch]
   )
 
   return (
@@ -129,7 +149,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
       description="Search subjects, notes, semesters, and quick actions"
       showCloseButton={false}
     >
-      <CommandInput placeholder="Search subjects, notes, semesters..." />
+      <CommandInput placeholder="Search subjects, notes, semesters..." onValueChange={setSearchInput} />
       <CommandList>
         <CommandEmpty>
           <div className="flex flex-col items-center gap-2 py-4">

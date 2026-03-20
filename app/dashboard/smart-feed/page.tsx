@@ -1,10 +1,37 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { ForYouFeed } from "@/components/dashboard/for-you-feed"
 import { TrendingResources } from "@/components/dashboard/trending-resources"
+import { SearchRecommendations } from "@/components/dashboard/search-recommendations"
 import { Sparkles } from "lucide-react"
 
-export const dynamic = "force-dynamic"
-
 export default function SmartFeedPage() {
+  const searchParams = useSearchParams()
+  const [searchQuery, setSearchQuery] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Check URL params first
+    const urlQuery = searchParams.get("q")
+    if (urlQuery) {
+      setSearchQuery(urlQuery)
+      return
+    }
+
+    // Check localStorage for search signal from search dialog
+    const stored = typeof window !== "undefined" ? localStorage.getItem("lastSearchQuery") : null
+    if (stored) setSearchQuery(stored)
+
+    // Listen for new search events
+    const handleSearchTracked = () => {
+      const q = localStorage.getItem("lastSearchQuery")
+      if (q) setSearchQuery(q)
+    }
+    window.addEventListener("searchTracked", handleSearchTracked)
+    return () => window.removeEventListener("searchTracked", handleSearchTracked)
+  }, [searchParams])
+
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
       {/* Page Header */}
@@ -24,6 +51,9 @@ export default function SmartFeedPage() {
           AI POWERED
         </span>
       </div>
+
+      {/* Search Recommendations (shown when repeat search detected) */}
+      <SearchRecommendations query={searchQuery} />
 
       {/* Main content */}
       <div className="grid gap-5 lg:grid-cols-[1fr_320px] items-start">

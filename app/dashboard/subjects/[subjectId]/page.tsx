@@ -7,6 +7,8 @@ import {
   FileText, Video, HelpCircle, BookOpen, Download, Eye, Heart,
   Star, ArrowLeft, Loader2, Upload, ExternalLink, Play, Archive, Clock,
 } from "lucide-react"
+import { AiSummaryPanel } from "@/components/dashboard/ai-summary-panel"
+import { ExamPredictor } from "@/components/dashboard/exam-predictor"
 
 interface ResourceData {
   id: string
@@ -275,6 +277,11 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
         </div>
       )}
 
+      {/* Exam Question Predictor */}
+      {subject && (
+        <ExamPredictor subjectId={subject.id} subjectName={subject.name} />
+      )}
+
       {/* Type Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1">
         {tabs.map((tab) => (
@@ -505,6 +512,9 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
                       )}
                     </div>
                   </div>
+                  {resource.mimeType?.includes("pdf") && (
+                    <AiSummaryPanel resourceId={resource.id} />
+                  )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
                   {resource.mimeType?.includes("pdf") && (
