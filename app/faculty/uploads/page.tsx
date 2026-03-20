@@ -66,7 +66,7 @@ export default function FacultyUploadsPage() {
           <span className="rounded-full bg-[#DCFCE7] text-[#15803D] px-2.5 py-0.5 text-xs font-bold">{uploads.length}</span>
         </div>
         <a
-          href="/dashboard/upload/new"
+          href="/faculty/upload"
           className="flex items-center gap-2 rounded-xl bg-[#22C55E] text-white font-semibold px-4 py-2.5 text-sm hover:bg-[#16A34A] transition-all no-underline"
         >
           <Plus className="h-4 w-4" />

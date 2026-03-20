@@ -46,7 +46,7 @@ export function FacultyHeader({ user }: FacultyHeaderProps) {
       <div className="flex items-center gap-2 ml-auto">
         {/* Upload Material */}
         <Button
-          onClick={() => router.push("/dashboard/upload/new")}
+          onClick={() => router.push("/faculty/upload")}
           className="relative overflow-hidden gap-2 rounded-xl bg-[#22C55E] text-white hover:bg-[#16A34A] shadow-lg shadow-[#22C55E]/20 transition-all duration-200 hidden sm:flex group"
         >
           <Upload className="h-4 w-4" />

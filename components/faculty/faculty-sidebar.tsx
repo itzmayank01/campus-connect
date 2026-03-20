@@ -139,7 +139,7 @@ export function FacultySidebar() {
                   tooltip="Upload Material"
                   className="bg-[#22C55E]/[0.06] text-[#22C55E] hover:bg-[#22C55E]/[0.12] hover:text-[#22C55E] font-medium rounded-lg transition-all duration-150 ease-out"
                 >
-                  <Link href="/dashboard/upload/new">
+                  <Link href="/faculty/upload">
                     <Upload className="h-5 w-5" strokeWidth={1.75} />
                     <span>Upload Material</span>
                   </Link>
