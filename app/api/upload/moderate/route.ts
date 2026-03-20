@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import { s3Client, buildS3Key, S3_BUCKET } from "@/lib/s3"
 import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
-import { callClaude, isAiConfigured } from "@/lib/anthropic"
+import { callAI, isAiConfigured } from "@/lib/anthropic"
 import { generateTags } from "@/lib/ai/tag-generator"
 
 // Allowed MIME types
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (isAiConfigured() && extractedText.length > 20) {
-      const relevanceResponse = await callClaude(
+      const relevanceResponse = await callAI(
         `You are an academic content moderator for an engineering college resource platform. Analyze if uploaded content is relevant to the specified academic subject. Respond ONLY with JSON: {"is_relevant": true/false, "confidence": 0.0-1.0, "reason": "one sentence explanation", "detected_topics": ["topic1", "topic2"], "verdict": "approved" | "rejected" | "review"}`,
         `Subject: ${subject?.name || "Unknown"} (${subject?.code || "N/A"})
 Semester: ${semesterNumber}
@@ -210,8 +210,7 @@ Filename: ${filename}
 Content preview:
 ${extractedText}
 
-Is this content relevant to the subject?`,
-        200
+Is this content relevant to the subject?`
       )
 
       if (relevanceResponse) {
@@ -254,10 +253,9 @@ Is this content relevant to the subject?`,
     updateStep("safety", "running")
 
     if (isAiConfigured() && extractedText.length > 50) {
-      const safetyResponse = await callClaude(
+      const safetyResponse = await callAI(
         `You are a content safety moderator. Check if academic content contains harmful, inappropriate, or dangerous material. Respond ONLY with JSON: {"is_safe": true/false, "flags": [], "severity": "none"|"low"|"medium"|"high", "action": "allow"|"warn"|"block"}`,
-        `Check this content for harmful material: ${extractedText}`,
-        150
+        `Check this content for harmful material: ${extractedText}`
       )
 
       if (safetyResponse) {

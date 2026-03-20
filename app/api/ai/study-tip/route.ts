@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { callClaude, isAiConfigured } from "@/lib/anthropic"
+import { callAI, isAiConfigured } from "@/lib/anthropic"
 
 // POST /api/ai/study-tip — generate personalized study tip
 export async function POST(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     if (!isAiConfigured()) {
       return NextResponse.json({
         tip: null,
-        error: "AI features are not configured. Add ANTHROPIC_API_KEY to enable.",
+        error: "AI features are not configured. Add GEMINI_API_KEY to enable.",
       })
     }
 
@@ -30,10 +30,9 @@ export async function POST(request: NextRequest) {
       ? resourceTitles.slice(0, 10).join(", ")
       : "various study materials"
 
-    const result = await callClaude(
+    const result = await callAI(
       `You are an academic advisor for engineering students. Given a student's search history and available resources, write a 2-sentence personalized study tip. Be specific, encouraging, and academic. Never be generic. Reference the actual subject name.`,
-      `Student searched '${query}' ${searchCount || 2} times. Available resources: ${resourceList}. Current date: ${new Date().toLocaleDateString("en-IN")}. Write a personalized 2-sentence tip.`,
-      150
+      `Student searched '${query}' ${searchCount || 2} times. Available resources: ${resourceList}. Current date: ${new Date().toLocaleDateString("en-IN")}. Write a personalized 2-sentence tip.`
     )
 
     return NextResponse.json({

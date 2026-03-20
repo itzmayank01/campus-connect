@@ -1,42 +1,40 @@
-import Anthropic from "@anthropic-ai/sdk"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
-let client: Anthropic | null = null
+let genAI: GoogleGenerativeAI | null = null
 
-function getClient(): Anthropic | null {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.warn("ANTHROPIC_API_KEY is not set — AI features will be disabled")
+function getClient(): GoogleGenerativeAI | null {
+  if (!process.env.GEMINI_API_KEY) {
+    console.warn("GEMINI_API_KEY is not set — AI features will be disabled")
     return null
   }
-  if (!client) {
-    client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  if (!genAI) {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   }
-  return client
+  return genAI
 }
 
-export async function callClaude(
+export async function callAI(
   systemPrompt: string,
   userMessage: string,
-  maxTokens: number = 300
 ): Promise<string | null> {
-  const anthropic = getClient()
-  if (!anthropic) return null
+  const client = getClient()
+  if (!client) return null
 
   try {
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userMessage }],
+    const model = client.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      systemInstruction: systemPrompt,
     })
 
-    const textBlock = response.content.find((b) => b.type === "text")
-    return textBlock ? textBlock.text : null
+    const result = await model.generateContent(userMessage)
+    const response = result.response
+    return response.text() || null
   } catch (error) {
-    console.error("Claude API error:", error)
+    console.error("Gemini API error:", error)
     return null
   }
 }
 
 export function isAiConfigured(): boolean {
-  return !!process.env.ANTHROPIC_API_KEY
+  return !!process.env.GEMINI_API_KEY
 }

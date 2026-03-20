@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
-import { callClaude, isAiConfigured } from "@/lib/anthropic"
+import { callAI, isAiConfigured } from "@/lib/anthropic"
 import { s3Client, S3_BUCKET } from "@/lib/s3"
 import { GetObjectCommand } from "@aws-sdk/client-s3"
 
@@ -48,7 +48,7 @@ export async function GET(
 
     if (!isAiConfigured()) {
       return NextResponse.json({
-        error: "AI features are not configured. Add ANTHROPIC_API_KEY to enable.",
+        error: "AI features are not configured. Add GEMINI_API_KEY to enable.",
         bullets: [],
         topics: [],
         examTopics: [],
@@ -105,7 +105,7 @@ export async function GET(
     }
 
     // Call Claude for summary
-    const result = await callClaude(
+    const result = await callAI(
       `You are an academic content analyst. Analyze the given study material and return ONLY a JSON object with these fields:
 {
   "summary_bullets": ["bullet point 1", "bullet point 2", ...],
@@ -119,8 +119,7 @@ Keep bullet points concise (max 8). Key topics should be 3-6 specific terms. Exa
 Filename: ${resource.originalFilename}
 
 Content:
-${extractedText}`,
-      500
+${extractedText}`
     )
 
     if (!result) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
-import { callClaude, isAiConfigured } from "@/lib/anthropic"
+import { callAI, isAiConfigured } from "@/lib/anthropic"
 import { s3Client, S3_BUCKET } from "@/lib/s3"
 import { GetObjectCommand } from "@aws-sdk/client-s3"
 
@@ -22,7 +22,7 @@ export async function GET(
 
     if (!isAiConfigured()) {
       return NextResponse.json({
-        error: "AI features are not configured. Add ANTHROPIC_API_KEY to enable.",
+        error: "AI features are not configured. Add GEMINI_API_KEY to enable.",
         predictions: null,
       })
     }
@@ -127,7 +127,7 @@ export async function GET(
       pyqText = `Available resources for ${subject.name}:\n${allResources.map((r) => `- ${r.originalFilename} (${r.resourceType}, ${r.downloadCount} downloads)`).join("\n")}`
     }
 
-    const result = await callClaude(
+    const result = await callAI(
       `You are an exam pattern analyst for engineering university exams. Based on previous year questions and resource patterns, predict the most likely topics for the next exam. Return ONLY a JSON object:
 {
   "very_likely": ["topic 1 - specific exam-style question", "topic 2", ...],
@@ -143,8 +143,7 @@ Number of popular notes: ${topNotes.length}
 Content from previous year questions and resources:
 ${pyqText}
 
-Based on this analysis, predict the most likely exam topics.`,
-      400
+Based on this analysis, predict the most likely exam topics.`
     )
 
     if (!result) {

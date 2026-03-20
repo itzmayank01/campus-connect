@@ -1,4 +1,4 @@
-import { callClaude } from "@/lib/anthropic"
+import { callAI } from "@/lib/anthropic"
 
 export async function generateTags(
   subjectName: string,
@@ -6,13 +6,12 @@ export async function generateTags(
   contentPreview: string,
   resourceType: string
 ): Promise<string[]> {
-  const result = await callClaude(
+  const result = await callAI(
     `Generate 3-5 relevant academic tags for this resource. Return ONLY a JSON array of strings. Tags should be lowercase, specific, and useful for search. Example: ["unit-1", "er-diagrams", "normalization", "important", "exam-prep"]`,
     `Subject: ${subjectName}
 Filename: ${filename}
 Content preview: ${contentPreview.slice(0, 500)}
-Resource type: ${resourceType}`,
-    150
+Resource type: ${resourceType}`
   )
 
   if (!result) return []
