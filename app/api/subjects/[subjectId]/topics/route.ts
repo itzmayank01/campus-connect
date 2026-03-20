@@ -22,22 +22,26 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Step 1: Check cache
-    const cached = await prisma.subjectAiCache.findUnique({
-      where: {
-        subjectId_cacheType: {
-          subjectId: id,
-          cacheType: "syllabus_topics"
+    // Step 1: Check cache, unless ?refresh=true is provided
+    const forceRefresh = request.nextUrl.searchParams.get("refresh") === "true"
+    
+    if (!forceRefresh) {
+      const cached = await prisma.subjectAiCache.findUnique({
+        where: {
+          subjectId_cacheType: {
+            subjectId: id,
+            cacheType: "syllabus_topics"
+          }
         }
-      }
-    })
+      })
 
-    if (cached) {
-      return NextResponse.json(cached.cacheData)
+      if (cached) {
+        return NextResponse.json(cached.cacheData)
+      }
     }
 
     // Step 2: Get syllabus resource
-    const syllabus = await prisma.resource.findFirst({
+    let syllabus = await prisma.resource.findFirst({
       where: {
         subjectId: id,
         resourceType: "SYLLABUS",
@@ -49,9 +53,33 @@ export async function GET(
     })
 
     if (!syllabus) {
+      // Find ANY pdf that has 'syllabus', 'course', 'plan' in the name, OR just use the most popular PDF
+      const possibleSyllabi = await prisma.resource.findMany({
+        where: {
+          subjectId: id,
+          deletedAt: null,
+          isPublic: true,
+          s3Key: { not: null },
+          // we prefer pdfs or generic files for text extraction
+          mimeType: { contains: "pdf" }
+        },
+        orderBy: { downloadCount: "desc" },
+        take: 5
+      })
+      
+      const matchedSyllabus = possibleSyllabi.find(r => 
+        r.originalFilename.toLowerCase().includes('syllabus') || 
+        r.originalFilename.toLowerCase().includes('course') || 
+        r.originalFilename.toLowerCase().includes('plan')
+      )
+      
+      syllabus = matchedSyllabus || possibleSyllabi[0] || null
+    }
+
+    if (!syllabus) {
       return NextResponse.json({ 
         has_syllabus: false,
-        error: "No syllabus uploaded yet" 
+        error: "No syllabus or matching resources uploaded yet" 
       })
     }
 
@@ -63,7 +91,8 @@ export async function GET(
       if (bodyBytes) {
         const buffer = Buffer.from(bodyBytes)
         syllabusText = await extractTextFromBuffer(buffer, syllabus.originalFilename, syllabus.mimeType || undefined)
-        syllabusText = syllabusText.slice(0, 4000)
+        // Extract up to 15000 chars to ensure long syllabi with many units are fully read
+        syllabusText = syllabusText.slice(0, 15000)
       }
     } catch (err) {
       console.error("Syllabus extraction error:", err)

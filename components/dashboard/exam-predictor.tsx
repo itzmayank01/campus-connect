@@ -31,7 +31,8 @@ export function ExamPredictor({ subjectId, subjectName }: ExamPredictorProps) {
   const fetchPredictions = async (force = false) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/subjects/${subjectId}/exam-predictor`)
+      const url = force ? `/api/subjects/${subjectId}/exam-predictor?refresh=true` : `/api/subjects/${subjectId}/exam-predictor`
+      const res = await fetch(url)
       const data = await res.json()
       setPredictions(data)
     } catch {

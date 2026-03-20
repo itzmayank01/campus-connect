@@ -40,21 +40,25 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Step 1: Check cache first (weekly TTL)
-    const oneWeekAgo = new Date()
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+    // Step 1: Check cache first (weekly TTL), unless ?refresh=true
+    const forceRefresh = request.nextUrl.searchParams.get("refresh") === "true"
+    
+    if (!forceRefresh) {
+      const oneWeekAgo = new Date()
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
 
-    const cached = await prisma.subjectAiCache.findUnique({
-      where: {
-        subjectId_cacheType: {
-          subjectId: id,
-          cacheType: "exam_predictor"
+      const cached = await prisma.subjectAiCache.findUnique({
+        where: {
+          subjectId_cacheType: {
+            subjectId: id,
+            cacheType: "exam_predictor"
+          }
         }
-      }
-    })
+      })
 
-    if (cached && (cached.createdAt > oneWeekAgo)) {
-      return NextResponse.json(cached.cacheData)
+      if (cached && (cached.createdAt > oneWeekAgo)) {
+        return NextResponse.json(cached.cacheData)
+      }
     }
 
     // Step 2: Get subject details
@@ -72,18 +76,30 @@ export async function GET(
       return NextResponse.json(getDefaultPredictions(subject))
     }
 
-    // Gather context (PYQs and Syllabus)
-    const pyqs = await prisma.resource.findMany({
+    // Gather context (PYQs and Syllabus) - Be aggressive, user might not have tagged them correctly
+    const allResources = await prisma.resource.findMany({
       where: {
         subjectId: id,
-        resourceType: { in: ["QUESTION_PAPERS", "SYLLABUS"] },
         deletedAt: null,
         isPublic: true,
         s3Key: { not: null }
       },
-      orderBy: { createdAt: "desc" },
-      take: 4
+      orderBy: { createdAt: "desc" }
     })
+
+    // Filter to find PYQs explicitly OR files that just sound like PYQs
+    const pyqs = allResources.filter(r => 
+      r.resourceType === "QUESTION_PAPERS" || 
+      r.originalFilename.toLowerCase().includes('pyq') || 
+      r.originalFilename.toLowerCase().includes('question') ||
+      r.originalFilename.toLowerCase().includes('paper')
+    ).slice(0, 4)
+
+    // If we STILL don't have enough, grab the syllabus and top notes as context
+    if (pyqs.length < 4) {
+       const others = allResources.filter(r => !pyqs.includes(r)).slice(0, 4 - pyqs.length)
+       pyqs.push(...others)
+    }
 
     let pyqText = ""
     for (const pyq of pyqs) {

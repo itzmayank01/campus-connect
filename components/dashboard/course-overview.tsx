@@ -38,18 +38,21 @@ export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) 
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(true)
 
-  useEffect(() => {
-    const fetchTopics = async () => {
-      try {
-        const res = await fetch(`/api/subjects/${subjectId}/topics`)
-        const json = await res.json()
-        setData(json)
-      } catch (err) {
-        console.error("Fetch topics error:", err)
-      } finally {
-        setLoading(false)
-      }
+  const fetchTopics = async (force = false) => {
+    setLoading(true)
+    try {
+      const url = force ? `/api/subjects/${subjectId}/topics?refresh=true` : `/api/subjects/${subjectId}/topics`
+      const res = await fetch(url)
+      const json = await res.json()
+      setData(json)
+    } catch (err) {
+      console.error("Fetch topics error:", err)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchTopics()
   }, [subjectId])
 
@@ -99,11 +102,8 @@ export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) 
   return (
     <div className="rounded-2xl border border-[#E2E8F0] bg-white overflow-hidden mb-6 shadow-sm font-sans">
       {/* Header */}
-      <div 
-        className="px-6 py-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-all border-b border-[#F1F5F9]"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="flex flex-col gap-0.5">
+      <div className="px-6 py-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-all border-b border-[#F1F5F9]">
+        <div className="flex flex-col gap-0.5" onClick={() => setExpanded(!expanded)}>
            <div className="flex items-center gap-2">
               <ClipboardList className="h-5 w-5 text-[#3B82F6]" />
               <h3 className="text-base font-bold text-[#1E293B]">📋 Course Overview</h3>
@@ -113,9 +113,29 @@ export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) 
            </div>
            <p className="text-[11px] text-[#64748B] ml-7">Extracted from course syllabus</p>
         </div>
-        <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-          {expanded ? <ChevronUp className="h-5 w-5 text-[#94A3B8]" /> : <ChevronDown className="h-5 w-5 text-[#94A3B8]" />}
-        </button>
+        <div className="flex items-center gap-2">
+          {!loading && data && data.has_syllabus && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                fetchTopics(true);
+              }}
+              className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-[#3B82F6] hover:bg-[#3B82F6]/10 transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+              Refresh
+            </button>
+          )}
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded(!expanded)
+            }}
+            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            {expanded ? <ChevronUp className="h-5 w-5 text-[#94A3B8]" /> : <ChevronDown className="h-5 w-5 text-[#94A3B8]" />}
+          </button>
+        </div>
       </div>
 
       {/* Content */}
@@ -126,13 +146,17 @@ export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) 
             <Target className="h-4 w-4 text-[#EF4444]" />
             🎯 Most Important Topics
           </div>
-          <div className="flex flex-wrap gap-2">
-            {data?.most_important_overall.map((topic: string, iIndex: number) => (
-              <span key={iIndex} className="rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] px-3.5 py-1.5 text-xs font-medium shadow-sm">
-                {topic}
-              </span>
-            ))}
-          </div>
+          {data?.error ? (
+             <div className="text-[13px] text-red-500 italic px-2">{data.error}</div>
+          ) : (
+             <div className="flex flex-wrap gap-2">
+               {data?.most_important_overall?.map((topic: string, iIndex: number) => (
+                 <span key={iIndex} className="rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] px-3.5 py-1.5 text-xs font-medium shadow-sm">
+                   {topic}
+                 </span>
+               ))}
+             </div>
+          )}
         </div>
 
         <AnimatePresence>
@@ -143,7 +167,7 @@ export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) 
               exit={{ height: 0, opacity: 0 }}
               className="space-y-6 overflow-hidden pt-2"
             >
-              {data.units.map((unit: Unit, uIndex: number) => (
+              {data?.units?.map((unit: Unit, uIndex: number) => (
                 <div key={uIndex} className="border-b border-[#F8FAFC] pb-5 last:border-0 last:pb-0">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2.5">
@@ -162,7 +186,7 @@ export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) 
                     )}
                   </div>
                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5 ml-4">
-                    {unit.topics.map((topic: string, tIndex: number) => (
+                    {unit.topics?.map((topic: string, tIndex: number) => (
                       <li key={tIndex} className="text-sm text-[#64748B] flex items-start gap-2 leading-relaxed">
                         <span className="text-[#CBD5E1] mt-1.5">•</span>
                         {topic}
@@ -172,13 +196,15 @@ export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) 
                 </div>
               ))}
 
-              <div className="pt-2">
-                 <p className="text-[10px] text-[#94A3B8] italic text-center flex items-center justify-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#EF4444]" /> High Probability
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B] ml-2" /> Medium
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] ml-2" /> Low
-                 </p>
-              </div>
+               {data?.units && data?.units.length > 0 && (
+                  <div className="pt-2">
+                     <p className="text-[10px] text-[#94A3B8] italic text-center flex items-center justify-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#EF4444]" /> High Probability
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B] ml-2" /> Medium
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] ml-2" /> Low
+                     </p>
+                  </div>
+               )}
             </motion.div>
           )}
         </AnimatePresence>
