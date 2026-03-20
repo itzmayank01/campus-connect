@@ -5,10 +5,10 @@ import { callAI, isAiConfigured } from "@/lib/anthropic"
 import { s3Client, S3_BUCKET } from "@/lib/s3"
 import { GetObjectCommand } from "@aws-sdk/client-s3"
 
-// GET /api/subjects/[id]/exam-predictor — predict exam questions
+// GET /api/subjects/[subjectId]/exam-predictor — predict exam questions
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ subjectId: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -18,7 +18,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
+    const { subjectId: id } = await params
 
     if (!isAiConfigured()) {
       return NextResponse.json({

@@ -9,25 +9,17 @@ export function SearchRecommendationsWrapper() {
   const [searchQuery, setSearchQuery] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check URL params first
+    // ONLY trigger from URL params — explicit Smart Feed navigation
+    // e.g. /dashboard/smart-feed?q=containerization
     const urlQuery = searchParams.get("q")
-    if (urlQuery) {
-      setSearchQuery(urlQuery)
-      return
-    }
-
-    // Check localStorage for search signal from search dialog
-    const stored = typeof window !== "undefined" ? localStorage.getItem("lastSearchQuery") : null
-    if (stored) setSearchQuery(stored)
-
-    // Listen for new search events
-    const handleSearchTracked = () => {
-      const q = localStorage.getItem("lastSearchQuery")
-      if (q) setSearchQuery(q)
-    }
-    window.addEventListener("searchTracked", handleSearchTracked)
-    return () => window.removeEventListener("searchTracked", handleSearchTracked)
+    setSearchQuery(urlQuery || null)
+    // NO localStorage reads
+    // NO event listeners
+    // AI recommendations ONLY load when user navigates here with ?q= param
   }, [searchParams])
+
+  // Don't render anything if there's no active search query
+  if (!searchQuery) return null
 
   return <SearchRecommendations query={searchQuery} />
 }

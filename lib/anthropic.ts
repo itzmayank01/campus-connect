@@ -13,6 +13,8 @@ function getClient(): GoogleGenerativeAI | null {
   return genAI
 }
 
+const AI_TIMEOUT_MS = 8000 // 8 second max — never block longer
+
 export async function callAI(
   systemPrompt: string,
   userMessage: string,
@@ -26,11 +28,22 @@ export async function callAI(
       systemInstruction: systemPrompt,
     })
 
-    const result = await model.generateContent(userMessage)
+    // Race between AI call and timeout — never block for more than 8 seconds
+    const result = await Promise.race([
+      model.generateContent(userMessage),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("AI_TIMEOUT")), AI_TIMEOUT_MS)
+      ),
+    ])
+
     const response = result.response
     return response.text() || null
-  } catch (error) {
-    console.error("Gemini API error:", error)
+  } catch (error: any) {
+    if (error?.message === "AI_TIMEOUT") {
+      console.warn("Gemini API timed out after 8 seconds — returning null")
+    } else {
+      console.error("Gemini API error:", error)
+    }
     return null
   }
 }

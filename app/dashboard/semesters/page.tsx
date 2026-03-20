@@ -4,6 +4,16 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Calendar, BookOpen, ChevronRight, Loader2, ArrowRight } from "lucide-react"
 
+interface SubjectData {
+  id: string
+  name: string
+  code: string
+  semesterNumber?: number
+  credits?: number
+  category?: string
+  resourceCount: number
+}
+
 const semesterAccents: Record<number, { color: string; gradient: string }> = {
   1: { color: "#4F8EF7", gradient: "from-[#4F8EF7] to-[#60A5FA]" },
   2: { color: "#34D399", gradient: "from-[#34D399] to-[#6EE7B7]" },
@@ -17,28 +27,28 @@ const semesterAccents: Record<number, { color: string; gradient: string }> = {
 
 export default function SemestersPage() {
   const [loading, setLoading] = useState(true)
-  const [semesterData, setSemesterData] = useState<any[]>([])
+  const [subjects, setSubjects] = useState<SubjectData[]>([])
 
   useEffect(() => {
-    // Fetch all semesters' subjects
-    Promise.all(
-      Array.from({ length: 8 }, (_, i) =>
-        fetch(`/api/semesters/${i + 1}/subjects`)
-          .then((r) => r.json())
-          .catch(() => null)
-      )
-    )
-      .then((results) => {
-        const data = results.filter(Boolean).map((r: any) => ({
-          number: r.semester?.number || 0,
-          totalSubjects: r.totalSubjects || 0,
-          totalResources: r.totalResources || 0,
-          subjects: (r.subjects || []).slice(0, 4),
-        }))
-        setSemesterData(data)
+    // Single fast API call instead of 8 separate calls
+    fetch("/api/subjects")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setSubjects(data)
+        }
       })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  // Group subjects by semester number
+  const grouped: Record<number, SubjectData[]> = {}
+  for (const s of subjects) {
+    const sem = s.semesterNumber || 1
+    if (!grouped[sem]) grouped[sem] = []
+    grouped[sem].push(s)
+  }
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
@@ -65,9 +75,8 @@ export default function SemestersPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 8 }, (_, i) => i + 1).map((semNum) => {
             const accent = semesterAccents[semNum] || semesterAccents[1]
-            const data = semesterData.find((d) => d.number === semNum)
-            const totalSubjects = data?.totalSubjects || 0
-            const totalResources = data?.totalResources || 0
+            const semSubjects = grouped[semNum] || []
+            const totalResources = semSubjects.reduce((a, s) => a + s.resourceCount, 0)
 
             return (
               <Link
@@ -97,28 +106,28 @@ export default function SemestersPage() {
                     <div>
                       <h3 className="text-base font-bold text-[#0F1117] font-display">Semester {semNum}</h3>
                       <p className="text-[11px] text-[#64748B]">
-                        {totalSubjects} subjects • {totalResources} resources
+                        {semSubjects.length} subjects • {totalResources} resources
                       </p>
                     </div>
                   </div>
 
                   {/* Preview of top subjects */}
-                  {data?.subjects && data.subjects.length > 0 && (
+                  {semSubjects.length > 0 && (
                     <div className="space-y-1.5 mb-4">
-                      {data.subjects.slice(0, 3).map((sub: any) => (
+                      {semSubjects.slice(0, 3).map((sub) => (
                         <div key={sub.id} className="flex items-center gap-2 text-xs text-[#64748B]">
                           <BookOpen className="h-3 w-3 shrink-0" style={{ color: accent.color }} />
                           <span className="truncate">{sub.name}</span>
-                          {sub.totalResources > 0 && (
+                          {sub.resourceCount > 0 && (
                             <span className="ml-auto shrink-0 text-[10px] font-bold" style={{ color: accent.color }}>
-                              {sub.totalResources}
+                              {sub.resourceCount}
                             </span>
                           )}
                         </div>
                       ))}
-                      {totalSubjects > 3 && (
+                      {semSubjects.length > 3 && (
                         <p className="text-[10px] font-semibold" style={{ color: accent.color }}>
-                          +{totalSubjects - 3} more subjects
+                          +{semSubjects.length - 3} more subjects
                         </p>
                       )}
                     </div>

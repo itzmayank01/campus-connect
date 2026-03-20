@@ -2,6 +2,7 @@ import { Suspense } from "react"
 import { ForYouFeed } from "@/components/dashboard/for-you-feed"
 import { TrendingResources } from "@/components/dashboard/trending-resources"
 import { SearchRecommendationsWrapper } from "@/components/dashboard/search-recommendations-wrapper"
+import { SmartFeedSearch } from "@/components/dashboard/smart-feed-search"
 import { Sparkles } from "lucide-react"
 
 export const dynamic = "force-dynamic"
@@ -27,7 +28,12 @@ export default function SmartFeedPage() {
         </span>
       </div>
 
-      {/* Search Recommendations (shown when repeat search detected) */}
+      {/* Smart Feed Search — AI triggers ONLY from here */}
+      <Suspense fallback={null}>
+        <SmartFeedSearch />
+      </Suspense>
+
+      {/* Search Recommendations (shown when ?q= param exists) */}
       <Suspense fallback={null}>
         <SearchRecommendationsWrapper />
       </Suspense>

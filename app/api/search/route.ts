@@ -25,10 +25,18 @@ export async function GET(request: NextRequest) {
     const where: any = { deletedAt: null, isPublic: true }
 
     if (query) {
+      const queryWords = query.toLowerCase().split(/\s+/).filter(Boolean)
       where.OR = [
         { originalFilename: { contains: query, mode: "insensitive" } },
         { description: { contains: query, mode: "insensitive" } },
-        { tags: { hasSome: query.toLowerCase().split(/\s+/) } },
+        { tags: { hasSome: queryWords } },
+        // Also search by subject name and code so "containerization", "devops", etc. match
+        { subject: { name: { contains: query, mode: "insensitive" } } },
+        { subject: { code: { contains: query, mode: "insensitive" } } },
+        // Match individual words against subject name for multi-word queries
+        ...queryWords.map((word) => ({
+          subject: { name: { contains: word, mode: "insensitive" as const } },
+        })),
       ]
     }
 

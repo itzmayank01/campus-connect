@@ -21,6 +21,7 @@ export const prisma = (() => {
     connectionString: cleanUrl,
     ssl: { rejectUnauthorized: false },
   });
+  // @ts-expect-error - Type definitions for pg Pool conflict between @types/pg and @prisma/adapter-pg
   const adapter = new PrismaPg(pool);
   const client = new PrismaClient({ adapter });
   

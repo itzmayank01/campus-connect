@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Brain, RefreshCw, Loader2, AlertCircle, Zap, ChevronDown, ChevronUp } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -43,7 +43,7 @@ export function ExamPredictor({ subjectId, subjectName }: ExamPredictorProps) {
   const [predictions, setPredictions] = useState<Predictions | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(false)
   const [generatedAt, setGeneratedAt] = useState<string | null>(null)
   const [pyqCount, setPyqCount] = useState<number>(0)
 
@@ -68,9 +68,8 @@ export function ExamPredictor({ subjectId, subjectName }: ExamPredictorProps) {
     }
   }
 
-  useEffect(() => {
-    fetchPredictions()
-  }, [subjectId])
+  // NO auto-fetch — user must click to load predictions
+  // Subject pages load from DB only, AI is on-demand
 
   return (
     <div className="rounded-2xl bg-white border border-[#F1F5F9] shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
@@ -94,10 +93,10 @@ export function ExamPredictor({ subjectId, subjectName }: ExamPredictorProps) {
                 fetchPredictions()
               }}
               className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-[#7C3AED] hover:bg-[#7C3AED]/10 transition-all"
-              title="Regenerate predictions"
+              title={predictions ? "Regenerate predictions" : "Load predictions"}
             >
               <RefreshCw className="h-3 w-3" />
-              Refresh
+              {predictions ? "Refresh" : "Load Predictions"}
             </button>
           )}
           {expanded ? <ChevronUp className="h-4 w-4 text-[#94A3B8]" /> : <ChevronDown className="h-4 w-4 text-[#94A3B8]" />}
