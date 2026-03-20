@@ -82,7 +82,7 @@ export async function GET(
     })
 
     const isExtractable = (mime: string | null, name: string) => 
-      mime?.includes("pdf") || mime?.includes("zip") || name.toLowerCase().endsWith(".pdf") || name.toLowerCase().endsWith(".zip")
+      !mime || mime.includes("pdf") || mime.includes("zip") || mime.includes("octet-stream") || name.toLowerCase().endsWith(".pdf") || name.toLowerCase().endsWith(".zip") || !name.includes(".")
 
     let syllabusText = ""
     for (const file of syllabusResources) {
@@ -184,9 +184,9 @@ export async function GET(
   "possible": ["other potential question 1", "other potential question 2", ...]
 }
       
-      - "very_likely": Highlight 3-5 of the MOST IMPORTANT TOPICS based on syllabus and frequency.
-      - "likely": Formulate 3-4 EXACT IMPORTANT QUESTIONS explicitly derived from the PYQs that match the syllabus.
-      - "possible": Formulate 2-3 OTHER important questions or thematic areas.
+      - "very_likely": Highlight 3-5 of the MOST IMPORTANT TOPICS based purely on traversing the syllabus sequentially.
+      - "likely": Provide 3-4 EXACT FULL QUESTIONS verbatim from the uploaded PYQ papers that perfectly match the syllabus topics. Do not summarize them, write out the full PYQ question text.
+      - "possible": Formulate 2-3 OTHER highly probable questions utilizing PYQ patterns that match the syllabus priorities.
       Keep predictions extremely concise. Do not use Markdown syntax.`,
       `Subject: ${subject.name} (${subject.code})
 Semester: ${subject.semester?.number || "N/A"}

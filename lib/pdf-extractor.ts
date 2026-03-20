@@ -4,8 +4,10 @@ import JSZip from "jszip"
  * Extracts text from a given buffer.
  * Supports processing direct PDF buffers, or ZIP buffers containing PDFs.
  */
-export async function extractTextFromBuffer(buffer: Buffer, filename: string): Promise<string> {
-  const isZip = filename.toLowerCase().endsWith(".zip")
+export async function extractTextFromBuffer(buffer: Buffer, filename: string, mimeType?: string): Promise<string> {
+  // Sniff magic bytes or fallback to mime/extension
+  const isZipBuffer = buffer.length > 4 && buffer[0] === 0x50 && buffer[1] === 0x4B
+  const isZip = isZipBuffer || filename.toLowerCase().endsWith(".zip") || mimeType?.includes("zip") || mimeType?.includes("archive")
 
   if (isZip) {
     let extractedText = ""

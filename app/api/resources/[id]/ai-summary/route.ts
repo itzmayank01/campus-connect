@@ -60,7 +60,9 @@ export async function GET(
 
     // Extract PDF/ZIP text
     let extractedText = ""
-    const isExtractable = resource.mimeType?.includes("pdf") || resource.mimeType?.includes("zip") || resource.originalFilename.toLowerCase().endsWith(".pdf") || resource.originalFilename.toLowerCase().endsWith(".zip")
+    const mime = resource.mimeType
+    const name = resource.originalFilename
+    const isExtractable = !mime || mime.includes("pdf") || mime.includes("zip") || mime.includes("octet-stream") || name.toLowerCase().endsWith(".pdf") || name.toLowerCase().endsWith(".zip") || !name.includes(".")
 
     if (resource.s3Key && isExtractable) {
       try {
