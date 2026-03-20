@@ -9,37 +9,29 @@ import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Loader2, CheckCircle2, GraduationCap, Check } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
-type RoleType = "student" | "faculty" | null
+// type RoleType = "student" | "faculty" | null  // Role selector temporarily disabled
 
 export function SignupForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [role, setRole] = useState<RoleType>(null)
-  const [facultyId, setFacultyId] = useState("")
+  // Role selector temporarily disabled — all users are students
+  const role = "student" as const
+  // const [role, setRole] = useState<RoleType>(null)
+  // const [facultyId, setFacultyId] = useState("")
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [roleError, setRoleError] = useState(false)
+  // const [roleError, setRoleError] = useState(false)  // Role selector temporarily disabled
   const [success, setSuccess] = useState(false)
   const router = useRouter()
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    setRoleError(false)
-
-    if (!role) {
-      setRoleError(true)
-      setError("Please select Student or Faculty")
-      return
-    }
-
-    if (role === "faculty" && !facultyId.trim()) {
-      setError("Please enter your Employee / Faculty ID")
-      return
-    }
+    // Role validation disabled — role is always 'student'
+    // setRoleError(false)
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters")
@@ -56,8 +48,7 @@ export function SignupForm() {
       options: {
         data: {
           name,
-          role,
-          faculty_id: role === "faculty" ? facultyId : null,
+          role: "student",  // Always student — faculty signup disabled
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -169,109 +160,8 @@ export function SignupForm() {
           />
         </div>
 
-        {/* Role Selector */}
-        <div className="flex flex-col gap-2">
-          <Label className="text-sm font-medium text-foreground">
-            I am a...
-          </Label>
-          <div className="grid grid-cols-2 gap-3">
-            {/* Student Card */}
-            <button
-              type="button"
-              onClick={() => { setRole("student"); setRoleError(false); setError(null) }}
-              disabled={loading || googleLoading}
-              className={`relative flex flex-col items-center gap-2 rounded-2xl p-5 transition-all duration-200 cursor-pointer border-[1.5px] ${
-                roleError && !role
-                  ? "border-red-400 animate-[shake_0.3s_ease-in-out]"
-                  : role === "student"
-                  ? "border-[#4F8EF7] shadow-[0_0_0_4px_rgba(79,142,247,0.1)]"
-                  : "border-[#E2E8F0] hover:border-[#CBD5E1]"
-              }`}
-              style={{
-                background: role === "student"
-                  ? "linear-gradient(135deg, #EFF6FF, #DBEAFE)"
-                  : "#F8FAFC",
-              }}
-            >
-              {role === "student" && (
-                <div className="absolute top-2.5 right-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#4F8EF7]">
-                  <Check className="h-3 w-3 text-white" strokeWidth={3} />
-                </div>
-              )}
-              <span className="text-[32px]">🎓</span>
-              <span className={`text-[15px] font-semibold ${
-                role === "student" ? "text-[#1E40AF]" : "text-[#94A3B8]"
-              }`}>
-                Student
-              </span>
-              <span className={`text-[11px] text-center leading-tight ${
-                role === "student" ? "text-[#3B82F6]" : "text-[#CBD5E1]"
-              }`}>
-                Browse and upload<br />study materials
-              </span>
-            </button>
-
-            {/* Faculty Card */}
-            <button
-              type="button"
-              onClick={() => { setRole("faculty"); setRoleError(false); setError(null) }}
-              disabled={loading || googleLoading}
-              className={`relative flex flex-col items-center gap-2 rounded-2xl p-5 transition-all duration-200 cursor-pointer border-[1.5px] ${
-                roleError && !role
-                  ? "border-red-400 animate-[shake_0.3s_ease-in-out]"
-                  : role === "faculty"
-                  ? "border-[#22C55E] shadow-[0_0_0_4px_rgba(34,197,94,0.1)]"
-                  : "border-[#E2E8F0] hover:border-[#CBD5E1]"
-              }`}
-              style={{
-                background: role === "faculty"
-                  ? "linear-gradient(135deg, #F0FDF4, #DCFCE7)"
-                  : "#F8FAFC",
-              }}
-            >
-              {role === "faculty" && (
-                <div className="absolute top-2.5 right-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#22C55E]">
-                  <Check className="h-3 w-3 text-white" strokeWidth={3} />
-                </div>
-              )}
-              <span className="text-[32px]">👨‍🏫</span>
-              <span className={`text-[15px] font-semibold ${
-                role === "faculty" ? "text-[#15803D]" : "text-[#94A3B8]"
-              }`}>
-                Faculty
-              </span>
-              <span className={`text-[11px] text-center leading-tight ${
-                role === "faculty" ? "text-[#22C55E]" : "text-[#CBD5E1]"
-              }`}>
-                Upload, manage<br />and verify notes
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Faculty ID Field - slides in when faculty selected */}
-        <div
-          className="overflow-hidden transition-all duration-[250ms] ease-out"
-          style={{
-            maxHeight: role === "faculty" ? "100px" : "0px",
-            opacity: role === "faculty" ? 1 : 0,
-          }}
-        >
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="facultyId" className="text-sm font-medium text-foreground">
-              Employee / Faculty ID
-            </Label>
-            <Input
-              id="facultyId"
-              type="text"
-              placeholder="Enter your employee ID"
-              className="h-11 rounded-xl bg-background"
-              value={facultyId}
-              onChange={(e) => setFacultyId(e.target.value)}
-              disabled={loading || googleLoading}
-            />
-          </div>
-        </div>
+        {/* Role Selector — temporarily disabled, all users are students */}
+        {/* Faculty ID Field — temporarily disabled */}
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="password" className="text-sm font-medium text-foreground">

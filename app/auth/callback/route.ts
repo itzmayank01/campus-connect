@@ -52,13 +52,10 @@ export async function GET(request: Request) {
           }
         }
 
-        // Route based on role
+        // Always redirect to student dashboard
+        // Faculty dashboard temporarily disabled
         if (dbUser) {
-          if (dbUser.role === "FACULTY") {
-            redirectPath = "/faculty/dashboard";
-          } else {
-            redirectPath = "/dashboard";
-          }
+          redirectPath = "/dashboard";
         }
       }
 
