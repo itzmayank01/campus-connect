@@ -1,4 +1,5 @@
 import JSZip from "jszip"
+const pdfParse = require("pdf-parse")
 
 /**
  * Extracts text from a given buffer.
@@ -25,7 +26,6 @@ export async function extractTextFromBuffer(buffer: Buffer, filename: string, mi
       for (const pdf of pdfFiles.slice(0, 5)) {
         try {
           const pdfBuffer = await pdf.async("nodebuffer")
-          const pdfParse = require("pdf-parse")
           const data = await pdfParse(pdfBuffer)
           extractedText += `\n--- FROM ZIP: ${pdf.name} ---\n${data.text.slice(0, 3000)}\n`
         } catch (err) {
@@ -40,7 +40,6 @@ export async function extractTextFromBuffer(buffer: Buffer, filename: string, mi
   } else {
     // Process single PDF
     try {
-      const pdfParse = require("pdf-parse")
       const data = await pdfParse(buffer)
       return data.text
     } catch (err) {

@@ -119,7 +119,12 @@ export async function GET(
   "estimated_read_minutes": number,
   "difficulty_level": "Beginner" | "Intermediate" | "Advanced"
 }
-Keep bullet points concise (max 8). Key topics should be 3-6 specific terms. Exam topics should be 3-5 likely exam questions/areas. Estimate read time based on content length and complexity.`,
+INSTRUCTIONS for summary_bullets:
+- Make the summary extremely crisp, short, and highly relevant.
+- Do NOT write huge theory blocks or lengthy paragraphs.
+- Keep each point strictly to a single, impactful sentence about the most vital concepts.
+
+Key topics should be 3-6 specific core terms. Exam topics should be 3-5 highly likely exam questions/areas directly based on this text. Estimate read time based on length.`,
       `Subject: ${resource.subject?.name || "Unknown"} (${resource.subject?.code || "N/A"})
 Filename: ${resource.originalFilename}
 
