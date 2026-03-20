@@ -79,8 +79,11 @@ export function TrendingResources() {
   const [loading, setLoading] = useState(true)
 
   const fetchTrending = useCallback(async () => {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 8000)
     try {
-      const res = await fetch("/api/trending?limit=5")
+      const res = await fetch("/api/trending?limit=5", { signal: controller.signal })
+      clearTimeout(timeout)
       if (res.ok) {
         const data = await res.json()
         setTrending(data.trending || [])
@@ -88,6 +91,7 @@ export function TrendingResources() {
     } catch {
       // Graceful fallback
     } finally {
+      clearTimeout(timeout)
       setLoading(false)
     }
   }, [])

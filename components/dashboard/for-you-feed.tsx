@@ -69,8 +69,11 @@ export function ForYouFeed() {
 
   useEffect(() => {
     async function fetchRecommendations() {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 8000)
       try {
-        const res = await fetch("/api/recommendations?limit=6")
+        const res = await fetch("/api/recommendations?limit=6", { signal: controller.signal })
+        clearTimeout(timeout)
         if (res.ok) {
           const data = await res.json()
           setRecommendations(data.recommendations || [])
@@ -80,6 +83,7 @@ export function ForYouFeed() {
       } catch {
         setError(true)
       } finally {
+        clearTimeout(timeout)
         setLoading(false)
       }
     }
