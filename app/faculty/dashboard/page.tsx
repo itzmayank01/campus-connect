@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Download, Heart, Star, Upload, BarChart3, CheckCircle, Megaphone, Loader2, Users, FileText, ArrowUpRight, Zap } from "lucide-react"
+import { Download, Heart, Star, Upload, BarChart3, CheckCircle, Megaphone, Loader2, Users, FileText, ArrowUpRight, Zap, Trophy, FolderUp, Flame, Crown, Gem, BookOpen } from "lucide-react"
 
 interface OverviewData {
   name: string
@@ -26,16 +26,22 @@ function getGreeting() {
   return "Good Evening"
 }
 
-function getRankEmoji(rank: string) {
-  const m: Record<string, string> = { "Contributor": "📚", "Active Educator": "🌟", "Top Instructor": "🔥", "Elite Faculty": "💎", "Campus Legend": "👑" }
-  return m[rank] || "📚"
+function getRankIcon(rank: string) {
+  const map: Record<string, { icon: any; color: string }> = {
+    "Contributor": { icon: BookOpen, color: "#4ADE80" },
+    "Active Educator": { icon: Star, color: "#60A5FA" },
+    "Top Instructor": { icon: Flame, color: "#FB923C" },
+    "Elite Faculty": { icon: Gem, color: "#C084FC" },
+    "Campus Legend": { icon: Crown, color: "#FBBF24" },
+  }
+  return map[rank] || map["Contributor"]
 }
 
 function getNextRank(score: number) {
-  if (score < 100) return { name: "Active Educator", target: 100, emoji: "🌟" }
-  if (score < 300) return { name: "Top Instructor", target: 300, emoji: "🔥" }
-  if (score < 600) return { name: "Elite Faculty", target: 600, emoji: "💎" }
-  if (score < 1000) return { name: "Campus Legend", target: 1000, emoji: "👑" }
+  if (score < 100) return { name: "Active Educator", target: 100, icon: Star, color: "#60A5FA" }
+  if (score < 300) return { name: "Top Instructor", target: 300, icon: Flame, color: "#FB923C" }
+  if (score < 600) return { name: "Elite Faculty", target: 600, icon: Gem, color: "#C084FC" }
+  if (score < 1000) return { name: "Campus Legend", target: 1000, icon: Crown, color: "#FBBF24" }
   return null
 }
 
@@ -83,87 +89,147 @@ export default function FacultyDashboardPage() {
         </div>
       </div>
 
-      {/* ═══ IMPACT SCORE HERO CARD — Premium Glassmorphism ═══ */}
-      <div className="relative rounded-[20px] overflow-hidden" style={{
-        background: "linear-gradient(135deg, #052e16 0%, #14532d 40%, #166534 70%, #15803d 100%)",
+      {/* ═══ IMPACT SCORE HERO CARD ═══ */}
+      <div className="heroCard relative rounded-[20px] overflow-hidden" style={{
+        background: "linear-gradient(135deg, #052e16 0%, #064e23 30%, #065f2b 60%, #047857 100%)",
         boxShadow: "0 20px 60px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
         border: "1px solid rgba(34,197,94,0.2)",
       }}>
-        {/* Background radial glow overlays */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: "radial-gradient(circle at 20% 50%, rgba(34,197,94,0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(74,222,128,0.1) 0%, transparent 40%)",
-        }} />
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
-          backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }} />
+        {/* L2 — Radial spotlight top-left */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 80% at 15% 50%, rgba(34,197,94,0.25) 0%, transparent 70%)" }} />
+        {/* L3 — Radial spotlight top-right */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 40% 60% at 85% 20%, rgba(74,222,128,0.12) 0%, transparent 60%)" }} />
+        {/* L4 — Noise texture */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.04]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E\")" }} />
+        {/* L5 — Top highlight line */}
+        <div className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(134,239,172,0.6) 30%, rgba(74,222,128,0.8) 50%, rgba(134,239,172,0.6) 70%, transparent)" }} />
 
-        <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row items-center gap-8">
-          {/* Crown with pulse glow */}
-          <div className="shrink-0">
-            <div className="text-[80px] leading-none" style={{
-              animation: "crownPulse 3s ease-in-out infinite",
-              filter: "drop-shadow(0 0 12px rgba(34,197,94,0.6))",
-            }}>👑</div>
-          </div>
-
-          {/* Score + Rank */}
-          <div className="flex-1 text-center md:text-left">
-            <p className="text-[12px] font-semibold tracking-[0.15em] uppercase" style={{ color: "#86EFAC" }}>Impact Score</p>
-            <p className="text-[72px] font-extrabold leading-none mt-1" style={{
-              background: "linear-gradient(135deg, #4ADE80, #86EFAC, #FFFFFF)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-[280px_1fr_280px] items-center" style={{ padding: "28px 32px" }}>
+          {/* ── COLUMN 1: Rank + Score ── */}
+          <div className="flex items-center gap-5">
+            {/* Rank Icon Circle */}
+            <div className="shrink-0 flex items-center justify-center rounded-full" style={{
+              width: 72, height: 72,
+              background: "rgba(0,0,0,0.3)",
+              border: "1px solid rgba(74,222,128,0.3)",
+              boxShadow: "0 0 0 8px rgba(34,197,94,0.08), inset 0 1px 0 rgba(255,255,255,0.05)",
+              animation: "iconGlow 3s ease-in-out infinite",
             }}>
-              {d.impactScore === 0 ? "0" : animatedScore}
-            </p>
-
-            {/* Rank Badge */}
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full px-4 py-1.5" style={{
-              background: "rgba(34,197,94,0.2)", border: "1px solid rgba(34,197,94,0.4)",
-            }}>
-              <span className="text-base">{getRankEmoji(d.facultyRank)}</span>
-              <span className="text-sm font-bold" style={{ color: "#86EFAC" }}>{d.facultyRank}</span>
+              <Trophy className="h-8 w-8" style={{ color: getRankIcon(d.facultyRank).color }} />
             </div>
 
-            {/* Progress to next rank */}
-            {nextRank && (
-              <div className="mt-4 max-w-xs mx-auto md:mx-0">
-                <div className="flex items-center justify-between text-[11px] mb-1.5" style={{ color: "rgba(134,239,172,0.6)" }}>
-                  <span>{d.impactScore} / {nextRank.target}</span>
-                  <span>{nextRank.emoji} {nextRank.name}</span>
-                </div>
-                <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
-                  <div className="h-full rounded-full transition-all duration-1000 ease-out" style={{
-                    width: `${progress}%`,
-                    background: "linear-gradient(90deg, #22C55E, #4ADE80, #86EFAC)",
-                    boxShadow: "0 0 12px rgba(34,197,94,0.5)",
-                  }} />
-                </div>
-                <p className="text-[10px] mt-1" style={{ color: "rgba(134,239,172,0.4)" }}>
-                  {nextRank.target - d.impactScore} points to unlock {nextRank.name}
-                </p>
+            {/* Score Display */}
+            <div>
+              <p className="font-bold uppercase" style={{ fontSize: 10, letterSpacing: "0.15em", color: "rgba(134,239,172,0.7)" }}>Impact Score</p>
+              <p className="font-extrabold leading-none" style={{
+                fontSize: 56, fontFamily: "'JetBrains Mono', monospace",
+                background: "linear-gradient(135deg, #FFFFFF 0%, #86EFAC 50%, #4ADE80 100%)",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+              }}>
+                {d.impactScore === 0 ? "0" : animatedScore}
+              </p>
+              {/* Rank Badge */}
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full" style={{
+                background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)",
+                padding: "5px 14px",
+              }}>
+                {(() => { const ri = getRankIcon(d.facultyRank); const Ic = ri.icon; return <Ic className="h-3 w-3" style={{ color: ri.color }} /> })()}
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#86EFAC" }}>{d.facultyRank}</span>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Stat grid inside hero */}
-          <div className="grid grid-cols-2 gap-3 shrink-0">
-            {[
-              { icon: "↓", label: "Downloads", value: d.totalDownloads },
-              { icon: "❤️", label: "Likes", value: d.totalLikes },
-              { icon: "⭐", label: "Rating", value: d.averageRating.toFixed(1) },
-              { icon: "📁", label: "Uploads", value: d.totalUploads },
-            ].map((s) => (
-              <div key={s.label} className="flex items-center gap-2.5 rounded-xl px-4 py-3" style={{
-                background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)",
-                backdropFilter: "blur(8px)",
-              }}>
-                <span className="text-lg">{s.icon}</span>
-                <div>
-                  <p className="text-[15px] font-bold leading-none" style={{ color: "#E2E8F0" }}>{s.value}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: "rgba(134,239,172,0.5)" }}>{s.label}</p>
+          {/* ── Divider 1 ── */}
+          <div className="hidden md:flex items-center justify-center" style={{ height: "100%" }}>
+            <div style={{ width: 1, height: "80%", background: "rgba(255,255,255,0.07)", margin: "0 32px", flexShrink: 0 }} />
+
+          {/* ── COLUMN 2: Progress + Milestones ── */}
+          <div className="flex-1 flex flex-col justify-center gap-4">
+            {nextRank ? (
+              <>
+                {/* Current → Next rank row */}
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1 rounded-full text-[11px]" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#86EFAC", padding: "4px 10px" }}>
+                    {(() => { const ri = getRankIcon(d.facultyRank); const Ic = ri.icon; return <Ic className="h-3 w-3" style={{ color: ri.color }} /> })()}
+                    {d.facultyRank}
+                  </span>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>{d.impactScore} / {nextRank.target} pts</span>
+                  <span className="inline-flex items-center gap-1 rounded-full text-[11px]" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "4px 10px" }}>
+                    {(() => { const Ic = nextRank.icon; return <Ic className="h-3 w-3" style={{ color: nextRank.color }} /> })()}
+                    {nextRank.name} →
+                  </span>
                 </div>
+
+                {/* Progress bar */}
+                <div>
+                  <div className="rounded-full overflow-hidden" style={{ height: 10, background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div className="h-full rounded-full" style={{
+                      width: `${progress}%`,
+                      background: "linear-gradient(90deg, #22C55E, #4ADE80, #86EFAC)",
+                      backgroundSize: "200% auto",
+                      animation: "shimmer 3s linear infinite",
+                      boxShadow: progress > 0 ? "0 0 8px rgba(74,222,128,0.6)" : "none",
+                      transition: "width 1500ms ease-out",
+                    }} />
+                  </div>
+                  {/* Milestone markers */}
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>0</span>
+                    <div className="flex-1 flex items-center justify-around px-2">
+                      {[100, 300, 600, 1000].map((m) => (
+                        <div key={m} className="flex flex-col items-center gap-0.5">
+                          <div className="rounded-full" style={{ width: 4, height: 4, background: d.impactScore >= m ? "rgba(74,222,128,0.8)" : "rgba(255,255,255,0.2)" }} />
+                          <span style={{ fontSize: 8, color: d.impactScore >= m ? "rgba(74,222,128,0.6)" : "rgba(255,255,255,0.25)" }}>{m}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{nextRank.target}</span>
+                  </div>
+                </div>
+
+                {/* Motivational text */}
+                <p className="text-center italic" style={{ fontSize: 11, color: "rgba(134,239,172,0.6)" }}>
+                  {nextRank.target - d.impactScore} pts to unlock {nextRank.name}
+                </p>
+              </>
+            ) : (
+              <div className="text-center">
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#86EFAC" }}>🏆 Max Rank Achieved!</p>
+                <p style={{ fontSize: 11, color: "rgba(134,239,172,0.5)", marginTop: 4 }}>You are a Campus Legend</p>
+              </div>
+            )}
+
+            {/* How to earn */}
+            <p className="text-center" style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>
+              Downloads×2 + Likes×5 + Ratings×4 + Uploads×3 + Subjects×10
+            </p>
+          </div>
+
+          {/* ── Divider 2 ── */}
+            <div style={{ width: 1, height: "80%", background: "rgba(255,255,255,0.07)", margin: "0 32px", flexShrink: 0 }} />
+          </div>
+
+          {/* ── COLUMN 3: Stats Grid ── */}
+          <div className="grid grid-cols-2 gap-2.5 mt-4 md:mt-0">
+            {[
+              { icon: Download, label: "DOWNLOADS", value: d.totalDownloads, color: "#60A5FA" },
+              { icon: Heart, label: "LIKES", value: d.totalLikes, color: "#F87171" },
+              { icon: Star, label: "AVG RATING", value: d.averageRating.toFixed(1), sub: "/ 5.0", color: "#FBBF24" },
+              { icon: FolderUp, label: "UPLOADS", value: d.totalUploads, color: "#A78BFA" },
+            ].map((s) => (
+              <div key={s.label} className="rounded-xl transition-all duration-150 hover:!bg-[rgba(34,197,94,0.1)] hover:!border-[rgba(34,197,94,0.2)]" style={{
+                background: "rgba(0,0,0,0.25)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                padding: "14px 16px",
+              }}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <s.icon className="h-4 w-4" style={{ color: s.color }} />
+                  <span className="uppercase font-medium" style={{ fontSize: 10, letterSpacing: "0.05em", color: "rgba(255,255,255,0.45)" }}>{s.label}</span>
+                </div>
+                <p className="font-bold leading-none" style={{ fontSize: 28, fontFamily: "'JetBrains Mono', monospace", color: "#F0FDF4", marginTop: 4 }}>
+                  {s.value}
+                </p>
+                {s.sub && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>{s.sub}</span>}
               </div>
             ))}
           </div>
@@ -292,9 +358,18 @@ export default function FacultyDashboardPage() {
       </div>
 
       <style jsx global>{`
-        @keyframes crownPulse {
-          0%, 100% { filter: drop-shadow(0 0 12px rgba(34,197,94,0.6)) drop-shadow(0 0 24px rgba(34,197,94,0.3)); transform: scale(1); }
-          50% { filter: drop-shadow(0 0 20px rgba(74,222,128,0.8)) drop-shadow(0 0 40px rgba(74,222,128,0.4)); transform: scale(1.05); }
+        @keyframes iconGlow {
+          0%, 100% { filter: drop-shadow(0 0 6px rgba(74,222,128,0.6)); }
+          50% { filter: drop-shadow(0 0 14px rgba(134,239,172,0.8)); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .heroCard { animation: heroEnter 400ms ease-out both; animation-delay: 100ms; }
+        @keyframes heroEnter {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
