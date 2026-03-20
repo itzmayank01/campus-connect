@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { callAI, isAiConfigured } from "@/lib/anthropic"
 import { s3Client, S3_BUCKET } from "@/lib/s3"
 import { GetObjectCommand } from "@aws-sdk/client-s3"
+import { extractTextFromBuffer } from "@/lib/pdf-extractor"
 
 // GET /api/resources/[id]/ai-summary — generate or return cached AI summary
 export async function GET(
@@ -57,9 +58,11 @@ export async function GET(
       })
     }
 
-    // Extract PDF text
+    // Extract PDF/ZIP text
     let extractedText = ""
-    if (resource.s3Key && resource.mimeType?.includes("pdf")) {
+    const isExtractable = resource.mimeType?.includes("pdf") || resource.mimeType?.includes("zip") || resource.originalFilename.toLowerCase().endsWith(".pdf") || resource.originalFilename.toLowerCase().endsWith(".zip")
+
+    if (resource.s3Key && isExtractable) {
       try {
         const response = await s3Client.send(
           new GetObjectCommand({ Bucket: S3_BUCKET, Key: resource.s3Key })
@@ -67,14 +70,14 @@ export async function GET(
         const bodyBytes = await response.Body?.transformToByteArray()
         if (bodyBytes) {
           const buffer = Buffer.from(bodyBytes)
-          const pdfParse = require("pdf-parse")
-          const data = await pdfParse(buffer)
-          extractedText = data.text.slice(0, 4000)
+          extractedText = await extractTextFromBuffer(buffer, resource.originalFilename)
+          // Limit to 4000 characters for summary payload
+          extractedText = extractedText.slice(0, 4000)
         }
       } catch (err) {
-        console.error("PDF extraction error:", err)
+        console.error("Extraction error:", err)
         return NextResponse.json({
-          error: "Could not extract PDF content",
+          error: "Could not extract content from the file",
           bullets: [],
           topics: [],
           examTopics: [],
@@ -84,7 +87,7 @@ export async function GET(
       }
     } else {
       return NextResponse.json({
-        error: "AI summary is only available for PDF files",
+        error: "AI summary is only available for PDF or ZIP files",
         bullets: [],
         topics: [],
         examTopics: [],

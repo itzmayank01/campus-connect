@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Download, FileText, Video, HelpCircle, BookOpen, Upload, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-type MaterialType = "notes" | "question_papers" | "videos" | "reference"
+type MaterialType = "notes" | "question_papers" | "videos" | "reference" | "syllabus"
 
 interface Material {
   id: string
@@ -25,6 +25,7 @@ const tabs: { label: string; value: MaterialType; icon: React.ElementType }[] = 
   { label: "Notes", value: "notes", icon: FileText },
   { label: "Question Papers", value: "question_papers", icon: HelpCircle },
   { label: "Videos", value: "videos", icon: Video },
+  { label: "Syllabus", value: "syllabus", icon: BookOpen },
   { label: "Reference", value: "reference", icon: BookOpen },
 ]
 

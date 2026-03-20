@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { callAI, isAiConfigured } from "@/lib/anthropic"
 import { s3Client, S3_BUCKET } from "@/lib/s3"
 import { GetObjectCommand } from "@aws-sdk/client-s3"
+import { extractTextFromBuffer } from "@/lib/pdf-extractor"
 
 // GET /api/subjects/[subjectId]/exam-predictor — predict exam questions
 export async function GET(
@@ -73,77 +74,131 @@ export async function GET(
       return NextResponse.json({ error: "Subject not found" }, { status: 404 })
     }
 
-    // Get top PYQ resources for this subject
-    const pyqResources = await prisma.resource.findMany({
-      where: {
-        subjectId: id,
-        resourceType: "QUESTION_PAPERS",
-        deletedAt: null,
-        isPublic: true,
-      },
+    // 1. Gather Syllabus / Notes for the current subject to establish context
+    const syllabusResources = await prisma.resource.findMany({
+      where: { subjectId: id, resourceType: { in: ["SYLLABUS", "NOTES", "REFERENCE"] }, deletedAt: null, isPublic: true },
       orderBy: { downloadCount: "desc" },
-      take: 3,
+      take: 5
     })
 
-    // Also get most bookmarked notes
-    const topNotes = await prisma.resource.findMany({
-      where: {
-        subjectId: id,
-        resourceType: "NOTES",
-        deletedAt: null,
-        isPublic: true,
-      },
-      orderBy: { bookmarkCount: "desc" },
-      take: 2,
+    const isExtractable = (mime: string | null, name: string) => 
+      mime?.includes("pdf") || mime?.includes("zip") || name.toLowerCase().endsWith(".pdf") || name.toLowerCase().endsWith(".zip")
+
+    let syllabusText = ""
+    for (const file of syllabusResources) {
+       if (file.s3Key && isExtractable(file.mimeType, file.originalFilename)) {
+          try {
+            const response = await s3Client.send(new GetObjectCommand({ Bucket: S3_BUCKET, Key: file.s3Key }))
+            const bodyBytes = await response.Body?.transformToByteArray()
+            if (bodyBytes) {
+              const buffer = Buffer.from(bodyBytes)
+              const text = await extractTextFromBuffer(buffer, file.originalFilename)
+              if (text.trim().length > 50) {
+                syllabusText += `\n--- SYLLABUS/NOTES: ${file.originalFilename} ---\n${text.slice(0, 3000)}\n`
+                break // Got enough syllabus context from the top file
+              }
+            }
+          } catch {}
+       }
+    }
+
+    // 2. Gather PYQs for the local subject
+    let pyqResources = await prisma.resource.findMany({
+      where: { subjectId: id, resourceType: "QUESTION_PAPERS", deletedAt: null, isPublic: true },
+      orderBy: { downloadCount: "desc" },
+      take: 4,
     })
 
-    // Extract text from PYQ PDFs
+    let usedSimilarSubjects = false
+
+    // 3. If NO PYQs are available locally, search for PYQs from SIMILAR subjects
+    if (pyqResources.length === 0) {
+      // Create search tokens from subject name (e.g., "Statistics and Data Analytics" -> "Statistics", "Data", "Analytics")
+      const tokens = subject.name.split(/[\s,-]+/)
+        .filter(t => t.length > 3 && !['and', 'with', 'for', 'the', 'fundamentals', 'advanced', 'introduction'].includes(t.toLowerCase()))
+      
+      if (tokens.length > 0) {
+        // Find other subjects matching these keywords
+        const similarSubjects = await prisma.subject.findMany({
+          where: {
+            id: { not: id },
+            OR: tokens.map(token => ({ name: { contains: token, mode: "insensitive" } }))
+          },
+          select: { id: true, name: true }
+        })
+
+        const similarIds = similarSubjects.map(s => s.id)
+        if (similarIds.length > 0) {
+          pyqResources = await prisma.resource.findMany({
+            where: {
+               subjectId: { in: similarIds },
+               resourceType: "QUESTION_PAPERS",
+               deletedAt: null,
+               isPublic: true
+            },
+            orderBy: { downloadCount: "desc" },
+            take: 4
+          })
+          if (pyqResources.length > 0) usedSimilarSubjects = true
+        }
+      }
+    }
+
+    // 4. Extract text from the gathered PYQs (either local or similar)
     let pyqText = ""
     for (const pyq of pyqResources) {
-      if (pyq.s3Key && pyq.mimeType?.includes("pdf")) {
+      if (pyq.s3Key && isExtractable(pyq.mimeType, pyq.originalFilename)) {
         try {
-          const response = await s3Client.send(
-            new GetObjectCommand({ Bucket: S3_BUCKET, Key: pyq.s3Key })
-          )
+          const response = await s3Client.send(new GetObjectCommand({ Bucket: S3_BUCKET, Key: pyq.s3Key }))
           const bodyBytes = await response.Body?.transformToByteArray()
           if (bodyBytes) {
             const buffer = Buffer.from(bodyBytes)
-            const pdfParse = require("pdf-parse")
-            const data = await pdfParse(buffer)
-            pyqText += `\n---PYQ: ${pyq.originalFilename}---\n${data.text.slice(0, 2000)}\n`
+            const text = await extractTextFromBuffer(buffer, pyq.originalFilename)
+            pyqText += `\n--- PYQ SOURCE: ${pyq.originalFilename} ---\n${text.slice(0, 2500)}\n`
           }
         } catch {}
       }
     }
 
-    // If no PYQ text, use note titles for context
-    if (!pyqText) {
+    // 5. Ultimate physical fallback
+    if (!syllabusText.trim() && !pyqText.trim()) {
       const allResources = await prisma.resource.findMany({
         where: { subjectId: id, deletedAt: null, isPublic: true },
         select: { originalFilename: true, resourceType: true, downloadCount: true },
         orderBy: { downloadCount: "desc" },
         take: 20,
       })
-      pyqText = `Available resources for ${subject.name}:\n${allResources.map((r) => `- ${r.originalFilename} (${r.resourceType}, ${r.downloadCount} downloads)`).join("\n")}`
+      syllabusText = `Available files (no text extracted):\n${allResources.map((r) => `- ${r.originalFilename} (${r.resourceType})`).join("\n")}`
     }
 
     const result = await callAI(
-      `You are an exam pattern analyst for engineering university exams. Based on previous year questions and resource patterns, predict the most likely topics for the next exam. Return ONLY a JSON object:
+      `You are an exam pattern analyst. Your goal is to predict exam topics and questions based on the provided syllabus context and PYQs. 
+      
+      INSTRUCTIONS:
+      1. Review the "Syllabus / Notes" (if any) to understand the core scope of the subject.
+      2. Review the "Previous Year Questions (PYQs)" (if any). If the PYQs are from a similar subject, strictly filter and cross-reference those PYQs against the syllabus to ONLY provide questions that match the current subject's syllabus.
+      3. Return ONLY a JSON object exactly matching this format:
 {
-  "very_likely": ["topic 1 - specific exam-style question", "topic 2", ...],
-  "likely": ["topic 3", "topic 4", ...],
-  "possible": ["topic 5", ...]
+  "very_likely": ["topic 1", "topic 2", ...],
+  "likely": ["specific PYQ question 1", "specific PYQ question 2", ...],
+  "possible": ["other potential question 1", "other potential question 2", ...]
 }
-very_likely: 2-3 topics that appear most frequently. likely: 2-3 topics that appear moderately. possible: 1-2 topics that could appear. Format each as an exam-style question or specific topic.`,
+      
+      - "very_likely": Highlight 3-5 of the MOST IMPORTANT TOPICS based on syllabus and frequency.
+      - "likely": Formulate 3-4 EXACT IMPORTANT QUESTIONS explicitly derived from the PYQs that match the syllabus.
+      - "possible": Formulate 2-3 OTHER important questions or thematic areas.
+      Keep predictions extremely concise. Do not use Markdown syntax.`,
       `Subject: ${subject.name} (${subject.code})
 Semester: ${subject.semester?.number || "N/A"}
-Number of PYQs analyzed: ${pyqResources.length}
-Number of popular notes: ${topNotes.length}
+PYQs sourced from similar subjects instead of exactly this one?: ${usedSimilarSubjects ? 'Yes (cross-reference with syllabus carefully)' : 'No (exact match)'}
 
-Content from previous year questions and resources:
-${pyqText}
+=== SYLLABUS / NOTES TEXT ===
+${syllabusText.trim() ? syllabusText : 'No syllabus text available.'}
 
-Based on this analysis, predict the most likely exam topics.`
+=== PREVIOUS YEAR QUESTIONS (PYQs) ===
+${pyqText.trim() ? pyqText : 'No PYQ text available.'}
+
+Based on the above, predict the most important topics and likely questions.`
     )
 
     if (!result) {

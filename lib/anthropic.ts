@@ -13,7 +13,7 @@ function getClient(): GoogleGenerativeAI | null {
   return genAI
 }
 
-const AI_TIMEOUT_MS = 8000 // 8 second max — never block longer
+const AI_TIMEOUT_MS = 25000 // 25 second max — asynchronous user-triggered
 
 export async function callAI(
   systemPrompt: string,

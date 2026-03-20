@@ -59,10 +59,12 @@ const typeLabels: Record<string, string> = {
   QUESTION_PAPERS: "Question Papers", question_papers: "Question Papers",
   VIDEOS: "Videos", videos: "Videos",
   REFERENCE: "Reference", reference: "Reference",
+  SYLLABUS: "Syllabus", syllabus: "Syllabus",
 }
 
 const tabs = [
   { label: "All", value: "all", icon: BookOpen },
+  { label: "Syllabus", value: "syllabus", icon: FileText },
   { label: "Notes", value: "notes", icon: FileText },
   { label: "Question Papers", value: "question_papers", icon: HelpCircle },
   { label: "Videos", value: "videos", icon: Video },
@@ -172,6 +174,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
   // Filter resources by tab
   const getFilteredResources = () => {
     const typeMap: Record<string, string[]> = {
+      syllabus: ["SYLLABUS"],
       notes: ["NOTES"],
       question_papers: ["QUESTION_PAPERS"],
       videos: ["VIDEOS"],
@@ -196,6 +199,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
   // Tab counts
   const tabCounts: Record<string, number> = {
     all: allTotal,
+    syllabus: resources.filter((r) => r.resourceType === "SYLLABUS").length + notes.filter((n) => n.type === "syllabus").length,
     notes: resources.filter((r) => r.resourceType === "NOTES").length + notes.filter((n) => n.type === "notes").length,
     question_papers: resources.filter((r) => r.resourceType === "QUESTION_PAPERS").length + notes.filter((n) => n.type === "question_papers").length,
     videos: resources.filter((r) => r.resourceType === "VIDEOS").length + notes.filter((n) => n.type === "videos").length,
@@ -512,7 +516,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
                       )}
                     </div>
                   </div>
-                  {resource.mimeType?.includes("pdf") && (
+                  {(resource.mimeType?.includes("pdf") || resource.mimeType?.includes("zip") || resource.originalFilename?.toLowerCase().endsWith(".zip") || resource.originalFilename?.toLowerCase().endsWith(".pdf")) && (
                     <AiSummaryPanel resourceId={resource.id} />
                   )}
                 </div>

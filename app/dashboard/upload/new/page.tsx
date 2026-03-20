@@ -387,6 +387,7 @@ export default function UploadNewPage() {
                 { value: "question_papers", label: "Question Paper" },
                 { value: "videos", label: "Video" },
                 { value: "reference", label: "Reference" },
+                { value: "syllabus", label: "Syllabus" },
               ].map((opt) => (
                 <button
                   key={opt.value}

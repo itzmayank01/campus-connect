@@ -25,6 +25,7 @@ enum ResourceType {
   QUESTION_PAPERS
   VIDEOS
   REFERENCE
+  SYLLABUS
 }
 
 enum ActivityType {

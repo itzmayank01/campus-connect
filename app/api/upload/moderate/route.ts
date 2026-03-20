@@ -344,6 +344,7 @@ Is this content relevant to the subject?`
       question_papers: "QUESTION_PAPERS",
       videos: "VIDEOS",
       reference: "REFERENCE",
+      syllabus: "SYLLABUS",
     }
 
     // Generate AI tags

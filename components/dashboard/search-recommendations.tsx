@@ -34,6 +34,7 @@ const tierLabels: Record<string, { label: string; emoji: string }> = {
 
 const typeFilterTabs = [
   { value: "all", label: "All", emoji: "" },
+  { value: "SYLLABUS", label: "Syllabus", emoji: "📖" },
   { value: "NOTES", label: "Notes", emoji: "📄" },
   { value: "QUESTION_PAPERS", label: "PYQs", emoji: "❓" },
   { value: "VIDEOS", label: "Videos", emoji: "🎬" },
@@ -41,6 +42,7 @@ const typeFilterTabs = [
 ]
 
 const typeLabels: Record<string, string> = {
+  SYLLABUS: "Syllabus",
   NOTES: "Notes",
   QUESTION_PAPERS: "PYQs",
   VIDEOS: "Videos",

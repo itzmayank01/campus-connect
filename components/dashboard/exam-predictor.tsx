@@ -17,24 +17,24 @@ interface Predictions {
 
 const probabilityConfig = {
   veryLikely: {
-    label: "Very Likely",
+    label: "Most Important Topics",
     emoji: "🔥",
     barColor: "#EF4444",
-    barPercent: 85,
+    barPercent: 100,
     headerColor: "text-[#991B1B]",
   },
   likely: {
-    label: "Likely",
+    label: "Important PYQ Questions",
     emoji: "📌",
     barColor: "#F59E0B",
-    barPercent: 60,
+    barPercent: 80,
     headerColor: "text-[#92400E]",
   },
   possible: {
-    label: "Possible",
+    label: "Other Likely Questions",
     emoji: "💡",
     barColor: "#4F8EF7",
-    barPercent: 35,
+    barPercent: 50,
     headerColor: "text-[#1E40AF]",
   },
 }
@@ -48,6 +48,7 @@ export function ExamPredictor({ subjectId, subjectName }: ExamPredictorProps) {
   const [pyqCount, setPyqCount] = useState<number>(0)
 
   const fetchPredictions = async () => {
+    setExpanded(true)
     setLoading(true)
     setError(null)
     try {
@@ -75,7 +76,13 @@ export function ExamPredictor({ subjectId, subjectName }: ExamPredictorProps) {
     <div className="rounded-2xl bg-white border border-[#F1F5F9] shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
       {/* Header */}
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => {
+          if (!expanded && !predictions && !loading) {
+            fetchPredictions()
+          } else {
+            setExpanded(!expanded)
+          }
+        }}
         className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-[#7C3AED]/5 to-[#A78BFA]/5 border-b border-[#F1F5F9] hover:from-[#7C3AED]/8 hover:to-[#A78BFA]/8 transition-all"
       >
         <div className="flex items-center gap-2">

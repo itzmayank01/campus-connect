@@ -133,9 +133,9 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    // Type counts for filter tabs
     const typeCounts: Record<string, number> = {
       all: ranked.length,
+      SYLLABUS: 0,
       NOTES: 0,
       QUESTION_PAPERS: 0,
       VIDEOS: 0,

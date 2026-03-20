@@ -14,6 +14,8 @@ const nextConfig = {
     '@prisma/client-runtime-utils',
     '@prisma/adapter-neon',
     '@prisma/adapter-pg',
+    'pdf-parse',
+    'jszip'
   ],
 }
 
