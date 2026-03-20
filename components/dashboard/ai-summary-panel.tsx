@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Sparkles, ChevronDown, ChevronUp, Loader2, BookOpen, Target, Clock, BarChart2, AlertCircle } from "lucide-react"
+import { Sparkles, ChevronDown, ChevronUp, BookOpen, Target, Clock, BarChart2, FileText } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface AiSummaryPanelProps {
@@ -15,6 +15,7 @@ interface SummaryData {
   readTime: number | null
   difficulty: string | null
   error?: string
+  fallback?: boolean
 }
 
 const difficultyColors: Record<string, string> = {
@@ -38,7 +39,14 @@ export function AiSummaryPanel({ resourceId }: AiSummaryPanelProps) {
         const json = await res.json()
         setData(json)
       } catch {
-        setData({ bullets: [], topics: [], examTopics: [], readTime: null, difficulty: null, error: "Failed to load" })
+        setData({ 
+          bullets: ["Content available for download", "Click Download to access this resource"], 
+          topics: [], 
+          examTopics: [], 
+          readTime: null, 
+          difficulty: null, 
+          fallback: true 
+        })
       } finally {
         setLoading(false)
         setFetched(true)
@@ -69,16 +77,21 @@ export function AiSummaryPanel({ resourceId }: AiSummaryPanelProps) {
           >
             <div className="mt-2 rounded-xl border border-[#EDE9FE] bg-gradient-to-br from-[#FAF5FF] to-white p-4 space-y-3">
               {loading && (
-                <div className="flex items-center gap-2 py-4">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#7C3AED]" />
-                  <span className="text-sm text-[#7C3AED]">Generating AI summary...</span>
+                <div className="space-y-3 py-2">
+                  <div className="flex gap-2">
+                    <div className="h-4 w-20 bg-[#F1F5F9] animate-pulse rounded" />
+                    <div className="h-4 w-24 bg-[#F1F5F9] animate-pulse rounded" />
+                  </div>
+                  <div className="h-3 w-full bg-[#F1F5F9] animate-pulse rounded" />
+                  <div className="h-3 w-5/6 bg-[#F1F5F9] animate-pulse rounded" />
+                  <div className="h-3 w-4/6 bg-[#F1F5F9] animate-pulse rounded" />
                 </div>
               )}
 
-              {data?.error && !data.bullets?.length && (
-                <div className="flex items-center gap-2 text-sm text-[#DC2626]">
-                  <AlertCircle className="h-4 w-4" />
-                  {data.error}
+              {data && data.fallback && (!data.bullets || data.bullets.length === 0) && (
+                <div className="flex items-center gap-2 text-sm text-[#64748B] py-2">
+                  <FileText className="h-4 w-4 opacity-50" />
+                  <span>📄 Download this resource to study</span>
                 </div>
               )}
 
@@ -146,7 +159,9 @@ export function AiSummaryPanel({ resourceId }: AiSummaryPanelProps) {
                     </div>
                   )}
 
-                  <p className="text-[9px] text-[#94A3B8] italic">AI-generated summary — verify with course materials</p>
+                  {!data.fallback && (
+                    <p className="text-[9px] text-[#94A3B8] italic">AI-generated summary — verify with course materials</p>
+                  )}
                 </>
               )}
             </div>

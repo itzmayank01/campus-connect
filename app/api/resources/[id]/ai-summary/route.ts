@@ -8,11 +8,29 @@ import { extractTextFromBuffer } from "@/lib/pdf-extractor"
 
 export const maxDuration = 60;
 
+function generateFallbackSummary(resource: any) {
+  return {
+    bullets: [
+      `${resource.resourceType || 'Educational content'} for ${resource.subject?.name || 'this subject'}`,
+      `Uploaded as ${resource.originalFilename}`,
+      `Download to view the full content`
+    ],
+    topics: resource.tags || [],
+    examTopics: [],
+    readTime: null,
+    difficulty: null,
+    fallback: true
+  }
+}
+
 // GET /api/resources/[id]/ai-summary — generate or return cached AI summary
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
+  let resource: any = null
+
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -21,46 +39,42 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
+    // Step 1: Get resource from DB
+    resource = await prisma.resource.findUnique({
+      where: { id },
+      include: { subject: true },
+    })
 
-    // Check cache first
+    if (!resource) {
+      return NextResponse.json({ error: "Resource not found", success: false }, { status: 200 })
+    }
+
+    // Step 2: Check cache first
     const cached = await prisma.resourceAiMetadata.findUnique({
       where: { resourceId: id },
     })
 
-    if (cached) {
+    if (cached && cached.summaryBullets?.length > 0) {
       return NextResponse.json({
         bullets: cached.summaryBullets,
         topics: cached.keyTopics,
         examTopics: cached.likelyExamTopics,
         readTime: cached.estimatedReadMinutes,
         difficulty: cached.difficultyLevel,
+        success: true,
         cached: true,
       })
     }
 
-    // Get resource
-    const resource = await prisma.resource.findUnique({
-      where: { id },
-      include: { subject: true },
-    })
-
-    if (!resource) {
-      return NextResponse.json({ error: "Resource not found" }, { status: 404 })
-    }
-
+    // Step 3: Handle AI extraction & call
     if (!isAiConfigured()) {
-      return NextResponse.json({
-        error: "AI features are not configured. Add GEMINI_API_KEY to enable.",
-        bullets: [],
-        topics: [],
-        examTopics: [],
-        readTime: null,
-        difficulty: null,
-      })
+       return NextResponse.json({
+         ...generateFallbackSummary(resource),
+         success: true,
+         error: "AI service not configured"
+       })
     }
 
-    // Extract PDF/ZIP text
     let extractedText = ""
     const mime = resource.mimeType
     const name = resource.originalFilename
@@ -74,84 +88,60 @@ export async function GET(
         const bodyBytes = await response.Body?.transformToByteArray()
         if (bodyBytes) {
           const buffer = Buffer.from(bodyBytes)
-          extractedText = await extractTextFromBuffer(buffer, resource.originalFilename)
-          // Limit to 4000 characters for summary payload
+          extractedText = await extractTextFromBuffer(buffer, resource.originalFilename, resource.mimeType || undefined)
+          // Limit length for summary
           extractedText = extractedText.slice(0, 4000)
         }
       } catch (err) {
         console.error("Extraction error:", err)
-        return NextResponse.json({
-          error: "Could not extract content from the file",
-          bullets: [],
-          topics: [],
-          examTopics: [],
-          readTime: null,
-          difficulty: null,
-        })
+        extractedText = resource.originalFilename
       }
+    } else if (resource.mimeType === "youtube" || resource.youtubeTitle) {
+      extractedText = `${resource.youtubeTitle || ''} by ${resource.youtubeChannel || ''}`
     } else {
-      return NextResponse.json({
-        error: "AI summary is only available for PDF or ZIP files",
-        bullets: [],
-        topics: [],
-        examTopics: [],
-        readTime: null,
-        difficulty: null,
-      })
+      extractedText = resource.originalFilename
     }
 
-    if (extractedText.length < 50) {
-      return NextResponse.json({
-        error: "Not enough text content to generate summary",
-        bullets: [],
-        topics: [],
-        examTopics: [],
-        readTime: null,
-        difficulty: null,
-      })
-    }
-
-    // Call Claude for summary
+    // Step 4: Call AI
     const result = await callAI(
-      `You are an academic content analyst. Analyze the given study material and return ONLY a JSON object with these fields:
-{
-  "summary_bullets": ["bullet point 1", "bullet point 2", ...],
-  "key_topics": ["topic1", "topic2", ...],
-  "likely_exam_topics": ["exam question topic 1", ...],
-  "estimated_read_minutes": number,
-  "difficulty_level": "Beginner" | "Intermediate" | "Advanced"
-}
-INSTRUCTIONS for summary_bullets:
-- Make the summary extremely crisp, short, and highly relevant.
-- Do NOT write huge theory blocks or lengthy paragraphs.
-- Keep each point strictly to a single, impactful sentence about the most vital concepts.
+      `You are an academic content analyst. Analyze the study material and return ONLY a valid JSON object.
+      
+      INSTRUCTIONS for summary_bullets:
+      - Make the summary extremely crisp, short, and highly relevant.
+      - Do NOT write huge theory blocks or lengthy paragraphs.
+      - Keep each point strictly to a single, impactful sentence about the most vital concepts.
 
-Key topics should be 3-6 specific core terms. Exam topics should be 3-5 highly likely exam questions/areas directly based on this text. Estimate read time based on length.`,
+      Return ONLY valid JSON, no markdown:
+      {
+        "summary_bullets": ["bullet point 1", "bullet point 2", ...],
+        "key_topics": ["topic1", "topic2", ...],
+        "likely_exam_topics": ["exam question topic 1", ...],
+        "estimated_read_minutes": number,
+        "difficulty_level": "Beginner" | "Intermediate" | "Advanced"
+      }`,
       `Subject: ${resource.subject?.name || "Unknown"} (${resource.subject?.code || "N/A"})
-Filename: ${resource.originalFilename}
-
-Content:
-${extractedText}`
+      Filename: ${resource.originalFilename}
+      
+      Content snippet:
+      ${extractedText || 'No text extracted.'}`
     )
 
     if (!result) {
-      return NextResponse.json({
-        error: "AI generation failed",
-        bullets: [],
-        topics: [],
-        examTopics: [],
-        readTime: null,
-        difficulty: null,
-      })
+       return NextResponse.json({
+         ...generateFallbackSummary(resource),
+         success: true,
+         error: "AI generation failed"
+       })
     }
 
     try {
       const cleaned = result.replace(/```json\n?|```\n?/g, "").trim()
       const parsed = JSON.parse(cleaned)
 
-      // Cache the result
-      await prisma.resourceAiMetadata.create({
-        data: {
+      // Step 5: Cache the result
+      await prisma.resourceAiMetadata.upsert({
+        where: { resourceId: id },
+        create: {
           resourceId: id,
           summaryBullets: parsed.summary_bullets || [],
           keyTopics: parsed.key_topics || [],
@@ -159,6 +149,14 @@ ${extractedText}`
           estimatedReadMinutes: parsed.estimated_read_minutes || null,
           difficultyLevel: parsed.difficulty_level || null,
         },
+        update: {
+          summaryBullets: parsed.summary_bullets || [],
+          keyTopics: parsed.key_topics || [],
+          likelyExamTopics: parsed.likely_exam_topics || [],
+          estimatedReadMinutes: parsed.estimated_read_minutes || null,
+          difficultyLevel: parsed.difficulty_level || null,
+          generatedAt: new Date(),
+        }
       })
 
       return NextResponse.json({
@@ -167,24 +165,29 @@ ${extractedText}`
         examTopics: parsed.likely_exam_topics || [],
         readTime: parsed.estimated_read_minutes || null,
         difficulty: parsed.difficulty_level || null,
+        success: true,
         cached: false,
       })
     } catch {
-      return NextResponse.json({
-        error: "Failed to parse AI response",
-        bullets: [],
-        topics: [],
-        examTopics: [],
-        readTime: null,
-        difficulty: null,
-      })
+       return NextResponse.json({
+         ...generateFallbackSummary(resource),
+         success: true,
+         error: "Failed to parse AI response"
+       })
     }
   } catch (error: unknown) {
-    console.error("AI summary error:", error)
-    const message = error instanceof Error ? error.message : "Unknown error"
-    return NextResponse.json(
-      { error: "Failed to generate AI summary", details: message },
-      { status: 500 }
-    )
+    console.error("AI summary main failure:", error)
+    if (resource) {
+       return NextResponse.json({
+         ...generateFallbackSummary(resource),
+         success: false
+       })
+    }
+    return NextResponse.json({ 
+      error: "Critical failure", 
+      bullets: ["Service temporarily unavailable"], 
+      topics: [], 
+      examTopics: [] 
+    }, { status: 200 })
   }
 }

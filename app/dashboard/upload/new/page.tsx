@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Upload, FileText, Check, AlertCircle, Loader2, ArrowLeft, Play, Link2 } from "lucide-react"
 import { ModerationProgress } from "@/components/dashboard/moderation-progress"
 
@@ -56,6 +56,7 @@ function extractYouTubeInfo(url: string): { type: "video" | "playlist"; videoId?
 
 export default function UploadNewPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [subjects, setSubjects] = useState<SubjectOption[]>([])
 
   const [selectedSemester, setSelectedSemester] = useState("")
@@ -96,11 +97,24 @@ export default function UploadNewPage() {
       .then((data) => {
         if (Array.isArray(data)) {
           setSubjects(data)
-          if (data.length > 0) setSelectedSubject(data[0].id)
+          
+          // Pre-fill from query params if available
+          const subId = searchParams.get('subjectId')
+          const type = searchParams.get('type')
+          
+          if (subId) {
+            setSelectedSubject(subId)
+            const sub = data.find(s => s.id === subId)
+            if (sub && sub.semesterNumber) setSelectedSemester(sub.semesterNumber.toString())
+          } else if (data.length > 0) {
+            setSelectedSubject(data[0].id)
+          }
+
+          if (type) setFileType(type.toLowerCase())
         }
       })
       .catch(() => {})
-  }, [])
+  }, [searchParams])
 
   // Fetch YouTube metadata when URL changes
   useEffect(() => {

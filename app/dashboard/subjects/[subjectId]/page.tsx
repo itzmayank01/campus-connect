@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { AiSummaryPanel } from "@/components/dashboard/ai-summary-panel"
 import { ExamPredictor } from "@/components/dashboard/exam-predictor"
+import { CourseOverview } from "@/components/dashboard/course-overview"
 
 interface ResourceData {
   id: string
@@ -279,6 +280,11 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
             </Link>
           </div>
         </div>
+      )}
+
+      {/* Course Overview & Syllabus Extraction */}
+      {subject && (
+        <CourseOverview subjectId={subject.id} subjectName={subject.name} />
       )}
 
       {/* Exam Question Predictor */}

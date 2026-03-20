@@ -115,8 +115,22 @@ model Subject {
   exams            Exam[]
   resources        Resource[]
   resourceFolders  ResourceFolder[]
+  aiCache          SubjectAiCache[]
 
   @@map("subjects")
+}
+
+model SubjectAiCache {
+  id        String   @id @default(uuid())
+  subjectId String   @map("subject_id")
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  cacheType String   @map("cache_type")
+  cacheData Json     @map("cache_data")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([subjectId, cacheType])
+  @@index([subjectId, cacheType])
+  @@map("subject_ai_cache")
 }
 
 model Note {
