@@ -154,13 +154,16 @@ export default function StudyMaterialsPage() {
           {filteredResources.map((resource) => (
             <div
               key={resource.id}
-              className="rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 group"
+              className="rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 group relative"
             >
               <div className="flex items-center gap-4">
                 {resource.mimeType === "youtube" && resource.youtubeThumbnail ? (
                   <div
-                    className="relative shrink-0 w-[120px] h-[68px] rounded-xl overflow-hidden bg-black cursor-pointer"
-                    onClick={() => setYoutubeModal(resource)}
+                    className="relative shrink-0 w-[120px] h-[68px] rounded-xl overflow-hidden bg-black cursor-pointer z-10"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setYoutubeModal(resource);
+                    }}
                   >
                     <img src={resource.youtubeThumbnail} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -178,11 +181,17 @@ export default function StudyMaterialsPage() {
                     )}
                   </div>
                 )}
+                
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-[#0F1117] truncate">
-                    {resource.mimeType === "youtube" ? resource.youtubeTitle || resource.originalFilename : resource.originalFilename}
+                  <Link href={`/dashboard/study-materials/${resource.id}`} className="absolute inset-0 z-0">
+                    <span className="sr-only">View resource details</span>
+                  </Link>
+                  <h3 className="text-sm font-semibold text-[#0F1117] truncate group-hover:text-[#4F8EF7] transition-colors relative z-10 w-fit">
+                    <Link href={`/dashboard/study-materials/${resource.id}`} className="no-underline text-inherit">
+                      {resource.mimeType === "youtube" ? resource.youtubeTitle || resource.originalFilename : resource.originalFilename}
+                    </Link>
                   </h3>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <div className="flex items-center gap-2 mt-1 flex-wrap relative z-10">
                     {resource.subject && (
                       <Link
                         href={`/dashboard/subjects/${resource.id}`}
@@ -203,11 +212,19 @@ export default function StudyMaterialsPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                
+                <div className="flex items-center gap-2 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity relative z-10">
+                  <Link href={`/dashboard/study-materials/${resource.id}`} className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-all no-underline">
+                    View Details
+                  </Link>
+                  
                   {resource.mimeType === "youtube" ? (
                     <>
                       <button
-                        onClick={() => setYoutubeModal(resource)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setYoutubeModal(resource);
+                        }}
                         className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-all"
                       >
                         <Play className="h-3.5 w-3.5" /> Watch
