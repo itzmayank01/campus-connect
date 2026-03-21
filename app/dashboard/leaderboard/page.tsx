@@ -291,7 +291,7 @@ export default function LeaderboardPage() {
   const fetchLeaderboard = useCallback(async (p: Period, silent = false) => {
     if (!silent) setLoaded(false)
     try {
-      const res = await fetch(`/api/leaderboard?period=${p}`)
+      const res = await fetch(`/api/leaderboard?period=${p}`, { cache: "no-store" })
       if (res.ok) {
         const data = await res.json()
         setLeaderboard(data.leaderboard || [])
@@ -312,7 +312,17 @@ export default function LeaderboardPage() {
     
     // Silent 5min periodic refresh
     const syncInterval = setInterval(() => fetchLeaderboard(period, true), 300000)
-    return () => clearInterval(syncInterval)
+
+    // Listen selectively for profile modifications dynamically broadcasted by other UI shells locally bounding re-fetch execution
+    const handleProfileChanges = () => fetchLeaderboard(period, true)
+    window.addEventListener("profile-updated", handleProfileChanges)
+    window.addEventListener("avatar-updated", handleProfileChanges)
+
+    return () => {
+      clearInterval(syncInterval)
+      window.removeEventListener("profile-updated", handleProfileChanges)
+      window.removeEventListener("avatar-updated", handleProfileChanges)
+    }
   }, [period, fetchLeaderboard])
 
   useEffect(() => {

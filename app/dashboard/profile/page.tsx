@@ -133,6 +133,7 @@ export default function ProfilePage() {
         // Only update local user state so `hasChanges` triggers TRUE natively
         setUser(prev => ({ ...prev, avatarUrl: data.avatar_url }))
         window.dispatchEvent(new Event('avatar-updated'))
+        router.refresh()
       } else {
         alert(data.error)
         setAvatarPreview(null)
@@ -170,6 +171,7 @@ export default function ProfilePage() {
         setOriginalUser(user)
         // trigger nav update globally
         window.dispatchEvent(new Event('profile-updated'))
+        router.refresh()
         setTimeout(() => setSaveSuccess(false), 2000)
       } else {
         alert(data.errors ? Object.values(data.errors)[0] : "Failed to update")
