@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   FileText, Video, HelpCircle, BookOpen, Download, Eye, Heart,
   Star, ArrowLeft, Loader2, Upload, ExternalLink, Play, Archive, Clock,
@@ -86,6 +86,9 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
   const [ratingMap, setRatingMap] = useState<Record<string, number>>({})
   const [hoverRating, setHoverRating] = useState<Record<string, number>>({})
 
+  const searchParams = useSearchParams()
+  const highlightId = searchParams?.get("highlight")
+
   useEffect(() => {
     fetch(`/api/subjects/${resolvedParams.subjectId}/resources`)
       .then((r) => r.json())
@@ -108,6 +111,18 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [resolvedParams.subjectId])
+
+  useEffect(() => {
+    if (!loading && highlightId) {
+       // Allow DOM to settle before smooth scrolling
+       setTimeout(() => {
+          const el = document.getElementById(`resource-${highlightId}`)
+          if (el) {
+             el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+       }, 500)
+    }
+  }, [loading, highlightId])
 
   const handleLike = async (resourceId: string) => {
     try {
@@ -312,11 +327,21 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
 
       {/* Resources List */}
       <div className="space-y-3">
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes highlightPulse {
+            0%, 100% { background: #EFF6FF; border-color: #3B82F6; }
+            50% { background: #DBEAFE; border-color: #1D4ED8; }
+          }
+        `}} />
         {/* Resource entries from resources table */}
         {filteredResources.map((resource) => (
           <div
+            id={`resource-${resource.id}`}
             key={resource.id}
-            className="rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 group"
+            className={`rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 group ${
+              highlightId === resource.id ? 'animate-highlightPulse' : ''
+            }`}
+            style={highlightId === resource.id ? { animation: 'highlightPulse 1s ease 2' } : {}}
           >
             {resource.mimeType === "youtube" ? (
               /* YouTube Resource Card */
@@ -557,8 +582,12 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
         {/* Legacy notes */}
         {filteredNotes.map((note) => (
           <div
+            id={`resource-${note.id}`}
             key={note.id}
-            className="rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 group"
+            className={`rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 group ${
+              highlightId === note.id ? 'animate-highlightPulse' : ''
+            }`}
+             style={highlightId === note.id ? { animation: 'highlightPulse 1s ease 2' } : {}}
           >
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#F1F3F9]">

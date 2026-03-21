@@ -1,6 +1,4 @@
 import { Suspense } from "react"
-import { ForYouFeed } from "@/components/dashboard/for-you-feed"
-import { TrendingResources } from "@/components/dashboard/trending-resources"
 import { SearchRecommendationsWrapper } from "@/components/dashboard/search-recommendations-wrapper"
 import { SmartFeedSearch } from "@/components/dashboard/smart-feed-search"
 import { Sparkles } from "lucide-react"
@@ -38,18 +36,7 @@ export default function SmartFeedPage() {
         <SearchRecommendationsWrapper />
       </Suspense>
 
-      {/* Main content */}
-      <div className="grid gap-5 lg:grid-cols-[1fr_320px] items-start">
-        {/* Left: For You Feed */}
-        <div className="space-y-5">
-          <ForYouFeed />
-        </div>
-
-        {/* Right: Trending */}
-        <div className="space-y-5">
-          <TrendingResources />
-        </div>
-      </div>
+      {/* Main content - now just holds empty whitespace if needed or removed */}
     </div>
   )
 }

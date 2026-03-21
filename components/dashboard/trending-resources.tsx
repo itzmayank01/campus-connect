@@ -77,31 +77,43 @@ function StarRating({ rating, size = 10 }: { rating: number; size?: number }) {
 export function TrendingResources() {
   const [trending, setTrending] = useState<TrendingResource[]>([])
   const [loading, setLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [timeAgo, setTimeAgo] = useState("just now")
 
   const fetchTrending = useCallback(async () => {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 8000)
     try {
-      const res = await fetch("/api/trending?limit=5", { signal: controller.signal })
-      clearTimeout(timeout)
+      const res = await fetch("/api/trending?limit=5")
       if (res.ok) {
         const data = await res.json()
         setTrending(data.trending || [])
+        setLastUpdated(new Date())
+        setTimeAgo("just now")
       }
     } catch {
       // Graceful fallback
     } finally {
-      clearTimeout(timeout)
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
     fetchTrending()
-    // Auto-refresh every 30 seconds for live updates
-    const interval = setInterval(fetchTrending, 30000)
+    const interval = setInterval(() => {
+      fetchTrending()
+    }, 60000)
     return () => clearInterval(interval)
   }, [fetchTrending])
+
+  useEffect(() => {
+    if (!lastUpdated) return
+    const interval = setInterval(() => {
+      const seconds = Math.floor((Date.now() - lastUpdated.getTime()) / 1000)
+      if (seconds < 10) setTimeAgo("just now")
+      else if (seconds < 60) setTimeAgo(`${seconds}s ago`)
+      else setTimeAgo(`${Math.floor(seconds / 60)}m ago`)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [lastUpdated])
 
   if (loading) {
     return (
@@ -143,15 +155,21 @@ export function TrendingResources() {
   }
 
   return (
-    <div className="rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+    <div className="rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] flex flex-col">
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes livePulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}} />
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="relative">
-          <TrendingUp className="h-4 w-4 text-[#F97316]" />
-          <div className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#F97316] animate-pulse" />
-        </div>
+        <TrendingUp className="h-4 w-4 text-[#0F1117]" />
         <h3 className="text-sm font-bold text-[#0F1117] font-display">Trending Now</h3>
-        <span className="rounded-full bg-[#F97316]/10 px-2 py-0.5 text-[9px] font-bold text-[#F97316] tracking-wider">
+        <span 
+          className="ml-auto flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-0.5 text-[10px] font-bold text-rose-600 tracking-wider shadow-sm border border-rose-100"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-rose-500" style={{ animation: 'livePulse 2s infinite' }} />
           LIVE
         </span>
       </div>
@@ -207,6 +225,14 @@ export function TrendingResources() {
           )
         })}
       </div>
+
+      {lastUpdated && (
+        <div className="mt-4 text-center">
+          <p className="text-[11px] font-medium text-[#94A3B8]">
+            Updated {timeAgo}
+          </p>
+        </div>
+      )}
     </div>
   )
 }
