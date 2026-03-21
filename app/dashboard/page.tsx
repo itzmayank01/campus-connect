@@ -164,11 +164,19 @@ export default async function DashboardPage() {
     }))
   ]
 
-  const displayName =
-    user?.user_metadata?.name ||
-    user?.user_metadata?.full_name ||
-    user?.email?.split("@")[0] ||
-    "Student"
+  // Pull active user from Postgres rather than stale Supabase JWT metadata
+  let dbUser = null
+  if (user) {
+    try {
+      dbUser = await prisma.user.findUnique({
+        where: { supabaseId: user.id },
+        select: { name: true, semester: true }
+      })
+    } catch {}
+  }
+
+  const displayName = dbUser?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Student"
+  const currentSemester = dbUser?.semester ? `Semester ${dbUser.semester}` : "Select Semester in Profile"
 
   const hour = new Date().getHours()
   const greeting =
@@ -188,7 +196,7 @@ export default async function DashboardPage() {
             {greeting}, {displayName}! 👋
           </h1>
           <p className="text-sm text-[#6B7280] mt-1">
-            {dateStr} • Semester 4
+            {dateStr} • {currentSemester}
           </p>
         </div>
         <button
