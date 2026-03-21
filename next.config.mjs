@@ -23,6 +23,7 @@ const nextConfig = {
     'fluent-ffmpeg',
     'bullmq',
     'ioredis',
+    'file-type',
   ],
 }
 

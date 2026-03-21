@@ -197,29 +197,47 @@ export function StudyMaterials({ initialMaterials = [] }: StudyMaterialsProps) {
                 className="mt-4 text-center py-2 text-[13px] text-[#3B82F6] cursor-pointer hover:underline font-medium"
                 onClick={() => router.push(`/dashboard/subjects/${recommendation.subject.id}`)}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F1F3F9]">
-                    <FileText className="h-5 w-5 text-[#6B7280]" strokeWidth={1.75} />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-medium text-[#0F1117] truncate hover:text-[#4F8EF7] transition-colors">
-                      <a href={`/dashboard/study-materials/${material.id}`} className="no-underline text-inherit">
-                        {material.title}
-                      </a>
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                      <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold border ${formatColors[material.format] || "bg-gray-50 text-gray-600 border-gray-100"}`}>
-                        {material.format}
-                      </span>
-                      <span className="text-[11px] text-[#94A3B8]">• {material.size}</span>
-                      <span className="text-[11px] text-[#94A3B8]">• {material.subject}</span>
-                      <span className="text-[11px] text-[#94A3B8] hidden sm:inline">• {material.downloads} downloads</span>
+                See more from {recommendation.subject.code} →
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Regular Mode */}
+        {!isRecMode && !loading && (
+          filtered.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {filtered.map((material) => (
+                <div
+                  key={material.id}
+                  className="group flex items-center justify-between rounded-2xl border border-[#F8FAFC] p-3 transition-all hover:bg-[#F8FAFC]/50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] bg-white cursor-pointer"
+                  onClick={() => router.push(`/dashboard/study-materials/${material.id}`)}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F1F3F9]">
+                      <FileText className="h-5 w-5 text-[#6B7280]" strokeWidth={1.75} />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-medium text-[#0F1117] truncate hover:text-[#4F8EF7] transition-colors">
+                        <span className="no-underline text-inherit">
+                          {material.title}
+                        </span>
+                      </h3>
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold border ${formatColors[material.format] || "bg-gray-50 text-gray-600 border-gray-100"}`}>
+                          {material.format}
+                        </span>
+                        <span className="text-[11px] text-[#94A3B8]">• {material.size}</span>
+                        <span className="text-[11px] text-[#94A3B8]">• {material.subject}</span>
+                        <span className="text-[11px] text-[#94A3B8] hidden sm:inline">• {material.downloads} downloads</span>
+                      </div>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-9 w-9 shrink-0 rounded-xl text-[#94A3B8] hover:text-[#4F8EF7] hover:bg-[#4F8EF7]/5 opacity-60 group-hover:opacity-100 transition-all duration-150"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <Download className="h-4 w-4" />
                     <span className="sr-only">Download {material.title}</span>
