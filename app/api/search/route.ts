@@ -25,11 +25,22 @@ export async function GET(request: NextRequest) {
     const where: any = { deletedAt: null, isPublic: true }
 
     if (query) {
-      where.OR = [
-        { originalFilename: { contains: query, mode: "insensitive" } },
-        { description: { contains: query, mode: "insensitive" } },
-        { tags: { hasSome: query.toLowerCase().split(/\s+/) } },
-      ]
+      const stopWords = new Set(['and', 'or', 'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'this', 'that'])
+      const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w))
+      
+      if (queryWords.length === 0) {
+        queryWords.push(query)
+      }
+      
+      where.AND = queryWords.map(word => ({
+        OR: [
+          { originalFilename: { contains: word, mode: "insensitive" } },
+          { description: { contains: word, mode: "insensitive" } },
+          { tags: { hasSome: [word] } },
+          { subject: { name: { contains: word, mode: "insensitive" } } },
+          { subject: { code: { contains: word, mode: "insensitive" } } }
+        ]
+      }))
     }
 
     if (subjectId) where.subjectId = subjectId

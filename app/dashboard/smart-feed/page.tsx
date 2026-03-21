@@ -1,5 +1,6 @@
-import { ForYouFeed } from "@/components/dashboard/for-you-feed"
-import { TrendingResources } from "@/components/dashboard/trending-resources"
+import { Suspense } from "react"
+import { SearchRecommendationsWrapper } from "@/components/dashboard/search-recommendations-wrapper"
+import { SmartFeedSearch } from "@/components/dashboard/smart-feed-search"
 import { Sparkles } from "lucide-react"
 
 export const dynamic = "force-dynamic"
@@ -25,18 +26,17 @@ export default function SmartFeedPage() {
         </span>
       </div>
 
-      {/* Main content */}
-      <div className="grid gap-5 lg:grid-cols-[1fr_320px] items-start">
-        {/* Left: For You Feed */}
-        <div className="space-y-5">
-          <ForYouFeed />
-        </div>
+      {/* Smart Feed Search — AI triggers ONLY from here */}
+      <Suspense fallback={null}>
+        <SmartFeedSearch />
+      </Suspense>
 
-        {/* Right: Trending */}
-        <div className="space-y-5">
-          <TrendingResources />
-        </div>
-      </div>
+      {/* Search Recommendations (shown when ?q= param exists) */}
+      <Suspense fallback={null}>
+        <SearchRecommendationsWrapper />
+      </Suspense>
+
+      {/* Main content - now just holds empty whitespace if needed or removed */}
     </div>
   )
 }

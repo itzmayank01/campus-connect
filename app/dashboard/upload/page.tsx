@@ -23,6 +23,7 @@ const typeLabels: Record<string, string> = {
   question_papers: "Question Paper",
   videos: "Video",
   reference: "Reference",
+  syllabus: "Syllabus",
 }
 
 const typeColors: Record<string, string> = {
@@ -30,6 +31,7 @@ const typeColors: Record<string, string> = {
   question_papers: "bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]/50",
   videos: "bg-[#F0FDF4] text-[#059669] border-[#A7F3D0]/50",
   reference: "bg-[#F5F3FF] text-[#7C3AED] border-[#C4B5FD]/50",
+  syllabus: "bg-[#F1F5F9] text-[#475569] border-[#E2E8F0]/50",
 }
 
 const formatColors: Record<string, string> = {

@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Upload, FileText, Check, AlertCircle, Loader2, ArrowLeft, Play, Link2 } from "lucide-react"
+import { ModerationProgress } from "@/components/dashboard/moderation-progress"
 
 interface SubjectOption {
   id: string
@@ -55,6 +56,7 @@ function extractYouTubeInfo(url: string): { type: "video" | "playlist"; videoId?
 
 export default function UploadNewPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [subjects, setSubjects] = useState<SubjectOption[]>([])
 
   const [selectedSemester, setSelectedSemester] = useState("")
@@ -72,7 +74,16 @@ export default function UploadNewPage() {
   const [youtubeUrl, setYoutubeUrl] = useState("")
   const [youtubeMetadata, setYoutubeMetadata] = useState<YoutubeMetadata | null>(null)
   const [fetchingMetadata, setFetchingMetadata] = useState(false)
-  
+
+  // Moderation state
+  const [moderationVisible, setModerationVisible] = useState(false)
+  const [moderationSteps, setModerationSteps] = useState<Array<{id: string; label: string; status: "pending" | "running" | "done" | "failed"; message?: string}>>([])
+  const [moderationPassed, setModerationPassed] = useState<boolean | null>(null)
+  const [moderationReason, setModerationReason] = useState<string | undefined>()
+  const [moderationTags, setModerationTags] = useState<string[] | undefined>()
+  const [moderationDuplicates, setModerationDuplicates] = useState<any[] | undefined>()
+  const [moderationRejection, setModerationRejection] = useState<any | undefined>()
+
   const filteredSubjects = selectedSemester 
     ? subjects.filter((s) => s.semesterNumber?.toString() === selectedSemester)
     : []
@@ -86,11 +97,24 @@ export default function UploadNewPage() {
       .then((data) => {
         if (Array.isArray(data)) {
           setSubjects(data)
-          if (data.length > 0) setSelectedSubject(data[0].id)
+          
+          // Pre-fill from query params if available
+          const subId = searchParams.get('subjectId')
+          const type = searchParams.get('type')
+          
+          if (subId) {
+            setSelectedSubject(subId)
+            const sub = data.find(s => s.id === subId)
+            if (sub && sub.semesterNumber) setSelectedSemester(sub.semesterNumber.toString())
+          } else if (data.length > 0) {
+            setSelectedSubject(data[0].id)
+          }
+
+          if (type) setFileType(type.toLowerCase())
         }
       })
       .catch(() => {})
-  }, [])
+  }, [searchParams])
 
   // Fetch YouTube metadata when URL changes
   useEffect(() => {
@@ -216,7 +240,7 @@ export default function UploadNewPage() {
       return
     }
 
-    // File upload
+    // File upload with moderation pipeline
     if (!selectedFile || !selectedSemester || !selectedSubject || !title) {
       setUploadStatus("error")
       setUploadMessage("Please fill all fields and select a file")
@@ -226,6 +250,23 @@ export default function UploadNewPage() {
     setUploading(true)
     setUploadStatus("idle")
 
+    // Show moderation progress UI
+    const initialSteps = [
+      { id: "file_type", label: "File type verification", status: "running" as const },
+      { id: "upload_s3", label: "Uploading to secure storage", status: "pending" as const },
+      { id: "relevance", label: "Checking content relevance", status: "pending" as const },
+      { id: "safety", label: "Safety check", status: "pending" as const },
+      { id: "duplicate", label: "Duplicate detection", status: "pending" as const },
+      { id: "save", label: "Saving resource", status: "pending" as const },
+    ]
+    setModerationSteps(initialSteps)
+    setModerationPassed(null)
+    setModerationReason(undefined)
+    setModerationTags(undefined)
+    setModerationDuplicates(undefined)
+    setModerationRejection(undefined)
+    setModerationVisible(true)
+
     try {
       const formData = new FormData()
       formData.append("file", selectedFile)
@@ -234,25 +275,39 @@ export default function UploadNewPage() {
       formData.append("semester", selectedSemester)
       formData.append("type", fileType)
 
-      const res = await fetch("/api/upload", {
+      const res = await fetch("/api/upload/moderate", {
         method: "POST",
         body: formData,
       })
 
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.details || err.error || "Failed to upload file")
+      const data = await res.json()
+
+      // Update steps from response
+      if (data.steps) {
+        setModerationSteps(data.steps)
       }
 
-      setUploadStatus("success")
-      setUploadMessage(`"${title}" uploaded successfully!`)
-      setSelectedFile(null)
-      setTitle("")
-      if (fileInputRef.current) fileInputRef.current.value = ""
-
-      // Redirect to Your Uploads after 1.5s
-      setTimeout(() => router.push("/dashboard/upload"), 1500)
+      if (data.passed) {
+        setModerationPassed(true)
+        setModerationTags(data.tags)
+        setModerationDuplicates(data.duplicates)
+        setUploadStatus("success")
+        setUploadMessage(`"${title}" uploaded successfully!`)
+        setSelectedFile(null)
+        setTitle("")
+        if (fileInputRef.current) fileInputRef.current.value = ""
+      } else if (data.error) {
+        throw new Error(data.details || data.error)
+      } else {
+        setModerationPassed(false)
+        setModerationReason(data.reason)
+        setModerationRejection(data.rejection)
+        setUploadStatus("error")
+        setUploadMessage(data.reason || "Upload was not approved")
+      }
     } catch (error: unknown) {
+      setModerationPassed(false)
+      setModerationReason(error instanceof Error ? error.message : "Upload failed")
       setUploadStatus("error")
       setUploadMessage(error instanceof Error ? error.message : "Upload failed")
     } finally {
@@ -346,6 +401,7 @@ export default function UploadNewPage() {
                 { value: "question_papers", label: "Question Paper" },
                 { value: "videos", label: "Video" },
                 { value: "reference", label: "Reference" },
+                { value: "syllabus", label: "Syllabus" },
               ].map((opt) => (
                 <button
                   key={opt.value}
@@ -534,6 +590,31 @@ export default function UploadNewPage() {
           </button>
         </div>
       </div>
+
+      {/* Moderation Progress Overlay */}
+      <ModerationProgress
+        visible={moderationVisible}
+        steps={moderationSteps}
+        passed={moderationPassed}
+        reason={moderationReason}
+        tags={moderationTags}
+        duplicates={moderationDuplicates}
+        rejection={moderationRejection}
+        onClose={() => {
+          setModerationVisible(false)
+          if (moderationPassed) {
+            setTimeout(() => router.push("/dashboard/upload"), 500)
+          }
+        }}
+        onUploadAnyway={() => {
+          setModerationVisible(false)
+          setModerationDuplicates(undefined)
+        }}
+        onChangeSubject={() => {
+          setModerationVisible(false)
+          setSelectedSubject("")
+        }}
+      />
     </div>
   )
 }

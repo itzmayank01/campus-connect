@@ -2,11 +2,14 @@
 
 import { useState, useEffect, use } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   FileText, Video, HelpCircle, BookOpen, Download, Eye, Heart,
   Star, ArrowLeft, Loader2, Upload, ExternalLink, Play, Archive, Clock,
 } from "lucide-react"
+import { AiSummaryPanel } from "@/components/dashboard/ai-summary-panel"
+import { ExamPredictor } from "@/components/dashboard/exam-predictor"
+import { CourseOverview } from "@/components/dashboard/course-overview"
 
 interface ResourceData {
   id: string
@@ -57,10 +60,12 @@ const typeLabels: Record<string, string> = {
   QUESTION_PAPERS: "Question Papers", question_papers: "Question Papers",
   VIDEOS: "Videos", videos: "Videos",
   REFERENCE: "Reference", reference: "Reference",
+  SYLLABUS: "Syllabus", syllabus: "Syllabus",
 }
 
 const tabs = [
   { label: "All", value: "all", icon: BookOpen },
+  { label: "Syllabus", value: "syllabus", icon: FileText },
   { label: "Notes", value: "notes", icon: FileText },
   { label: "Question Papers", value: "question_papers", icon: HelpCircle },
   { label: "Videos", value: "videos", icon: Video },
@@ -80,6 +85,9 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({})
   const [ratingMap, setRatingMap] = useState<Record<string, number>>({})
   const [hoverRating, setHoverRating] = useState<Record<string, number>>({})
+
+  const searchParams = useSearchParams()
+  const highlightId = searchParams?.get("highlight")
 
   useEffect(() => {
     fetch(`/api/subjects/${resolvedParams.subjectId}/resources`)
@@ -103,6 +111,18 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [resolvedParams.subjectId])
+
+  useEffect(() => {
+    if (!loading && highlightId) {
+       // Allow DOM to settle before smooth scrolling
+       setTimeout(() => {
+          const el = document.getElementById(`resource-${highlightId}`)
+          if (el) {
+             el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+       }, 500)
+    }
+  }, [loading, highlightId])
 
   const handleLike = async (resourceId: string) => {
     try {
@@ -170,6 +190,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
   // Filter resources by tab
   const getFilteredResources = () => {
     const typeMap: Record<string, string[]> = {
+      syllabus: ["SYLLABUS"],
       notes: ["NOTES"],
       question_papers: ["QUESTION_PAPERS"],
       videos: ["VIDEOS"],
@@ -194,6 +215,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
   // Tab counts
   const tabCounts: Record<string, number> = {
     all: allTotal,
+    syllabus: resources.filter((r) => r.resourceType === "SYLLABUS").length + notes.filter((n) => n.type === "syllabus").length,
     notes: resources.filter((r) => r.resourceType === "NOTES").length + notes.filter((n) => n.type === "notes").length,
     question_papers: resources.filter((r) => r.resourceType === "QUESTION_PAPERS").length + notes.filter((n) => n.type === "question_papers").length,
     videos: resources.filter((r) => r.resourceType === "VIDEOS").length + notes.filter((n) => n.type === "videos").length,
@@ -275,6 +297,16 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
         </div>
       )}
 
+      {/* Course Overview & Syllabus Extraction */}
+      {subject && (
+        <CourseOverview subjectId={subject.id} subjectName={subject.name} />
+      )}
+
+      {/* Exam Question Predictor */}
+      {subject && (
+        <ExamPredictor subjectId={subject.id} subjectName={subject.name} />
+      )}
+
       {/* Type Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1">
         {tabs.map((tab) => (
@@ -295,11 +327,21 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
 
       {/* Resources List */}
       <div className="space-y-3">
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes highlightPulse {
+            0%, 100% { background: #EFF6FF; border-color: #3B82F6; }
+            50% { background: #DBEAFE; border-color: #1D4ED8; }
+          }
+        `}} />
         {/* Resource entries from resources table */}
         {filteredResources.map((resource) => (
           <div
+            id={`resource-${resource.id}`}
             key={resource.id}
-            className="rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 group"
+            className={`rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 group ${
+              highlightId === resource.id ? 'animate-highlightPulse' : ''
+            }`}
+            style={highlightId === resource.id ? { animation: 'highlightPulse 1s ease 2' } : {}}
           >
             {resource.mimeType === "youtube" ? (
               /* YouTube Resource Card */
@@ -505,6 +547,9 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
                       )}
                     </div>
                   </div>
+                  {(resource.mimeType?.includes("pdf") || resource.mimeType?.includes("zip") || resource.originalFilename?.toLowerCase().endsWith(".zip") || resource.originalFilename?.toLowerCase().endsWith(".pdf")) && (
+                    <AiSummaryPanel resourceId={resource.id} />
+                  )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
                   {resource.mimeType?.includes("pdf") && (
@@ -537,8 +582,12 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
         {/* Legacy notes */}
         {filteredNotes.map((note) => (
           <div
+            id={`resource-${note.id}`}
             key={note.id}
-            className="rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 group"
+            className={`rounded-2xl bg-white border border-[#F1F5F9] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-all duration-200 group ${
+              highlightId === note.id ? 'animate-highlightPulse' : ''
+            }`}
+             style={highlightId === note.id ? { animation: 'highlightPulse 1s ease 2' } : {}}
           >
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#F1F3F9]">

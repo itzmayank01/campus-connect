@@ -38,6 +38,18 @@ export async function POST(request: Request) {
       },
     })
 
+    // Safely seed leaderboard row tracking
+    await prisma.userStreak.upsert({
+      where: { userId: dbUser.id },
+      update: {},
+      create: {
+        userId: dbUser.id,
+        currentStreak: 1,
+        flameScore: 0,
+        flameLevel: "Starter Flame"
+      }
+    })
+
     return NextResponse.json({
       success: true,
       role: dbUser.role.toLowerCase(),

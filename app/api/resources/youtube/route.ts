@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
       question_papers: "QUESTION_PAPERS",
       videos: "VIDEOS",
       reference: "REFERENCE",
+      syllabus: "SYLLABUS",
     }
 
     const resource = await prisma.resource.create({
