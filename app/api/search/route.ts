@@ -25,19 +25,22 @@ export async function GET(request: NextRequest) {
     const where: any = { deletedAt: null, isPublic: true }
 
     if (query) {
-      const queryWords = query.toLowerCase().split(/\s+/).filter(Boolean)
-      where.OR = [
-        { originalFilename: { contains: query, mode: "insensitive" } },
-        { description: { contains: query, mode: "insensitive" } },
-        { tags: { hasSome: queryWords } },
-        // Also search by subject name and code so "containerization", "devops", etc. match
-        { subject: { name: { contains: query, mode: "insensitive" } } },
-        { subject: { code: { contains: query, mode: "insensitive" } } },
-        // Match individual words against subject name for multi-word queries
-        ...queryWords.map((word) => ({
-          subject: { name: { contains: word, mode: "insensitive" as const } },
-        })),
-      ]
+      const stopWords = new Set(['and', 'or', 'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'this', 'that'])
+      const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w))
+      
+      if (queryWords.length === 0) {
+        queryWords.push(query)
+      }
+      
+      where.AND = queryWords.map(word => ({
+        OR: [
+          { originalFilename: { contains: word, mode: "insensitive" } },
+          { description: { contains: word, mode: "insensitive" } },
+          { tags: { hasSome: [word] } },
+          { subject: { name: { contains: word, mode: "insensitive" } } },
+          { subject: { code: { contains: word, mode: "insensitive" } } }
+        ]
+      }))
     }
 
     if (subjectId) where.subjectId = subjectId

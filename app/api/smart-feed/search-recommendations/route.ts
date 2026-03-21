@@ -45,27 +45,28 @@ export async function GET(request: NextRequest) {
     const searchCount = Number(searchCountResult[0]?.total_count || 0)
 
     // Find all matching resources
-    const queryWords = query.split(/\s+/).filter(Boolean)
+    const stopWords = new Set(['and', 'or', 'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'this', 'that'])
+    const queryWords = query.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w.toLowerCase()))
+    
+    // If query was literally "and" or just stopwords, fallback to the exact original query
+    if (queryWords.length === 0) {
+      queryWords.push(query)
+    }
+
     const resources = await prisma.resource.findMany({
       where: {
         deletedAt: null,
         isPublic: true,
-        OR: [
-          ...queryWords.map((word) => ({
-            originalFilename: { contains: word, mode: "insensitive" as const },
-          })),
-          ...queryWords.map((word) => ({
-            description: { contains: word, mode: "insensitive" as const },
-          })),
-          ...queryWords.map((word) => ({
-            subject: { name: { contains: word, mode: "insensitive" as const } },
-          })),
-          ...queryWords.map((word) => ({
-            subject: { code: { contains: word, mode: "insensitive" as const } },
-          })),
-          { tags: { hasSome: queryWords } },
-          { aiTags: { hasSome: queryWords } },
-        ],
+        AND: queryWords.map((word) => ({
+          OR: [
+            { originalFilename: { contains: word, mode: "insensitive" as const } },
+            { description: { contains: word, mode: "insensitive" as const } },
+            { subject: { name: { contains: word, mode: "insensitive" as const } } },
+            { subject: { code: { contains: word, mode: "insensitive" as const } } },
+            { tags: { hasSome: [word] } },
+            { aiTags: { hasSome: [word] } },
+          ],
+        })),
       },
       include: {
         subject: { select: { id: true, name: true, code: true } },
