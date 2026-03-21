@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
           u.id as user_id,
           u.name as full_name,
           u.email,
-          u.image as avatar_url,
+          COALESCE(u.avatar_url, u.image) as avatar_url,
           
           COALESCE(us.flame_score, 0)::int as flame_score,
           COALESCE(us.flame_level, 'Starter Flame') as flame_level,

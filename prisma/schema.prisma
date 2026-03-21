@@ -40,19 +40,26 @@ enum ActivityType {
 }
 
 model User {
-  id         String     @id @default(uuid())
-  supabaseId String?    @unique @map("supabase_id")
-  name       String?
-  email      String     @unique
-  password   String?
-  image      String?
-  role       Role       @default(STUDENT)
-  facultyId  String?    @map("faculty_id")
-  department String?
-  impactScore Int       @default(0) @map("impact_score")
-  facultyRank String    @default("Contributor") @map("faculty_rank")
-  createdAt  DateTime   @default(now()) @map("created_at")
-  updatedAt  DateTime   @updatedAt @map("updated_at")
+  id              String     @id @default(uuid())
+  supabaseId      String?    @unique @map("supabase_id")
+  name            String?
+  email           String     @unique
+  username        String?    @unique
+  password        String?
+  image           String?
+  avatarUrl       String?    @map("avatar_url")
+  role            Role       @default(STUDENT)
+  facultyId       String?    @map("faculty_id")
+  department      String?
+  semester        Int?
+  branch          String?
+  bio             String?
+  userIdDisplay   String?    @unique @map("user_id_display")
+  userNumber      Int        @default(autoincrement()) @map("user_number")
+  impactScore     Int        @default(0) @map("impact_score")
+  facultyRank     String     @default("Contributor") @map("faculty_rank")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
 
   notes              Note[]              @relation("UploadedNotes")
   bookmarks          Bookmark[]
