@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 
-// GET /api/leaderboard?period=week|month|all
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -13,120 +12,193 @@ export async function GET(request: NextRequest) {
     }
 
     const period = request.nextUrl.searchParams.get("period") || "week"
+    const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
+    const currentUserId = dbUser?.id
 
-    // Determine the sort field based on period
-    const pointsField = period === "week"
-      ? "pointsThisWeek"
-      : period === "month"
-        ? "pointsThisMonth"
-        : "pointsAllTime"
+    let dateFilterQuery = ""
+    if (period === "week") {
+      dateFilterQuery = ">= DATE_TRUNC('week', NOW())"
+    } else if (period === "month") {
+      dateFilterQuery = ">= DATE_TRUNC('month', NOW())"
+    } // "all" has no date filter
 
-    // Get top 15 users by points for the period
-    const topUsers = await prisma.userStreak.findMany({
-      orderBy: { [pointsField]: "desc" },
-      take: 15,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            supabaseId: true,
-          },
-        },
-      },
-    })
+    // Execute the massive combined raw query matching the user's exact specifications
+    const query = `
+      WITH leaderboard_cte AS (
+        SELECT 
+          u.id as user_id,
+          u.name as full_name,
+          u.email,
+          u.image as avatar_url,
+          
+          COALESCE(us.flame_score, 0)::int as flame_score,
+          COALESCE(us.flame_level, 'Starter Flame') as flame_level,
+          COALESCE(us.current_streak, 0)::int as current_streak,
+          COALESCE(us.longest_streak, 0)::int as longest_streak,
+          
+          COALESCE(upload_stats.upload_count, 0)::int as upload_count,
+          COALESCE(download_stats.downloads_received, 0)::int as downloads_received,
+          COALESCE(like_stats.likes_received, 0)::int as likes_received,
+          
+          ${period === "all" 
+            ? "COALESCE(us.flame_score, 0)::int" 
+            : `(
+                COALESCE(upload_stats.uploads_this_period, 0) * 5 +
+                COALESCE(download_stats.downloads_this_period, 0) * 1 +
+                COALESCE(like_stats.likes_this_period, 0) * 3 +
+                COALESCE(us.current_streak, 0) * 1
+              )::int`
+          } as points_this_period,
+          
+          RANK() OVER (
+            ORDER BY (
+              ${period === "all" 
+                ? "COALESCE(us.flame_score, 0)" 
+                : `(
+                    COALESCE(upload_stats.uploads_this_period, 0)*5 +
+                    COALESCE(download_stats.downloads_this_period, 0)*1 +
+                    COALESCE(like_stats.likes_this_period, 0)*3 +
+                    COALESCE(us.current_streak, 0)*1
+                  )`
+              }
+            ) DESC,
+            u.created_at ASC
+          )::int as rank
+          
+        FROM users u
+        
+        LEFT JOIN user_streaks us 
+          ON u.id = us.user_id
+        
+        LEFT JOIN (
+          SELECT 
+            uploader_id,
+            COUNT(*) as upload_count,
+            COUNT(*) FILTER (
+              WHERE deleted_at IS NULL
+              ${dateFilterQuery ? `AND created_at ${dateFilterQuery}` : ""}
+            ) as uploads_this_period
+          FROM resources
+          WHERE is_public = true AND deleted_at IS NULL
+          GROUP BY uploader_id
+        ) upload_stats ON u.id = upload_stats.uploader_id
+        
+        LEFT JOIN (
+          SELECT 
+            r.uploader_id,
+            COUNT(rd.id) as downloads_received,
+            COUNT(rd.id) FILTER (
+              WHERE 1=1
+              ${dateFilterQuery ? `AND rd.downloaded_at ${dateFilterQuery}` : ""}
+            ) as downloads_this_period
+          FROM resource_downloads rd
+          JOIN resources r ON rd.resource_id = r.id
+          WHERE r.is_public = true AND r.deleted_at IS NULL
+          GROUP BY r.uploader_id
+        ) download_stats ON u.id = download_stats.uploader_id
+        
+        LEFT JOIN (
+          SELECT 
+            r.uploader_id,
+            COUNT(rl.id) as likes_received,
+            COUNT(rl.id) FILTER (
+              WHERE 1=1
+              ${dateFilterQuery ? `AND rl.created_at ${dateFilterQuery}` : ""}
+            ) as likes_this_period
+          FROM resource_likes rl
+          JOIN resources r ON rl.resource_id = r.id
+          WHERE r.is_public = true AND r.deleted_at IS NULL
+          GROUP BY r.uploader_id
+        ) like_stats ON u.id = like_stats.uploader_id
+        
+        WHERE u.role = 'STUDENT'
+        AND (
+          upload_stats.upload_count > 0
+          OR us.current_streak > 0
+          OR us.flame_score > 0
+        )
+      )
+      SELECT * FROM leaderboard_cte
+      ORDER BY points_this_period DESC, flame_score DESC
+    `
 
-    // Get upload counts for these users
-    const userIds = topUsers.map((s) => s.userId)
-    const uploadCounts = await prisma.resource.groupBy({
-      by: ["uploaderId"],
-      where: { uploaderId: { in: userIds }, deletedAt: null },
-      _count: { id: true },
-    })
-    const uploadMap = new Map(uploadCounts.map((u) => [u.uploaderId, u._count.id]))
+    const rows = await prisma.$queryRawUnsafe<any[]>(query)
 
-    // Get today's points for each user
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const dailyActivities = await prisma.dailyActivity.findMany({
-      where: {
-        userId: { in: userIds },
-        activityDate: today,
-      },
-      select: { userId: true, totalPointsToday: true },
-    })
-    const todayPointsMap = new Map(dailyActivities.map((d) => [d.userId, d.totalPointsToday]))
-
-    // Build leaderboard entries
-    const leaderboard = topUsers.map((streak, index) => {
-      const uploads = uploadMap.get(streak.userId) || 0
-      const todayPts = todayPointsMap.get(streak.userId) || 0
-
-      // Assign badges
-      let badge = null
-      if (uploads >= 20) badge = { emoji: "⭐", label: "Top Uploader", color: "#F59E0B" }
-      else if (streak.currentStreak >= 7) badge = { emoji: "🔥", label: "On Fire", color: "#F97316" }
-      else if ((streak as any)[pointsField] >= 200) badge = { emoji: "📚", label: "Study King", color: "#4F8EF7" }
-
+    // Build the format according to the spec
+    const leaderboard = rows.slice(0, 15).map(row => {
+      const isCurrent = row.user_id === currentUserId
       return {
-        rank: index + 1,
-        userId: streak.userId,
-        name: streak.user.name || streak.user.email.split("@")[0],
-        username: streak.user.email.split("@")[0],
-        avatar: streak.user.image,
-        supabaseId: streak.user.supabaseId,
-        currentStreak: streak.currentStreak,
-        flameLevel: streak.flameLevel,
-        flameScore: streak.flameScore,
-        points: (streak as any)[pointsField] as number,
-        pointsToday: todayPts,
-        uploads,
-        badge,
-        rankChange: 0, // TODO: compute vs last week
+        rank: row.rank,
+        user_id: row.user_id,
+        full_name: row.full_name || row.email.split("@")[0],
+        initials: (row.full_name || row.email).split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
+        avatar_url: row.avatar_url,
+        flame_score: row.flame_score,
+        flame_level: row.flame_level,
+        current_streak: row.current_streak,
+        upload_count: row.upload_count,
+        downloads_received: row.downloads_received,
+        likes_received: row.likes_received,
+        points_this_period: row.points_this_period,
+        is_current_user: isCurrent
       }
     })
 
-    // Find current user's rank
-    const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
-    let myRank = null
-    if (dbUser) {
-      const myStreak = await prisma.userStreak.findUnique({ where: { userId: dbUser.id } })
-      if (myStreak) {
-        const myPoints = (myStreak as any)[pointsField] as number
-        const higherCount = await prisma.userStreak.count({
-          where: { [pointsField]: { gt: myPoints } },
-        })
-        const rank = higherCount + 1
-        const myUploads = await prisma.resource.count({
-          where: { uploaderId: dbUser.id, deletedAt: null },
-        })
+    // Current user rank
+    let current_user = null
+    const myRow = rows.find(r => r.user_id === currentUserId)
 
-        // Gap to rank 15
-        const rank15Points = leaderboard.length >= 15 ? leaderboard[14].points : 0
-        const gapToTop15 = rank > 15 ? rank15Points - myPoints + 1 : 0
-
-        myRank = {
-          rank,
-          userId: dbUser.id,
-          name: dbUser.name || dbUser.email.split("@")[0],
-          username: dbUser.email.split("@")[0],
-          avatar: dbUser.image,
-          currentStreak: myStreak.currentStreak,
-          flameLevel: myStreak.flameLevel,
-          flameScore: myStreak.flameScore,
-          points: myPoints,
-          uploads: myUploads,
-          gapToTop15,
+    if (myRow) {
+      const myRank = myRow.rank
+      let points_to_next_rank = 0
+      let uploads_to_climb = 0
+      
+      if (myRank > 1) {
+        const higherUser = rows.find(r => r.rank === myRank - 1)
+        if (higherUser) {
+          points_to_next_rank = higherUser.points_this_period - myRow.points_this_period + 1
+          uploads_to_climb = Math.ceil(points_to_next_rank / 5.0)
         }
+      }
+
+      let motivational_tip = "Keep building your streak daily"
+      if (points_to_next_rank === 0) motivational_tip = "You're at the top! 🏆"
+      else if (points_to_next_rank <= 20) motivational_tip = "So close! One upload gets you there"
+      else if (points_to_next_rank <= 50) motivational_tip = `Upload ${uploads_to_climb} files this week`
+
+      current_user = {
+        rank: myRank,
+        points: myRow.points_this_period,
+        flame_level: myRow.flame_level,
+        current_streak: myRow.current_streak,
+        points_to_next_rank,
+        next_rank_user: null, // Just hiding identity
+        uploads_to_climb,
+        motivational_tip
+      }
+    } else if (currentUserId) {
+      // User is registered but has NO activity -> not in the rows array
+      current_user = {
+        rank: null,
+        points: 0,
+        flame_level: "Starter Flame",
+        current_streak: 0,
+        points_to_next_rank: 5,
+        uploads_to_climb: 1,
+        motivational_tip: "Upload your first resource to earn points and appear in rankings!"
       }
     }
 
-    // Total students with streaks
-    const totalStudents = await prisma.userStreak.count()
+    const totalStudents = rows.length
 
-    return NextResponse.json({ leaderboard, myRank, totalStudents })
+    return NextResponse.json({
+      leaderboard,
+      current_user,
+      total_students: totalStudents,
+      period,
+      last_updated: new Date().toISOString()
+    })
+
   } catch (error: any) {
     console.error("Leaderboard error:", error)
     return NextResponse.json(

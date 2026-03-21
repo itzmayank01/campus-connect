@@ -95,6 +95,62 @@ export async function POST(request: NextRequest) {
       include: { subject: true },
     })
 
+    try {
+      // Leaderboard / Streak / Activity Hooks
+      const actDate = new Date()
+      actDate.setHours(0, 0, 0, 0)
+      
+      const currentStreak = await prisma.userStreak.findUnique({ where: { userId: dbUser.id } })
+      const currentScore = (currentStreak?.flameScore || 0) + 5
+      let flameLevel = 'Starter Flame'
+      if (currentScore >= 500) flameLevel = 'Legend Flame'
+      else if (currentScore >= 300) flameLevel = 'Inferno'
+      else if (currentScore >= 150) flameLevel = 'Raging Flame'
+      else if (currentScore >= 50) flameLevel = 'Growing Flame'
+
+      await prisma.userStreak.upsert({
+        where: { userId: dbUser.id },
+        update: { flameScore: currentScore, flameLevel },
+        create: { userId: dbUser.id, flameScore: currentScore, flameLevel }
+      })
+
+      await prisma.activityEvent.create({
+        data: {
+          userId: dbUser.id,
+          eventType: "UPLOAD",
+          pointsEarned: 5,
+          activityDate: new Date()
+        }
+      })
+
+      const daily = await prisma.dailyActivity.findUnique({
+        where: { userId_activityDate: { userId: dbUser.id, activityDate: actDate } }
+      })
+
+      if (daily) {
+        await prisma.dailyActivity.update({
+          where: { id: daily.id },
+          data: {
+             uploadCount: { increment: 1 },
+             pointsFromUploads: { increment: 5 },
+             totalPointsToday: { increment: 5 }
+          }
+        })
+      } else {
+        await prisma.dailyActivity.create({
+          data: {
+             userId: dbUser.id,
+             activityDate: actDate,
+             uploadCount: 1,
+             pointsFromUploads: 5,
+             totalPointsToday: 5
+          }
+        })
+      }
+    } catch (e) {
+      console.warn("Failed to safely update streaks/points logic during upload", e)
+    }
+
     return NextResponse.json({
       success: true,
       noteId: resource.id, // mapped exactly to avoid breaking client API expectations
