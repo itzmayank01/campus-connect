@@ -1,0 +1,32 @@
+﻿lib/prisma.ts(24,32): error TS2345: Argument of type 'Pool' is not assignable to parameter of type 'Pool | PoolConfig'.
+  Type 'import("C:/Users/HP/Desktop/campus-connect/node_modules/@types/pg/index").Pool' is not assignable to type 'import("C:/Users/HP/Desktop/campus-connect/node_modules/@prisma/adapter-pg/node_modules/@types/pg/index").Pool'.
+    The types of 'options.Client' are incompatible between these types.
+      Type '(new () => import("C:/Users/HP/Desktop/campus-connect/node_modules/@types/pg/index").ClientBase) | undefined' is not assignable to type '(new () => import("C:/Users/HP/Desktop/campus-connect/node_modules/@prisma/adapter-pg/node_modules/@types/pg/index").ClientBase) | undefined'.
+        Type 'new () => import("C:/Users/HP/Desktop/campus-connect/node_modules/@types/pg/index").ClientBase' is not assignable to type 'new () => import("C:/Users/HP/Desktop/campus-connect/node_modules/@prisma/adapter-pg/node_modules/@types/pg/index").ClientBase'.
+          Construct signature return types 'ClientBase' and 'ClientBase' are incompatible.
+            The types returned by 'connect()' are incompatible between these types.
+              Type 'Promise<ClientBase>' is not assignable to type 'Promise<void>'.
+                Type 'ClientBase' is not assignable to type 'void'.
+lib/studyToolPipeline.ts(10,8): error TS1192: Module '"C:/Users/HP/Desktop/campus-connect/node_modules/pdf-parse/dist/pdf-parse/esm/index"' has no default export.
+prisma/seed.ts(10,32): error TS2345: Argument of type 'Pool' is not assignable to parameter of type 'Pool | PoolConfig'.
+  Type 'import("C:/Users/HP/Desktop/campus-connect/node_modules/@types/pg/index").Pool' is not assignable to type 'import("C:/Users/HP/Desktop/campus-connect/node_modules/@prisma/adapter-pg/node_modules/@types/pg/index").Pool'.
+    The types of 'options.Client' are incompatible between these types.
+      Type '(new () => import("C:/Users/HP/Desktop/campus-connect/node_modules/@types/pg/index").ClientBase) | undefined' is not assignable to type '(new () => import("C:/Users/HP/Desktop/campus-connect/node_modules/@prisma/adapter-pg/node_modules/@types/pg/index").ClientBase) | undefined'.
+        Type 'new () => import("C:/Users/HP/Desktop/campus-connect/node_modules/@types/pg/index").ClientBase' is not assignable to type 'new () => import("C:/Users/HP/Desktop/campus-connect/node_modules/@prisma/adapter-pg/node_modules/@types/pg/index").ClientBase'.
+          Construct signature return types 'ClientBase' and 'ClientBase' are incompatible.
+            The types returned by 'connect()' are incompatible between these types.
+              Type 'Promise<ClientBase>' is not assignable to type 'Promise<void>'.
+                Type 'ClientBase' is not assignable to type 'void'.
+workers/studyToolWorker.ts(112,5): error TS2353: Object literal may only specify known properties, and 'defaultJobOptions' does not exist in type 'WorkerOptions'.
+workers/tools/audioOverviewGenerator.ts(75,18): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(value: void | PromiseLike<void>) => void' is not assignable to parameter of type '(stdout: string | null, stderr: string | null) => void'.
+      Types of parameters 'value' and 'stdout' are incompatible.
+        Type 'string | null' is not assignable to type 'void | PromiseLike<void>'.
+          Type 'null' is not assignable to type 'void | PromiseLike<void>'.
+workers/tools/audioOverviewGenerator.ts(96,18): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(value: void | PromiseLike<void>) => void' is not assignable to parameter of type '(stdout: string | null, stderr: string | null) => void'.
+      Types of parameters 'value' and 'stdout' are incompatible.
+        Type 'string | null' is not assignable to type 'void | PromiseLike<void>'.
+          Type 'null' is not assignable to type 'void | PromiseLike<void>'.

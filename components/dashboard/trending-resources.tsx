@@ -165,8 +165,8 @@ export function TrendingResources() {
               transition={{ duration: 0.25, delay: index * 0.06 }}
             >
               <Link
-                href={`/dashboard/subjects/${resource.subject.id}`}
-                className="group flex items-center gap-2.5 rounded-lg p-2 transition-all duration-150 hover:bg-[#FFF7ED] cursor-pointer"
+                href={`/dashboard/study-materials/${resource.id}`}
+                className="group flex items-center gap-2.5 rounded-lg p-2 transition-all duration-150 hover:bg-[#FFF7ED] cursor-pointer no-underline text-inherit"
               >
                 <TrendingBadge rank={index + 1} />
 

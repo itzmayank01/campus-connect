@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Sparkles, Download, Heart, TrendingUp, ExternalLink, User, Flame, Star } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import Link from "next/link"
 
 interface Recommendation {
   resourceId: string
@@ -156,74 +157,78 @@ export function ForYouFeed() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="group flex items-center justify-between rounded-xl p-3 transition-all duration-150 hover:bg-[#F8FAFC] cursor-pointer"
               >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {/* Type icon */}
-                  <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200 group-hover:scale-105"
-                    style={{ backgroundColor: typeStyle.bg, border: `1px solid ${typeStyle.border}` }}
-                  >
-                    <span className="text-lg">
-                      {rec.resource.resourceType === "NOTES" ? "📄" :
-                       rec.resource.resourceType === "QUESTION_PAPERS" ? "📝" :
-                       rec.resource.resourceType === "VIDEOS" ? "🎬" : "📚"}
-                    </span>
-                  </div>
-
-                  {/* Info */}
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-medium text-[#0F1117] truncate">
-                      {rec.resource.filename}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                      <span
-                        className="rounded-md px-1.5 py-0.5 text-[10px] font-bold"
-                        style={{
-                          backgroundColor: typeStyle.bg,
-                          color: typeStyle.text,
-                          border: `1px solid ${typeStyle.border}`,
-                        }}
-                      >
-                        {rec.resource.subject.code}
+                <Link
+                  href={`/dashboard/study-materials/${rec.resource.id}`}
+                  className="group flex items-center justify-between rounded-xl p-3 transition-all duration-150 hover:bg-[#F8FAFC] cursor-pointer no-underline text-inherit"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {/* Type icon */}
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200 group-hover:scale-105"
+                      style={{ backgroundColor: typeStyle.bg, border: `1px solid ${typeStyle.border}` }}
+                    >
+                      <span className="text-lg">
+                        {rec.resource.resourceType === "NOTES" ? "📄" :
+                         rec.resource.resourceType === "QUESTION_PAPERS" ? "📝" :
+                         rec.resource.resourceType === "VIDEOS" ? "🎬" : "📚"}
                       </span>
-
-                      {/* Uploader with reputation */}
-                      <span className="text-[11px] text-[#94A3B8] flex items-center gap-0.5">
-                        <span>{badge.emoji}</span>
-                        {rec.resource.uploader.name}
-                      </span>
-
-                      {/* Quality bar */}
-                      <QualityBar score={rec.resource.qualityScore} />
-
-                      {/* Trending indicator */}
-                      {rec.resource.trendingScore > 0.3 && (
-                        <span className="flex items-center gap-0.5 text-[10px] font-semibold text-[#F97316]">
-                          <TrendingUp className="h-2.5 w-2.5" />
-                          Hot
-                        </span>
-                      )}
                     </div>
 
-                    {/* Recommendation reason */}
-                    {rec.reasons[0] && (
-                      <p className="text-[10px] text-[#4F8EF7] mt-0.5 font-medium">
-                        ✨ {rec.reasons[0]}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                    {/* Info */}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-medium text-[#0F1117] truncate group-hover:text-[#4F8EF7] transition-colors">
+                        {rec.resource.filename}
+                      </h3>
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span
+                          className="rounded-md px-1.5 py-0.5 text-[10px] font-bold"
+                          style={{
+                            backgroundColor: typeStyle.bg,
+                            color: typeStyle.text,
+                            border: `1px solid ${typeStyle.border}`,
+                          }}
+                        >
+                          {rec.resource.subject.code}
+                        </span>
 
-                {/* Stats */}
-                <div className="flex items-center gap-3 shrink-0 ml-3">
-                  <span className="text-[11px] text-[#94A3B8] flex items-center gap-0.5">
-                    <Download className="h-3 w-3" /> {rec.resource.downloadCount}
-                  </span>
-                  <span className="text-[11px] text-[#94A3B8] flex items-center gap-0.5">
-                    <Heart className="h-3 w-3" /> {rec.resource.likeCount}
-                  </span>
-                </div>
+                        {/* Uploader with reputation */}
+                        <span className="text-[11px] text-[#94A3B8] flex items-center gap-0.5">
+                          <span>{badge.emoji}</span>
+                          {rec.resource.uploader.name}
+                        </span>
+
+                        {/* Quality bar */}
+                        <QualityBar score={rec.resource.qualityScore} />
+
+                        {/* Trending indicator */}
+                        {rec.resource.trendingScore > 0.3 && (
+                          <span className="flex items-center gap-0.5 text-[10px] font-semibold text-[#F97316]">
+                            <TrendingUp className="h-2.5 w-2.5" />
+                            Hot
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Recommendation reason */}
+                      {rec.reasons[0] && (
+                        <p className="text-[10px] text-[#4F8EF7] mt-0.5 font-medium">
+                          ✨ {rec.reasons[0]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex items-center gap-3 shrink-0 ml-3">
+                    <span className="text-[11px] text-[#94A3B8] flex items-center gap-0.5">
+                      <Download className="h-3 w-3" /> {rec.resource.downloadCount}
+                    </span>
+                    <span className="text-[11px] text-[#94A3B8] flex items-center gap-0.5">
+                      <Heart className="h-3 w-3" /> {rec.resource.likeCount}
+                    </span>
+                  </div>
+                </Link>
               </motion.div>
             )
           })}

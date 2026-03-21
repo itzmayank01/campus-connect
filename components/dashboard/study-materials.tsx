@@ -80,7 +80,11 @@ export function StudyMaterials({ initialMaterials = [] }: StudyMaterialsProps) {
                     <FileText className="h-5 w-5 text-[#6B7280]" strokeWidth={1.75} />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-medium text-[#0F1117] truncate">{material.title}</h3>
+                    <h3 className="text-sm font-medium text-[#0F1117] truncate hover:text-[#4F8EF7] transition-colors">
+                      <a href={`/dashboard/study-materials/${material.id}`} className="no-underline text-inherit">
+                        {material.title}
+                      </a>
+                    </h3>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold border ${formatColors[material.format] || "bg-gray-50 text-gray-600 border-gray-100"}`}>
                         {material.format}

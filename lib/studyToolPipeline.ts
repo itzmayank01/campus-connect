@@ -7,8 +7,6 @@
 
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
-// @ts-expect-error pdf-parse lacks default export types
-import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
 import Groq from "groq-sdk";
 
@@ -70,6 +68,8 @@ export async function extractText(
   const type = mimeType.toLowerCase();
 
   if (type.includes("pdf")) {
+    const mod = await import("pdf-parse") as any;
+    const pdfParse = mod.default || mod;
     const data = await pdfParse(buffer);
     return data.text;
   }

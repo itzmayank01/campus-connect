@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { FileText, Download, Eye, Upload, Loader2, Plus, Calendar, BookOpen, Trash2, CheckSquare, Square, XCircle, RefreshCw, Play } from "lucide-react"
 
 interface UploadedFile {
@@ -344,7 +345,9 @@ export default function YourUploadsPage() {
 
                   {/* File info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-[#0F1117] truncate">{file.title}</h3>
+                    <Link href={`/dashboard/study-materials/${file.id}`} className="no-underline text-inherit group-hover:text-[#4F8EF7] transition-colors">
+                      <h3 className="text-sm font-semibold truncate">{file.title}</h3>
+                    </Link>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       {/* Format badge */}
                       <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold border ${formatColors[file.format] || "bg-gray-50 text-gray-600 border-gray-100"}`}>
@@ -376,20 +379,29 @@ export default function YourUploadsPage() {
 
                   {/* Action buttons */}
                   <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                    {/* View */}
+                    {/* View Details */}
+                    <Link
+                      href={`/dashboard/study-materials/${file.id}`}
+                      className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-all duration-150 no-underline"
+                      title="View Details & StudyLab"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Details</span>
+                    </Link>
+                    {/* View Raw */}
                     {file.fileUrl && (
                       <button
                         onClick={() => handleView(file.id)}
                         disabled={!!actionLoading[file.id]}
                         className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-[#4F8EF7] bg-[#4F8EF7]/5 hover:bg-[#4F8EF7]/10 disabled:opacity-50 transition-all duration-150"
-                        title="View file"
+                        title="View raw file"
                       >
                         {actionLoading[file.id] === "view" ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         ) : (
-                          <Eye className="h-3.5 w-3.5" />
+                          <FileText className="h-3.5 w-3.5" />
                         )}
-                        <span className="hidden sm:inline">View</span>
+                        <span className="hidden sm:inline">Raw</span>
                       </button>
                     )}
                     {/* Download */}

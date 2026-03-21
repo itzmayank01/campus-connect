@@ -7,6 +7,7 @@ async function main() {
   console.log("🌱 Seeding UPES B.Tech CSE 2023-2027 curriculum...\n")
 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+  // @ts-expect-error type mismatch between @types/pg and @prisma/adapter-pg
   const adapter = new PrismaPg(pool)
   const prisma = new PrismaClient({ adapter })
 
