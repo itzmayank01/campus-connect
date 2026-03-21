@@ -29,7 +29,12 @@ export async function GET(request: NextRequest) {
           u.id as user_id,
           u.name as full_name,
           u.email,
-          COALESCE(u.avatar_url, u.image) as avatar_url,
+          CASE 
+            WHEN COALESCE(u.avatar_url, u.image) LIKE '%amazonaws.com%avatars/%' THEN 
+              '/api/avatar?key=' || SUBSTRING(COALESCE(u.avatar_url, u.image) FROM 'avatars/.*$')
+            ELSE 
+              COALESCE(u.avatar_url, u.image) 
+          END as avatar_url,
           
           COALESCE(us.flame_score, 0)::int as flame_score,
           COALESCE(us.flame_level, 'Starter Flame') as flame_level,

@@ -130,15 +130,16 @@ export default function ProfilePage() {
       })
       const data = await res.json()
       if (data.success) {
+        // Only update local user state so `hasChanges` triggers TRUE natively
         setUser(prev => ({ ...prev, avatarUrl: data.avatar_url }))
-        setOriginalUser(prev => ({ ...prev, avatarUrl: data.avatar_url }))
-        // Refresh entire browser layout silently to update top bar
         window.dispatchEvent(new Event('avatar-updated'))
       } else {
         alert(data.error)
+        setAvatarPreview(null)
       }
     } catch (e) {
       alert("Failed to upload avatar")
+      setAvatarPreview(null)
     }
   }
 

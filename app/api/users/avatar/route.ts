@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       })
     )
 
-    const avatarUrl = `https://${S3_BUCKET}.s3.amazonaws.com/${s3Key}`
+    const avatarUrl = `/api/avatar?key=${encodeURIComponent(s3Key)}`
 
     await prisma.user.update({
       where: { id: dbUser.id },

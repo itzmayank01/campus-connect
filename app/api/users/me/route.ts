@@ -19,6 +19,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
+    let resolvedAvatarUrl = dbUser.avatarUrl || dbUser.image
+    if (resolvedAvatarUrl && resolvedAvatarUrl.includes("amazonaws.com") && resolvedAvatarUrl.includes("avatars/")) {
+      const parts = resolvedAvatarUrl.split("/")
+      const s3Key = parts.slice(parts.indexOf("avatars")).join("/")
+      resolvedAvatarUrl = `/api/avatar?key=${encodeURIComponent(s3Key)}`
+      
+      // Auto-heal DB silently
+      prisma.user.update({
+        where: { id: dbUser.id },
+        data: { avatarUrl: resolvedAvatarUrl }
+      }).catch(console.error)
+    }
+
     return NextResponse.json({
       user: {
         id: dbUser.id,
@@ -26,7 +39,7 @@ export async function GET(request: NextRequest) {
         full_name: dbUser.name,
         username: dbUser.username,
         email: dbUser.email,
-        avatar_url: dbUser.avatarUrl || dbUser.image,
+        avatar_url: resolvedAvatarUrl,
         semester: dbUser.semester,
         branch: dbUser.branch,
         bio: dbUser.bio,
