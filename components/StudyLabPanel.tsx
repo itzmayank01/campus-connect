@@ -102,7 +102,7 @@ export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold text-[#0F1117]">StudyLab</p>
-                <p className="text-xs text-[#64748B]">9 AI study tools — podcasts, quizzes, mind maps & more</p>
+                <p className="text-xs text-[#64748B]">8 AI study tools — podcasts, quizzes, mind maps & more</p>
               </div>
             </div>
             <div className="flex items-center gap-2">

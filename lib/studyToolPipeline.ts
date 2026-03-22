@@ -80,10 +80,22 @@ export async function extractText(
   const type = mimeType.toLowerCase();
 
   if (type.includes("pdf")) {
-    const mod = await import("pdf-parse") as any;
-    const pdfParse = mod.default || mod;
-    const data = await pdfParse(buffer);
-    return data.text;
+    // Use pdfjs-dist legacy build directly — works on Vercel serverless
+    // (pdf-parse fails with "DOMMatrix is not defined" on serverless)
+    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const data = new Uint8Array(buffer);
+    const doc = await pdfjsLib.getDocument({ data, useSystemFonts: true }).promise;
+
+    const pages: string[] = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      const strings = content.items
+        .filter((item: any) => "str" in item)
+        .map((item: any) => item.str);
+      pages.push(strings.join(" "));
+    }
+    return pages.join("\n\n");
   }
 
   if (type.includes("word") || type.includes("docx") || type.includes("openxmlformats")) {

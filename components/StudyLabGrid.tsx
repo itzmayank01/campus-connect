@@ -5,7 +5,7 @@
 
 "use client";
 
-import { Loader2, CheckCircle2, XCircle, Play, Headphones, Presentation, Brain, HelpCircle, BookText, FileBarChart, Video, BarChart3, Table2 } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Play, Headphones, Presentation, Brain, HelpCircle, BookText, FileBarChart, BarChart3, Table2 } from "lucide-react";
 import type { StudyToolMeta, ToolType } from "./StudyLabPanel";
 
 const TOOL_DEFS: Array<{
@@ -21,7 +21,6 @@ const TOOL_DEFS: Array<{
   { type: "QUIZ",            label: "Quiz",        icon: HelpCircle,    estimatedSeconds: 10,  color: "text-amber-600" },
   { type: "FLASHCARDS",      label: "Flashcards",  icon: BookText,      estimatedSeconds: 8,   color: "text-pink-600" },
   { type: "REPORT",          label: "Report",      icon: FileBarChart,  estimatedSeconds: 14,  color: "text-cyan-600" },
-  { type: "VIDEO_OVERVIEW",  label: "Video",       icon: Video,         estimatedSeconds: 120, color: "text-red-600" },
   { type: "INFOGRAPHIC",     label: "Infographic", icon: BarChart3,     estimatedSeconds: 8,   color: "text-indigo-600" },
   { type: "DATA_TABLE",      label: "Data Table",  icon: Table2,        estimatedSeconds: 6,   color: "text-teal-600" },
 ];

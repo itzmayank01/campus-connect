@@ -1,6 +1,20 @@
 import JSZip from "jszip"
-const pdfParse = require("pdf-parse")
 
+async function parsePdfBuffer(buffer: Buffer): Promise<string> {
+  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const data = new Uint8Array(buffer);
+  const doc = await pdfjsLib.getDocument({ data, useSystemFonts: true }).promise;
+  const pages: string[] = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    const strings = content.items
+      .filter((item: any) => "str" in item)
+      .map((item: any) => item.str);
+    pages.push(strings.join(" "));
+  }
+  return pages.join("\n\n");
+}
 /**
  * Extracts text from a given buffer.
  * Supports processing direct PDF buffers, or ZIP buffers containing PDFs.
@@ -26,8 +40,8 @@ export async function extractTextFromBuffer(buffer: Buffer, filename: string, mi
       for (const pdf of pdfFiles.slice(0, 5)) {
         try {
           const pdfBuffer = await pdf.async("nodebuffer")
-          const data = await pdfParse(pdfBuffer)
-          extractedText += `\n--- FROM ZIP: ${pdf.name} ---\n${data.text.slice(0, 3000)}\n`
+          const text = await parsePdfBuffer(pdfBuffer)
+          extractedText += `\n--- FROM ZIP: ${pdf.name} ---\n${text.slice(0, 3000)}\n`
         } catch (err) {
           console.warn(`Failed to parse zipped PDF: ${pdf.name}`)
         }
@@ -40,8 +54,8 @@ export async function extractTextFromBuffer(buffer: Buffer, filename: string, mi
   } else {
     // Process single PDF
     try {
-      const data = await pdfParse(buffer)
-      return data.text
+      const text = await parsePdfBuffer(buffer)
+      return text
     } catch (err) {
       console.error("Single PDF processing error:", err)
       throw err

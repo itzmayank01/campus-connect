@@ -4,9 +4,9 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
-  Headphones, Presentation, Video, GitBranch, FileText, BookOpen,
+  Headphones, Presentation, GitBranch, FileText, BookOpen,
   HelpCircle, BarChart3, Table2, Loader2, ChevronRight, Sparkles,
-  FlaskConical, ArrowRight, FileAudio, Film
+  FlaskConical, ArrowRight
 } from "lucide-react"
 
 const TOOL_DEFINITIONS = [
@@ -26,14 +26,7 @@ const TOOL_DEFINITIONS = [
     gradient: "from-blue-500 to-cyan-500",
     bgGlow: "blue",
   },
-  {
-    key: "VIDEO_OVERVIEW",
-    label: "Video Overview",
-    description: "Narrated slide deck with AI voiceover — like a mini lecture",
-    icon: Film,
-    gradient: "from-rose-500 to-pink-500",
-    bgGlow: "rose",
-  },
+
   {
     key: "MIND_MAP",
     label: "Mind Map",
@@ -145,12 +138,12 @@ export default function StudyLabPage() {
                 </span>
               </div>
               <p className="text-sm text-indigo-200/70 mt-0.5">
-                Transform any study material into 9 different AI-powered learning tools
+                Transform any study material into 8 different AI-powered learning tools
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 md:grid-cols-9 gap-3 mt-6">
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-3 mt-6">
             {TOOL_DEFINITIONS.map((tool) => (
               <div key={tool.key} className="flex flex-col items-center text-center">
                 <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-lg mb-1.5`}>
