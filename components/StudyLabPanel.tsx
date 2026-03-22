@@ -37,12 +37,13 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 interface StudyLabPanelProps {
   resourceId: string;
   resourceTitle: string;
+  defaultOpen?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function StudyLabPanel({ resourceId, resourceTitle }: StudyLabPanelProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }: StudyLabPanelProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
   const [activeToolType, setActiveToolType] = useState<ToolType | null>(null);
 

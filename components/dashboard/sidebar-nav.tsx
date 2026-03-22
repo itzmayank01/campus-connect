@@ -13,6 +13,7 @@ import {
   BarChart3,
   Trophy,
   Sparkles,
+  FlaskConical,
 } from "lucide-react"
 import {
   Sidebar,
@@ -32,6 +33,7 @@ import {
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Study Materials", href: "/dashboard/study-materials", icon: BookOpen },
+  { title: "Study Lab", href: "/dashboard/study-lab", icon: FlaskConical, hasAiBadge: true },
   { title: "Subjects", href: "/dashboard/subjects", icon: GraduationCap },
   { title: "Semesters", href: "/dashboard/semesters", icon: Calendar },
   { title: "Bookmarks", href: "/dashboard/bookmarks", icon: Bookmark },
@@ -112,6 +114,28 @@ export function DashboardSidebar() {
                             }}
                           >
                             LIVE
+                          </span>
+                        )}
+                        {/* AI badge for Study Lab */}
+                        {"hasAiBadge" in item && item.hasAiBadge && (
+                          <span
+                            className="group-data-[collapsible=icon]:hidden ml-auto"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: 22,
+                              height: 16,
+                              borderRadius: 999,
+                              background: "linear-gradient(135deg, #8B5CF6, #6366F1)",
+                              color: "#fff",
+                              fontSize: 8,
+                              fontWeight: 700,
+                              textTransform: "uppercase" as const,
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            AI
                           </span>
                         )}
                       </Link>

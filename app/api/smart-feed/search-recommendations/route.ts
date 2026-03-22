@@ -26,23 +26,21 @@ export async function GET(request: NextRequest) {
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-    const searchCountResult = await prisma.$queryRaw<
-      Array<{ total_count: bigint }>
-    >`
-      SELECT COALESCE(SUM(cnt), 0) as total_count FROM (
-        SELECT COUNT(*) as cnt
-        FROM user_behavior_events
-        WHERE user_id = ${dbUser.id}
-          AND event_type = 'search'
-          AND (
-            search_query ILIKE '%' || ${query} || '%'
-            OR ${query} ILIKE '%' || search_query || '%'
-          )
-          AND created_at > ${sevenDaysAgo}
-      ) sub
-    `
-
-    const searchCount = Number(searchCountResult[0]?.total_count || 0)
+    // Search count — use a simple default since we don't track search events in a separate table
+    let searchCount = 1
+    try {
+      // Try to count related activity events as a proxy for search interest
+      const activityCount = await prisma.activityEvent.count({
+        where: {
+          userId: dbUser.id,
+          eventType: "DOWNLOAD",
+          createdAt: { gte: sevenDaysAgo },
+        },
+      })
+      searchCount = Math.max(1, activityCount)
+    } catch {
+      searchCount = 1
+    }
 
     // Find all matching resources
     const stopWords = new Set(['and', 'or', 'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'this', 'that'])

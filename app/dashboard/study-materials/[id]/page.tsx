@@ -7,6 +7,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, FileText, Download, Star, Eye, Clock, User, Loader2 } from "lucide-react";
 import { StudyLabPanel } from "@/components/StudyLabPanel";
@@ -40,6 +41,8 @@ function formatDate(d: string) {
 
 export default function ResourceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const searchParams = useSearchParams();
+  const openLab = searchParams.get("openLab") === "true";
   const [resource, setResource] = useState<ResourceDetail | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<string | null>(null);
@@ -138,7 +141,7 @@ export default function ResourceDetailPage({ params }: { params: Promise<{ id: s
 
       {/* StudyLab — appears for PDF/DOCX/text resources */}
       {canUseStudyLab ? (
-        <StudyLabPanel resourceId={resource.id} resourceTitle={resource.originalFilename} />
+        <StudyLabPanel resourceId={resource.id} resourceTitle={resource.originalFilename} defaultOpen={openLab} />
       ) : (
         <div className="rounded-2xl border border-[#F1F5F9] bg-[#F8FAFC] p-5 text-center">
           <p className="text-sm text-[#64748B]">StudyLab is available for PDF and Word documents</p>

@@ -20,37 +20,36 @@ export async function GET(request: NextRequest) {
     const targetQuery = request.nextUrl.searchParams.get("query")
     const resourceTypeParam = request.nextUrl.searchParams.get("type")
 
-    // Find ALL repeated searches for this user in the last 7 days
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    // Build recommendations based on user's behavior profile (preferred subjects)
+    // Since we don't have a user_behavior_events table, use preferred subjects from behavior profile
+    let triggers: Array<{ query: string; count: number; last_searched: Date }> = []
 
-    const repeatedSearchesResult = await prisma.$queryRaw<
-      Array<{ search_query: string; search_count: bigint; last_searched: Date }>
-    >`
-      SELECT 
-        search_query,
-        COUNT(*) as search_count,
-        MAX(created_at) as last_searched
-      FROM user_behavior_events
-      WHERE user_id = ${dbUser.id}
-        AND event_type = 'search'
-        AND created_at > ${sevenDaysAgo}
-      GROUP BY search_query
-      HAVING COUNT(*) >= 2
-      ORDER BY search_count DESC, last_searched DESC
-      LIMIT 3
-    `
+    try {
+      const behaviorProfile = await prisma.userBehaviorProfile.findUnique({
+        where: { userId: dbUser.id },
+      })
 
-    if (!repeatedSearchesResult || repeatedSearchesResult.length === 0) {
+      if (behaviorProfile?.preferredSubjects?.length) {
+        // Use preferred subjects as recommendation triggers
+        triggers = behaviorProfile.preferredSubjects.slice(0, 3).map((subj, i) => ({
+          query: subj,
+          count: Math.max(2, 5 - i),
+          last_searched: behaviorProfile.lastProfileUpdate,
+        }))
+      }
+    } catch {
+      // Behavior profile doesn't exist yet
+    }
+
+    // If we have a target query param, use that as a trigger instead
+    if (targetQuery) {
+      triggers = [{ query: targetQuery, count: 3, last_searched: new Date() }]
+    }
+
+    if (!triggers || triggers.length === 0) {
       return NextResponse.json({ has_recommendation: false })
     }
 
-    // Determine the active trigger
-    const triggers = repeatedSearchesResult.map(row => ({
-      query: row.search_query,
-      count: Number(row.search_count),
-      last_searched: row.last_searched
-    }))
 
     const activeTrigger = targetQuery 
       ? triggers.find(t => t.query === targetQuery) || triggers[0]

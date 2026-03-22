@@ -10,19 +10,31 @@ import { Readable } from "stream";
 import mammoth from "mammoth";
 import Groq from "groq-sdk";
 
-// ─── Clients ──────────────────────────────────────────────────────────────────
+// ─── Clients (lazy-initialized to avoid build-time failures) ─────────────────
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+let _s3: S3Client | null = null;
+function getS3() {
+  if (!_s3) {
+    _s3 = new S3Client({
+      region: process.env.AWS_REGION!,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
+    });
+  }
+  return _s3;
+}
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY!,
-});
+let _groq: Groq | null = null;
+function getGroq() {
+  if (!_groq) {
+    _groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY!,
+    });
+  }
+  return _groq;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,7 +54,7 @@ export async function fetchFromS3(s3Key: string): Promise<Buffer> {
     Key: s3Key,
   });
 
-  const response = await s3.send(command);
+  const response = await getS3().send(command);
 
   if (!response.Body) {
     throw new Error(`S3 returned empty body for key: ${s3Key}`);
@@ -121,7 +133,7 @@ export async function callGroq(
   userContent: string,
   model: GroqModel = "llama-3.3-70b-versatile"
 ): Promise<string> {
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model,
     messages: [
       { role: "system", content: systemPrompt },

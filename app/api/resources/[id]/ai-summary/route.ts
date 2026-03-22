@@ -23,7 +23,7 @@ function generateFallbackSummary(resource: any) {
   }
 }
 
-// GET /api/resources/[id]/ai-summary — generate or return cached AI summary
+// GET /api/resources/[id]/ai-summary — generate AI summary (no caching for now)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -49,21 +49,32 @@ export async function GET(
       return NextResponse.json({ error: "Resource not found", success: false }, { status: 200 })
     }
 
-    // Step 2: Check cache first
-    const cached = await prisma.resourceAiMetadata.findUnique({
-      where: { resourceId: id },
-    })
-
-    if (cached && cached.summaryBullets?.length > 0) {
-      return NextResponse.json({
-        bullets: cached.summaryBullets,
-        topics: cached.keyTopics,
-        examTopics: cached.likelyExamTopics,
-        readTime: cached.estimatedReadMinutes,
-        difficulty: cached.difficultyLevel,
-        success: true,
-        cached: true,
+    // Step 2: Check SubjectAiCache for a cached summary
+    let cached: any = null
+    try {
+      cached = await prisma.subjectAiCache.findFirst({
+        where: {
+          subjectId: resource.subjectId,
+          cacheType: `resource_summary_${id}`,
+        },
       })
+    } catch {
+      // Cache table might not have data yet — continue without cache
+    }
+
+    if (cached?.cacheData) {
+      const data = cached.cacheData as any
+      if (data.summary_bullets?.length > 0) {
+        return NextResponse.json({
+          bullets: data.summary_bullets,
+          topics: data.key_topics || [],
+          examTopics: data.likely_exam_topics || [],
+          readTime: data.estimated_read_minutes || null,
+          difficulty: data.difficulty_level || null,
+          success: true,
+          cached: true,
+        })
+      }
     }
 
     // Step 3: Handle AI extraction & call
@@ -138,26 +149,27 @@ export async function GET(
       const cleaned = result.replace(/```json\n?|```\n?/g, "").trim()
       const parsed = JSON.parse(cleaned)
 
-      // Step 5: Cache the result
-      await prisma.resourceAiMetadata.upsert({
-        where: { resourceId: id },
-        create: {
-          resourceId: id,
-          summaryBullets: parsed.summary_bullets || [],
-          keyTopics: parsed.key_topics || [],
-          likelyExamTopics: parsed.likely_exam_topics || [],
-          estimatedReadMinutes: parsed.estimated_read_minutes || null,
-          difficultyLevel: parsed.difficulty_level || null,
-        },
-        update: {
-          summaryBullets: parsed.summary_bullets || [],
-          keyTopics: parsed.key_topics || [],
-          likelyExamTopics: parsed.likely_exam_topics || [],
-          estimatedReadMinutes: parsed.estimated_read_minutes || null,
-          difficultyLevel: parsed.difficulty_level || null,
-          generatedAt: new Date(),
-        }
-      })
+      // Step 5: Cache the result using SubjectAiCache
+      try {
+        await prisma.subjectAiCache.upsert({
+          where: {
+            subjectId_cacheType: {
+              subjectId: resource.subjectId,
+              cacheType: `resource_summary_${id}`,
+            },
+          },
+          create: {
+            subjectId: resource.subjectId,
+            cacheType: `resource_summary_${id}`,
+            cacheData: parsed,
+          },
+          update: {
+            cacheData: parsed,
+          },
+        })
+      } catch {
+        // Caching failed — not critical, continue
+      }
 
       return NextResponse.json({
         bullets: parsed.summary_bullets || [],
