@@ -1,4 +1,3 @@
-# campus-connect
 
 # 🎓 Campus Connect
 
