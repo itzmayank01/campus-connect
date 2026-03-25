@@ -43,7 +43,7 @@ export async function generateQuiz(
     isRefresh,
   });
 
-  const raw = await callGroq(prompt, "", "llama-3.3-70b-versatile");
+  const raw = await callGroq(prompt, "", "llama-3.1-8b-instant");
 
   await job.updateProgress({ stage: "Reviewing questions", percent: 80 });
 
