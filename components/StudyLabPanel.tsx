@@ -1,8 +1,9 @@
 /**
  * @file StudyLabPanel.tsx
  * @description The main StudyLab panel shown on the resource detail page.
- * Collapsed by default — student clicks "Open StudyLab" to reveal tools.
- * Each tool shows its status and opens in a modal when ready.
+ * Clicking a tool opens the modal immediately with a loading state.
+ * Generation runs synchronously via /api/study-tools/generate,
+ * then the modal shows the result.
  */
 
 "use client";
@@ -47,6 +48,9 @@ export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
   const [activeToolType, setActiveToolType] = useState<ToolType | null>(null);
 
+  // generatingType: which type is currently mid-generation (shows spinner in grid)
+  const [generatingType, setGeneratingType] = useState<ToolType | null>(null);
+
   const { data, mutate } = useSWR<{ tools: StudyToolMeta[] }>(
     isOpen ? `/api/study-tools?resourceId=${resourceId}` : null,
     fetcher,
@@ -63,13 +67,44 @@ export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }
   const tools = data?.tools ?? [];
   const readyCount = tools.filter((t) => t.status === "READY").length;
 
+  /**
+   * handleGenerate — called when user clicks an idle tool button.
+   * 1. Immediately opens the modal with a loading state (activeToolType set, but no toolId yet)
+   * 2. Calls /api/study-tools/generate (synchronous — awaits full generation, ~10-30s)
+   * 3. On success: sets toolId → modal transitions from loading → viewer
+   * 4. On failure: shows error in modal
+   */
   const handleGenerate = useCallback(async (type: ToolType) => {
-    const res = await fetch("/api/study-tools", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resourceId, type }),
-    });
-    if (res.ok) mutate();
+    // Open modal immediately in "generating" state
+    setActiveToolType(type);
+    setActiveToolId(null); // null = generating, modal shows progress
+    setGeneratingType(type);
+
+    try {
+      const res = await fetch("/api/study-tools/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resourceId, type }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        // Show error inside modal (toolId stays null, error bubbled via state)
+        setActiveToolId(`error:${json.error ?? "Generation failed"}`);
+        mutate(); // refresh grid to show FAILED status
+        return;
+      }
+
+      // Generation succeeded — toolId is now available
+      setActiveToolId(json.toolId);
+      mutate(); // refresh grid to show READY status
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Network error";
+      setActiveToolId(`error:${message}`);
+    } finally {
+      setGeneratingType(null);
+    }
   }, [resourceId, mutate]);
 
   const handleOpen = useCallback((tool: StudyToolMeta) => {
@@ -81,9 +116,16 @@ export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }
     const failedTool = tools.find((t) => t.type === type && t.status === "FAILED");
     if (failedTool) {
       await fetch(`/api/study-tools/${failedTool.id}`, { method: "DELETE" });
+      await mutate();
     }
     handleGenerate(type);
-  }, [tools, handleGenerate]);
+  }, [tools, handleGenerate, mutate]);
+
+  const handleClose = useCallback(() => {
+    setActiveToolId(null);
+    setActiveToolType(null);
+    setGeneratingType(null);
+  }, []);
 
   return (
     <>
@@ -102,7 +144,7 @@ export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold text-[#0F1117]">StudyLab</p>
-                <p className="text-xs text-[#64748B]">8 AI study tools — podcasts, quizzes, mind maps & more</p>
+                <p className="text-xs text-[#64748B]">8 AI study tools — podcasts, quizzes, mind maps &amp; more</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -149,6 +191,7 @@ export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }
           <div className="p-4">
             <StudyLabGrid
               tools={tools}
+              generatingType={generatingType}
               onGenerate={handleGenerate}
               onOpen={handleOpen}
               onRetry={handleRetry}
@@ -157,16 +200,13 @@ export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }
         </div>
       )}
 
-      {/* Modal */}
-      {activeToolId && activeToolType && (
+      {/* Modal — opens immediately with loading state, then shows result */}
+      {activeToolType && (
         <StudyLabModal
           toolId={activeToolId}
           toolType={activeToolType}
           resourceTitle={resourceTitle}
-          onClose={() => {
-            setActiveToolId(null);
-            setActiveToolType(null);
-          }}
+          onClose={handleClose}
         />
       )}
     </>

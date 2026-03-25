@@ -9,6 +9,7 @@ import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
 import mammoth from "mammoth";
 import Groq from "groq-sdk";
+import pdfParse from "pdf-parse";
 
 // ─── Clients (lazy-initialized to avoid build-time failures) ─────────────────
 
@@ -80,22 +81,10 @@ export async function extractText(
   const type = mimeType.toLowerCase();
 
   if (type.includes("pdf")) {
-    // Use pdfjs-dist legacy build directly — works on Vercel serverless
-    // (pdf-parse fails with "DOMMatrix is not defined" on serverless)
-    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-    const data = new Uint8Array(buffer);
-    const doc = await pdfjsLib.getDocument({ data, useSystemFonts: true }).promise;
-
-    const pages: string[] = [];
-    for (let i = 1; i <= doc.numPages; i++) {
-      const page = await doc.getPage(i);
-      const content = await page.getTextContent();
-      const strings = content.items
-        .filter((item: any) => "str" in item)
-        .map((item: any) => item.str);
-      pages.push(strings.join(" "));
-    }
-    return pages.join("\n\n");
+    // pdf-parse v1.1.1 — pure Node.js, NO browser APIs, works on Vercel serverless
+    // pdfjs-dist was replaced because it requires DOMMatrix (browser-only API)
+    const data = await pdfParse(buffer);
+    return data.text;
   }
 
   if (type.includes("word") || type.includes("docx") || type.includes("openxmlformats")) {

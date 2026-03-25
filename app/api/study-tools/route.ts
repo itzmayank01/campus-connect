@@ -8,12 +8,15 @@
  * No BullMQ worker needed — fully compatible with Vercel serverless.
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { after } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { generateStudyTool } from "@/lib/generateStudyTool";
 import { StudyToolType } from "@/lib/generated/prisma";
+
+// Required for after() to work and for generation to have enough time
+export const dynamic    = "force-dynamic";
+export const maxDuration = 60; // seconds — Vercel Pro allows up to 300s
 
 const VALID_TYPES = new Set<StudyToolType>([
   "AUDIO_OVERVIEW", "SLIDE_DECK", "MIND_MAP", "QUIZ",
@@ -78,11 +81,10 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // ── Kick off generation in the background using Next.js after() ──
-  // after() runs after the response is sent — works on Vercel, zero extra infra.
-  after(async () => {
-    await generateStudyTool(tool.id, body.resourceId, type);
-  });
+  // ── Kick off generation with after() ──────────────────────────────────────
+  // after() schedules work to run AFTER the response is sent.
+  // This is the correct Next.js pattern for background generation.
+  after(() => generateStudyTool(tool.id, body.resourceId, type));
 
   return NextResponse.json({ toolId: tool.id, cached: false }, { status: 201 });
 }

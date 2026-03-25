@@ -1,64 +1,67 @@
-import JSZip from "jszip"
+/**
+ * @file pdf-extractor.ts
+ * @description Extracts text from PDF or ZIP-of-PDFs buffers.
+ * Uses pdf-parse v1.1.1 (pure Node.js, no DOMMatrix, works on Vercel).
+ */
 
+import JSZip from "jszip";
+import pdfParse from "pdf-parse";
+
+/**
+ * Extracts text from a PDF buffer using pdf-parse (pure Node.js).
+ * No browser APIs required — safe on Vercel serverless.
+ */
 async function parsePdfBuffer(buffer: Buffer): Promise<string> {
-  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const data = new Uint8Array(buffer);
-  const doc = await pdfjsLib.getDocument({ data, useSystemFonts: true }).promise;
-  const pages: string[] = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    const strings = content.items
-      .filter((item: any) => "str" in item)
-      .map((item: any) => item.str);
-    pages.push(strings.join(" "));
-  }
-  return pages.join("\n\n");
+  const data = await pdfParse(buffer);
+  return data.text;
 }
+
 /**
  * Extracts text from a given buffer.
- * Supports processing direct PDF buffers, or ZIP buffers containing PDFs.
+ * Supports direct PDF buffers, or ZIP buffers containing PDFs.
  */
-export async function extractTextFromBuffer(buffer: Buffer, filename: string, mimeType?: string): Promise<string> {
-  // Sniff magic bytes or fallback to mime/extension
-  const isZipBuffer = buffer.length > 4 && buffer[0] === 0x50 && buffer[1] === 0x4B
-  const isZip = isZipBuffer || filename.toLowerCase().endsWith(".zip") || mimeType?.includes("zip") || mimeType?.includes("archive")
+export async function extractTextFromBuffer(
+  buffer: Buffer,
+  filename: string,
+  mimeType?: string
+): Promise<string> {
+  const isZipBuffer =
+    buffer.length > 4 &&
+    buffer[0] === 0x50 &&
+    buffer[1] === 0x4b;
+
+  const isZip =
+    isZipBuffer ||
+    filename.toLowerCase().endsWith(".zip") ||
+    mimeType?.includes("zip") ||
+    mimeType?.includes("archive");
 
   if (isZip) {
-    let extractedText = ""
+    let extractedText = "";
     try {
-      const zip = await JSZip.loadAsync(buffer)
-      const pdfFiles = Object.values(zip.files).filter((file) => 
-        !file.dir && file.name.toLowerCase().endsWith(".pdf")
-      )
+      const zip = await JSZip.loadAsync(buffer);
+      const pdfFiles = Object.values(zip.files).filter(
+        (file) => !file.dir && file.name.toLowerCase().endsWith(".pdf")
+      );
 
-      if (pdfFiles.length === 0) {
-        return ""
-      }
+      if (pdfFiles.length === 0) return "";
 
-      // Process up to 5 PDFs from the zip to avoid massive processing
       for (const pdf of pdfFiles.slice(0, 5)) {
         try {
-          const pdfBuffer = await pdf.async("nodebuffer")
-          const text = await parsePdfBuffer(pdfBuffer)
-          extractedText += `\n--- FROM ZIP: ${pdf.name} ---\n${text.slice(0, 3000)}\n`
+          const pdfBuffer = await pdf.async("nodebuffer");
+          const text = await parsePdfBuffer(pdfBuffer);
+          extractedText += `\n--- FROM ZIP: ${pdf.name} ---\n${text.slice(0, 3000)}\n`;
         } catch (err) {
-          console.warn(`Failed to parse zipped PDF: ${pdf.name}`)
+          console.warn(`Failed to parse zipped PDF: ${pdf.name}`, err);
         }
       }
-      return extractedText
+      return extractedText;
     } catch (err) {
-      console.error("ZIP processing error:", err)
-      return ""
+      console.error("ZIP processing error:", err);
+      return "";
     }
   } else {
-    // Process single PDF
-    try {
-      const text = await parsePdfBuffer(buffer)
-      return text
-    } catch (err) {
-      console.error("Single PDF processing error:", err)
-      throw err
-    }
+    const text = await parsePdfBuffer(buffer);
+    return text;
   }
 }

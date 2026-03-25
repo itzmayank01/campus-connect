@@ -27,12 +27,13 @@ const TOOL_DEFS: Array<{
 
 interface StudyLabGridProps {
   tools: StudyToolMeta[];
+  generatingType?: ToolType | null;
   onGenerate: (type: ToolType) => void;
   onOpen: (tool: StudyToolMeta) => void;
   onRetry: (type: ToolType) => void;
 }
 
-export function StudyLabGrid({ tools, onGenerate, onOpen, onRetry }: StudyLabGridProps) {
+export function StudyLabGrid({ tools, generatingType, onGenerate, onOpen, onRetry }: StudyLabGridProps) {
   const toolMap = new Map(tools.map((t) => [t.type, t]));
 
   return (
@@ -41,10 +42,11 @@ export function StudyLabGrid({ tools, onGenerate, onOpen, onRetry }: StudyLabGri
         const tool = toolMap.get(type);
         const status = tool?.status;
 
-        const isReady = status === "READY";
-        const isProcessing = status === "PROCESSING" || status === "PENDING";
-        const isFailed = status === "FAILED";
-        const isIdle = !status;
+        const isGeneratingNow = generatingType === type; // direct from parent state
+        const isReady = status === "READY" && !isGeneratingNow;
+        const isProcessing = isGeneratingNow || status === "PROCESSING" || status === "PENDING";
+        const isFailed = status === "FAILED" && !isGeneratingNow;
+        const isIdle = !status && !isGeneratingNow;
 
         return (
           <button

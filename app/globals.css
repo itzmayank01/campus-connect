@@ -299,3 +299,58 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ── markmap Mind Map Styles ─────────────────────────────────────────────── */
+
+/* Node circles */
+.markmap-node circle {
+  stroke-width: 1.5px !important;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+/* Node text */
+.markmap-node text,
+.markmap-node foreignObject {
+  font-family: 'DM Sans', system-ui, sans-serif !important;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+/* Links between nodes */
+.markmap-link {
+  stroke-width: 1.5px !important;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+/* Root node (depth 0) — indigo to match StudyLab header */
+.markmap-node[data-depth="0"] circle {
+  fill: #6366f1 !important;
+  stroke: #4f46e5 !important;
+}
+
+/* Main theme nodes (depth 1) — softer indigo */
+.markmap-node[data-depth="1"] circle {
+  fill: #e0e7ff !important;
+  stroke: #6366f1 !important;
+}
+
+/* Sub-concept nodes (depth 2) — light */
+.markmap-node[data-depth="2"] circle {
+  fill: #f0f0ff !important;
+  stroke: #a5b4fc !important;
+}
+
+/* Detail nodes (depth 3+) — very light */
+.markmap-node[data-depth="3"] circle,
+.markmap-node[data-depth="4"] circle,
+.markmap-node[data-depth="5"] circle {
+  fill: #fafafa !important;
+  stroke: #d1d5db !important;
+}
+
+/* Hover opacity */
+.markmap-node:hover circle {
+  opacity: 0.8;
+}
