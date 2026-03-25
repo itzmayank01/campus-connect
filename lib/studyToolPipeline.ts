@@ -151,30 +151,53 @@ export async function callGroq(
   return content;
 }
 
-// ─── Step 5: Safe JSON parse ──────────────────────────────────────────────────
-
 /**
- * Safely parses a JSON string from an LLM response.
- * Handles markdown code fences, smart quotes, trailing commas.
+ * Extracts the first complete JSON object or array from an LLM response.
+ * Handles trailing prose after JSON (llama-3.1-8b-instant appends explanations),
+ * markdown fences, smart quotes, trailing commas.
  */
 export function safeParseJson<T>(raw: string): T {
-  const cleaned = raw
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/i, "")
+  // 1. Strip markdown fences + fix smart quotes + trailing commas
+  const defenced = raw
+    .replace(/^```(?:json)?\s*/im, "")
+    .replace(/\s*```\s*$/im, "")
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/,(\s*[}\]])/g, "$1")
     .trim();
 
-  try {
-    return JSON.parse(cleaned) as T;
-  } catch (err) {
-    throw new Error(
-      `JSON parse failed after cleanup.\nRaw (first 300 chars): ${raw.slice(0, 300)}\nCleaned: ${cleaned.slice(0, 300)}\nError: ${err}`
-    );
+  // 2. Direct parse (fast path — works when model behaves)
+  try { return JSON.parse(defenced) as T; } catch { /* fall through */ }
+
+  // 3. Balanced-brace extractor — stops at the real closing brace,
+  //    ignoring any trailing prose the model adds after the JSON.
+  const startChar = (defenced.indexOf("{") !== -1 && defenced.indexOf("[") !== -1)
+    ? (defenced.indexOf("{") < defenced.indexOf("[") ? "{" : "[")
+    : defenced.includes("{") ? "{" : "[";
+  const closeChar = startChar === "{" ? "}" : "]";
+  const start = defenced.indexOf(startChar);
+
+  if (start === -1) {
+    throw new Error(`No JSON in model response. Raw: ${raw.slice(0, 300)}`);
   }
+
+  let depth = 0, inString = false, escaped = false;
+  for (let i = start; i < defenced.length; i++) {
+    const ch = defenced[i];
+    if (escaped)          { escaped = false; continue; }
+    if (ch === "\\" && inString) { escaped = true; continue; }
+    if (ch === '"')       { inString = !inString; continue; }
+    if (inString)         continue;
+    if (ch === startChar) depth++;
+    else if (ch === closeChar && --depth === 0) {
+      try { return JSON.parse(defenced.slice(start, i + 1)) as T; }
+      catch (e) { throw new Error(`JSON slice parse failed: ${e}\nSlice: ${defenced.slice(start, i + 1).slice(0, 300)}`); }
+    }
+  }
+
+  throw new Error(`Unbalanced JSON in model response. Raw: ${raw.slice(0, 300)}`);
 }
+
 
 // ─── Audio helper: stream to Buffer ──────────────────────────────────────────
 

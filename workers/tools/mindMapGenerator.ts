@@ -2,7 +2,7 @@
  * @file mindMapGenerator.ts — uses master prompt builder
  */
 import { Job } from "bullmq";
-import { callGroq } from "@/lib/studyToolPipeline";
+import { callGroq, safeParseJson } from "@/lib/studyToolPipeline";
 import { buildPrompt, getDocumentId } from "@/lib/studylab-prompt";
 
 export interface MindMapOutput {
@@ -16,7 +16,7 @@ function jsonToMarkdown(json: { root: string; branches: Array<{ name: string; ch
   const lines = [`# ${json.root}`];
   for (const b of json.branches) {
     lines.push(`## ${b.name}`);
-    for (const c of b.children) lines.push(`### ${c}`);
+    for (const c of (b.children ?? [])) lines.push(`### ${c}`);
   }
   return lines.join("\n");
 }
@@ -40,20 +40,16 @@ export async function generateMindMap(
 
   await job.updateProgress({ stage: "Building mind map", percent: 75 });
 
-  // Parse JSON (strip any accidental fences)
-  const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-  let parsed: { root: string; branches: Array<{ name: string; children: string[] }> };
-  try {
-    parsed = JSON.parse(cleaned);
-    if (parsed.root === undefined) throw new Error("Missing root");
-  } catch {
-    const m = raw.match(/\{[\s\S]*\}/);
-    if (!m) throw new Error(`Model did not return JSON. Got: ${raw.slice(0, 200)}`);
-    parsed = JSON.parse(m[0]);
+  // safeParseJson uses balanced-brace extractor — handles trailing prose
+  // that llama-3.1-8b-instant appends after the JSON block
+  const parsed = safeParseJson<{ root: string; branches: Array<{ name: string; children: string[] }> }>(raw);
+
+  if (!parsed.root || !Array.isArray(parsed.branches)) {
+    throw new Error(`Mind map JSON missing root or branches. Got: ${JSON.stringify(parsed).slice(0, 200)}`);
   }
 
   const markdown  = jsonToMarkdown(parsed);
-  const nodeCount = 1 + parsed.branches.length + parsed.branches.reduce((s, b) => s + b.children.length, 0);
+  const nodeCount = 1 + parsed.branches.length + parsed.branches.reduce((s, b) => s + (b.children?.length ?? 0), 0);
 
   return { markdown, title: parsed.root, nodeCount, depth: 3 };
 }
