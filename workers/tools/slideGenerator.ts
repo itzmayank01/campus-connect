@@ -5,43 +5,7 @@
 
 import { Job } from "bullmq";
 import { callGroq, safeParseJson } from "@/lib/studyToolPipeline";
-
-const SYSTEM_PROMPT = `
-You are a professional presentation designer and academic communicator.
-Output ONLY a valid JSON object. No markdown. No explanation. No preamble.
-
-OUTPUT SCHEMA:
-{
-  "title": "string",
-  "subtitle": "string",
-  "totalSlides": 10,
-  "slides": [
-    {
-      "index": number,
-      "type": "title" | "content" | "quote" | "two-column" | "visual-stat" | "summary",
-      "title": "string",
-      "subtitle": "string or null",
-      "bullets": ["max 5 bullets, max 12 words each"],
-      "quote": "string or null",
-      "quoteSource": "string or null",
-      "col1": { "heading": "string", "bullets": ["..."] },
-      "col2": { "heading": "string", "bullets": ["..."] },
-      "stat": { "value": "string", "label": "string", "context": "string" },
-      "note": "string — speaker note, 2-3 sentences"
-    }
-  ]
-}
-
-SLIDE STRUCTURE:
-1. title — document title + hook
-2. content — overview
-3-7. core content mix
-8. two-column — comparison
-9. quote — impactful statement
-10. summary — 5 takeaways
-
-OUTPUT ONLY THE JSON. NOTHING ELSE.
-`;
+import { buildPrompt, getDocumentId } from "@/lib/studylab-prompt";
 
 export interface SlideCol { heading: string; bullets: string[] }
 export interface SlideStat { value: string; label: string; context: string }
@@ -70,18 +34,28 @@ export interface SlideDeckOutput {
  * Generates a 10-slide presentation from document text.
  */
 export async function generateSlides(
-  text: string,
-  resource: { originalFilename: string },
-  job: Job
+  text:      string,
+  resource:  { originalFilename: string },
+  job:       Job,
+  isRefresh  = false
 ): Promise<SlideDeckOutput> {
   await job.updateProgress({ stage: "Designing presentation", percent: 40 });
 
-  const raw = await callGroq(
-    SYSTEM_PROMPT,
-    `Document title: "${resource.originalFilename}"\n\nDocument content:\n${text}`,
-    "llama-3.3-70b-versatile"
-  );
+  const prompt = buildPrompt({
+    toolType:        "SLIDE_DECK",
+    documentContent: text,
+    documentId:      getDocumentId(text),
+    isRefresh,
+  });
+
+  const raw = await callGroq(prompt, "", "llama-3.3-70b-versatile");
 
   await job.updateProgress({ stage: "Finalising slides", percent: 80 });
-  return safeParseJson<SlideDeckOutput>(raw);
+
+  const parsed = safeParseJson<SlideDeckOutput>(raw);
+  // Normalise array response
+  if (Array.isArray(parsed)) {
+    return { title: resource.originalFilename, subtitle: "", totalSlides: parsed.length, slides: parsed as unknown as Slide[] };
+  }
+  return parsed;
 }

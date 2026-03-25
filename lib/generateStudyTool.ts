@@ -46,7 +46,8 @@ function makeFakeJob(toolId: string): FakeJob {
 export async function generateStudyTool(
   toolId:     string,
   resourceId: string,
-  type:       StudyToolType
+  type:       StudyToolType,
+  isRefresh   = false
 ): Promise<void> {
   // Mark as PROCESSING so the SSE stream starts showing progress
   await prisma.studyTool.update({
@@ -75,25 +76,25 @@ export async function generateStudyTool(
 
     switch (type) {
       case "MIND_MAP":
-        outputData = await generateMindMap(text, resource, fakeJob as never);
+        outputData = await generateMindMap(text, resource, fakeJob as never, isRefresh);
         break;
       case "FLASHCARDS":
-        outputData = await generateFlashcards(text, resource, fakeJob as never);
+        outputData = await generateFlashcards(text, resource, fakeJob as never, isRefresh);
         break;
       case "QUIZ":
-        outputData = await generateQuiz(text, resource, fakeJob as never);
+        outputData = await generateQuiz(text, resource, fakeJob as never, isRefresh);
         break;
       case "SLIDE_DECK":
-        outputData = await generateSlides(text, resource, fakeJob as never);
+        outputData = await generateSlides(text, resource, fakeJob as never, isRefresh);
         break;
       case "REPORT":
-        outputData = await generateReport(text, resource, fakeJob as never);
+        outputData = await generateReport(text, resource, fakeJob as never, isRefresh);
         break;
       case "INFOGRAPHIC":
-        outputData = await generateInfographic(text, resource, fakeJob as never);
+        outputData = await generateInfographic(text, resource, fakeJob as never, isRefresh);
         break;
       case "DATA_TABLE":
-        outputData = await generateDataTable(text, resource, fakeJob as never);
+        outputData = await generateDataTable(text, resource, fakeJob as never, isRefresh);
         break;
       case "AUDIO_OVERVIEW":
         outputData = await generateAudioOverview(text, resource, fakeJob as never);

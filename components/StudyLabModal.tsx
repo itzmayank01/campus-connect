@@ -29,9 +29,11 @@ import { PodcastPlayer }      from "./tools/PodcastPlayer";
 import { VideoOverviewPlayer } from "./tools/VideoOverviewPlayer";
 
 interface StudyLabModalProps {
-  toolId:        string | null; // null = generating; "error:msg" = failed; id = ready
+  toolId:        string | null;
   toolType:      ToolType;
   resourceTitle: string;
+  isRefreshing?: boolean;
+  onRefresh?:    () => void;
   onClose:       () => void;
 }
 
@@ -61,7 +63,7 @@ const GENERATING_MESSAGES: Record<ToolType, string> = {
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export function StudyLabModal({ toolId, toolType, resourceTitle, onClose }: StudyLabModalProps) {
+export function StudyLabModal({ toolId, toolType, resourceTitle, isRefreshing = false, onRefresh, onClose }: StudyLabModalProps) {
   // Only fetch when we have a real toolId (not null and not error prefix)
   const isGenerating = toolId === null;
   const isError      = typeof toolId === "string" && toolId.startsWith("error:");
@@ -167,13 +169,39 @@ export function StudyLabModal({ toolId, toolType, resourceTitle, onClose }: Stud
           </h2>
           <p className="text-xs text-[#64748B] mt-0.5 truncate max-w-[60vw]">{resourceTitle}</p>
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 rounded-lg hover:bg-[#F1F5F9] text-[#64748B] transition-colors"
-          aria-label="Close"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Refresh button — shown when tool is READY or after generation */}
+          {onRefresh && !isGenerating && (toolId && !isError) && (
+            <button
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              title="Regenerate fresh from document"
+              className={[
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200",
+                isRefreshing
+                  ? "border-indigo-200 text-indigo-400 cursor-wait bg-indigo-50"
+                  : "border-indigo-200 text-indigo-600 hover:bg-indigo-50 cursor-pointer",
+              ].join(" ")}
+            >
+              <svg
+                className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+              {isRefreshing ? "Regenerating…" : "↺ Refresh"}
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-[#F1F5F9] text-[#64748B] transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Content */}

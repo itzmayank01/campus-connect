@@ -50,6 +50,7 @@ export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }
 
   // generatingType: which type is currently mid-generation (shows spinner in grid)
   const [generatingType, setGeneratingType] = useState<ToolType | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { data, mutate } = useSWR<{ tools: StudyToolMeta[] }>(
     isOpen ? `/api/study-tools?resourceId=${resourceId}` : null,
@@ -74,38 +75,41 @@ export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }
    * 3. On success: sets toolId → modal transitions from loading → viewer
    * 4. On failure: shows error in modal
    */
-  const handleGenerate = useCallback(async (type: ToolType) => {
-    // Open modal immediately in "generating" state
+  const handleGenerate = useCallback(async (type: ToolType, refresh = false) => {
     setActiveToolType(type);
-    setActiveToolId(null); // null = generating, modal shows progress
+    setActiveToolId(null);
     setGeneratingType(type);
+    setIsRefreshing(refresh);
 
     try {
       const res = await fetch("/api/study-tools/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resourceId, type }),
+        body: JSON.stringify({ resourceId, type, isRefresh: refresh }),
       });
 
       const json = await res.json();
 
       if (!res.ok) {
-        // Show error inside modal (toolId stays null, error bubbled via state)
         setActiveToolId(`error:${json.error ?? "Generation failed"}`);
-        mutate(); // refresh grid to show FAILED status
+        mutate();
         return;
       }
 
-      // Generation succeeded — toolId is now available
       setActiveToolId(json.toolId);
-      mutate(); // refresh grid to show READY status
+      mutate();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Network error";
       setActiveToolId(`error:${message}`);
     } finally {
       setGeneratingType(null);
+      setIsRefreshing(false);
     }
   }, [resourceId, mutate]);
+
+  const handleRefresh = useCallback(() => {
+    if (activeToolType) handleGenerate(activeToolType, true);
+  }, [activeToolType, handleGenerate]);
 
   const handleOpen = useCallback((tool: StudyToolMeta) => {
     setActiveToolId(tool.id);
@@ -113,18 +117,14 @@ export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }
   }, []);
 
   const handleRetry = useCallback(async (type: ToolType) => {
-    const failedTool = tools.find((t) => t.type === type && t.status === "FAILED");
-    if (failedTool) {
-      await fetch(`/api/study-tools/${failedTool.id}`, { method: "DELETE" });
-      await mutate();
-    }
-    handleGenerate(type);
-  }, [tools, handleGenerate, mutate]);
+    handleGenerate(type, false);
+  }, [handleGenerate]);
 
   const handleClose = useCallback(() => {
     setActiveToolId(null);
     setActiveToolType(null);
     setGeneratingType(null);
+    setIsRefreshing(false);
   }, []);
 
   return (
@@ -206,6 +206,8 @@ export function StudyLabPanel({ resourceId, resourceTitle, defaultOpen = false }
           toolId={activeToolId}
           toolType={activeToolType}
           resourceTitle={resourceTitle}
+          isRefreshing={isRefreshing}
+          onRefresh={handleRefresh}
           onClose={handleClose}
         />
       )}

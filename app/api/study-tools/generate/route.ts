@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
   }
 
   const type = body.type as StudyToolType;
+  const isRefresh: boolean = body.isRefresh === true;
   if (!VALID_TYPES.has(type)) {
     return NextResponse.json({ error: `Invalid tool type: ${type}` }, { status: 400 });
   }
@@ -58,23 +59,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Resource not found" }, { status: 404 });
   }
 
-  // ── Cache check: if already READY, return existing toolId immediately ────────
+  // ── Cache / refresh logic ────────────────────────────────────────────────────
   const existing = await prisma.studyTool.findUnique({
     where: { userId_resourceId_type: { userId, resourceId: body.resourceId, type } },
   });
 
-  if (existing?.status === "READY") {
+  if (existing?.status === "READY" && !isRefresh) {
+    // Cached and not a refresh request — return immediately
     return NextResponse.json({ toolId: existing.id, cached: true });
   }
 
-  // If already running, return the existing toolId so the frontend can poll
-  if (existing?.status === "PROCESSING" || existing?.status === "PENDING") {
+  // If already running (and not refreshing), let the frontend poll
+  if ((existing?.status === "PROCESSING" || existing?.status === "PENDING") && !isRefresh) {
     return NextResponse.json({ toolId: existing.id, cached: false, running: true });
   }
 
   // ── Create or reset the tool row ─────────────────────────────────────────────
   let tool;
-  if (existing?.status === "FAILED") {
+  if (existing) {
+    // Reset any existing row (FAILED, READY-being-refreshed, etc.)
     tool = await prisma.studyTool.update({
       where: { id: existing.id },
       data:  { status: "PENDING", errorMessage: null, outputJson: null },
@@ -85,10 +88,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // ── Run generation synchronously ─────────────────────────────────────────────
-  // This is the key difference from /api/study-tools — we await inline.
-  // The request stays open (~10–30s), then returns the toolId once ready.
-  await generateStudyTool(tool.id, body.resourceId, type);
+  // ── Run generation synchronously ──────────────────────────────────────────────
+  await generateStudyTool(tool.id, body.resourceId, type, isRefresh);
 
   // Fetch updated status
   const updated = await prisma.studyTool.findUnique({
