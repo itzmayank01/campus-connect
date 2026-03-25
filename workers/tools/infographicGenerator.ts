@@ -27,7 +27,7 @@ export async function generateInfographic(
 ): Promise<InfographicOutput> {
   await job.updateProgress({ stage: "Extracting visual data", percent: 40 });
   const prompt = buildPrompt({ toolType: "INFOGRAPHIC", documentContent: text, documentId: getDocumentId(text), isRefresh });
-  const raw = await callGroq(prompt, "", "llama-3.1-8b-instant");
+  const raw = await callGroq("Return ONLY valid JSON. No explanation, no markdown.", prompt, "llama-3.1-8b-instant");
   await job.updateProgress({ stage: "Building infographic", percent: 80 });
   return safeParseJson<InfographicOutput>(raw);
 }

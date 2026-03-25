@@ -36,7 +36,7 @@ export async function generateMindMap(
     isRefresh,
   });
 
-  const raw = await callGroq(prompt, "", "llama-3.1-8b-instant");
+  const raw = await callGroq("Return ONLY valid JSON. No explanation, no markdown.", prompt, "llama-3.1-8b-instant");
 
   await job.updateProgress({ stage: "Building mind map", percent: 75 });
 

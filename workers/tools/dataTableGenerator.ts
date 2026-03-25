@@ -27,7 +27,7 @@ export async function generateDataTable(
 ): Promise<DataTableOutput> {
   await job.updateProgress({ stage: "Extracting structured data", percent: 40 });
   const prompt = buildPrompt({ toolType: "DATA_TABLE", documentContent: text, documentId: getDocumentId(text), isRefresh });
-  const raw = await callGroq(prompt, "", "llama-3.1-8b-instant");
+  const raw = await callGroq("Return ONLY valid JSON. No explanation, no markdown.", prompt, "llama-3.1-8b-instant");
   await job.updateProgress({ stage: "Structuring table", percent: 80 });
   return safeParseJson<DataTableOutput>(raw);
 }
