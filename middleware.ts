@@ -2,23 +2,27 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  // Skip middleware entirely for API routes — they handle their own auth
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   // If Supabase env vars are missing, skip auth middleware entirely
-  // This prevents MIDDLEWARE_INVOCATION_FAILED on Vercel
   if (
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   ) {
-    console.warn(
-      "⚠️ Supabase env vars missing — auth middleware disabled"
-    );
     return NextResponse.next();
   }
 
   try {
-    return await updateSession(request);
+    // Race the Supabase session update against a 3s timeout
+    // to prevent MIDDLEWARE_INVOCATION_TIMEOUT on Vercel
+    const timeoutPromise = new Promise<NextResponse>((resolve) =>
+      setTimeout(() => resolve(NextResponse.next()), 3000)
+    );
+    return await Promise.race([updateSession(request), timeoutPromise]);
   } catch (error) {
-    // If middleware fails (e.g., Supabase is unreachable), let the request through
-    // rather than crashing with a 500
     console.error("Middleware error:", error);
     return NextResponse.next();
   }
@@ -27,13 +31,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths EXCEPT:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico (browser icon)
-     * - public files (images, svgs, etc.)
-     * - API routes that don't need auth middleware (subjects, etc.)
+     * Only run middleware on dashboard and auth pages.
+     * Exclude: static files, images, favicon, public assets, and API routes.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/(dashboard|login|signup)(.*)",
   ],
 };
