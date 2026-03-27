@@ -5,9 +5,11 @@
  * Every tool follows the same flow:
  *   fetchFromS3 → extractText → cleanAndChunk → callGroq → safeParseJson
  *
- * PDF Extraction: uses pdfjs-dist/legacy (pure JS, Vercel-safe).
- *   pdf-parse is NOT used — it crashes on Vercel serverless due to a
- *   fs.readFileSync call at module load time on a path that doesn't exist.
+ * PDF Extraction: uses pdf-parse/lib/pdf-parse (Vercel-safe).
+ *   Imported via the internal module path to skip the fs.readFileSync on a
+ *   test-PDF that lives in pdf-parse/index.js — that call crashes Vercel cold starts.
+ *   pdfjs-dist is NOT used — it references DOMMatrix + other browser globals
+ *   that do not exist in Node.js serverless runtimes.
  *
  * Model selection: llama-3.3-70b-versatile for all tools.
  *   The fast 8b model hallucinates heavily on structured JSON tasks.
@@ -91,7 +93,7 @@ export async function extractText(buffer: Buffer, mimeType: string): Promise<str
   const type = mimeType.toLowerCase();
 
   if (type.includes("pdf")) {
-    // pdfjs-dist/legacy — pure JS, no fs.readFileSync at import, works on Vercel
+    // pdf-parse/lib/pdf-parse — bypasses the test-file readFileSync, works on Vercel
     const filename = "document.pdf";
     return extractTextFromBuffer(buffer, filename, mimeType);
   }
