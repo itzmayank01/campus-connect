@@ -66,7 +66,8 @@ export async function generateStudyTool(
 
     // ── Shared pipeline ──
     const buffer  = await fetchFromS3(resource.s3Key);
-    const rawText = await extractText(buffer, resource.mimeType);
+    // Pass s3Key so extractText can trigger Textract OCR for handwritten/scanned PDFs
+    const rawText = await extractText(buffer, resource.mimeType, resource.s3Key);
     const text    = cleanAndChunk(rawText);
 
     const fakeJob = makeFakeJob(toolId);

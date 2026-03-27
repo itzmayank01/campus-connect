@@ -21,6 +21,7 @@ import { Readable }                   from "stream";
 import mammoth                        from "mammoth";
 import Groq                           from "groq-sdk";
 import { extractTextFromBuffer }      from "./pdf-extractor";
+import { extractTextWithTextract }    from "./textract-ocr";
 
 // ─── Clients (lazy-initialized to avoid build-time failures) ─────────────────
 
@@ -83,19 +84,53 @@ export async function fetchFromS3(s3Key: string): Promise<Buffer> {
 
 // ─── Step 2: Extract plain text from buffer ───────────────────────────────────
 
+/** Minimum characters considered "real" extracted text. Below this threshold
+ *  the PDF is almost certainly scanned/handwritten with no text layer. */
+const MIN_TEXT_LENGTH = 200;
+
 /**
  * Extracts plain text from a PDF or DOCX buffer.
- * PDF: uses pdfjs-dist/legacy (Vercel-safe, no native deps).
- * DOCX: uses mammoth.
+ *
+ * PDF strategy (two-pass):
+ *  1. pdf-parse — fast, works for digital PDFs with a text layer.
+ *  2. AWS Textract OCR — triggered automatically when pdf-parse returns <200 chars,
+ *     which indicates a scanned or handwritten PDF (images, no text layer).
+ *
+ * DOCX: mammoth.
  * Plain text: UTF-8 decode.
+ *
+ * @param buffer   File buffer downloaded from S3.
+ * @param mimeType MIME type of the file.
+ * @param s3Key    S3 object key — required for the Textract OCR fallback.
  */
-export async function extractText(buffer: Buffer, mimeType: string): Promise<string> {
+export async function extractText(
+  buffer:   Buffer,
+  mimeType: string,
+  s3Key?:   string
+): Promise<string> {
   const type = mimeType.toLowerCase();
 
   if (type.includes("pdf")) {
-    // pdf-parse/lib/pdf-parse — bypasses the test-file readFileSync, works on Vercel
-    const filename = "document.pdf";
-    return extractTextFromBuffer(buffer, filename, mimeType);
+    // Pass 1 — fast digital extraction
+    const filename  = "document.pdf";
+    const digitalText = await extractTextFromBuffer(buffer, filename, mimeType);
+
+    if (digitalText.trim().length >= MIN_TEXT_LENGTH) {
+      return digitalText; // Digital PDF — has a text layer, use as-is
+    }
+
+    // Pass 2 — OCR fallback for scanned / handwritten PDFs
+    if (s3Key) {
+      console.log(
+        `[StudyLab] pdf-parse returned ${digitalText.trim().length} chars — ` +
+        `falling back to AWS Textract OCR for ${s3Key}`
+      );
+      return extractTextWithTextract(s3Key);
+    }
+
+    // No s3Key provided — best effort with whatever pdf-parse extracted
+    console.warn("[StudyLab] Low text from pdf-parse and no s3Key for OCR fallback");
+    return digitalText;
   }
 
   if (
