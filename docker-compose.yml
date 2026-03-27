@@ -1,0 +1,53 @@
+# docker-compose.yml
+# Run with: docker-compose up -d
+# open-notebook REST API  → http://localhost:5055
+# open-notebook Web UI   → http://localhost:8502  (admin setup only)
+# SurrealDB              → http://localhost:8000  (internal — don't expose)
+
+version: "3.8"
+
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:v2.1.4
+    command: start --log info --user root --pass root rocksdb:/mydata/mydatabase.db
+    user: root
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./surreal_data:/mydata
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  open_notebook:
+    image: lfnovo/open_notebook:v1-latest
+    ports:
+      - "8502:8502"   # Web UI — admin access only, NOT for students
+      - "5055:5055"   # REST API — used by Campus Connect backend
+    environment:
+      # A random 32-char secret — change this in production
+      - OPEN_NOTEBOOK_ENCRYPTION_KEY=cc_studylab_secret_key_change_me_32c
+      # SurrealDB connection (internal docker network)
+      - SURREAL_URL=ws://surrealdb:8000/rpc
+      - SURREAL_USER=root
+      - SURREAL_PASSWORD=root
+      - SURREAL_NAMESPACE=open_notebook
+      - SURREAL_DATABASE=open_notebook
+      # Groq — free at console.groq.com (no credit card needed)
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      # Internal API self-reference
+      - INTERNAL_API_URL=http://localhost:5055
+    volumes:
+      - ./notebook_data:/app/data
+    depends_on:
+      surrealdb:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5055/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 10

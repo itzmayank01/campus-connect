@@ -5,7 +5,7 @@
 
 import { Job } from "bullmq";
 import { callGroq, safeParseJson } from "@/lib/studyToolPipeline";
-import { buildPrompt, getDocumentId } from "@/lib/studylab-prompt";
+import { buildPrompt, getDocumentId, SYSTEM_JSON } from "@/lib/studylab-prompt";
 export interface DataTableOutput {
   hasData: boolean;
   title?: string;
@@ -27,7 +27,7 @@ export async function generateDataTable(
 ): Promise<DataTableOutput> {
   await job.updateProgress({ stage: "Extracting structured data", percent: 40 });
   const prompt = buildPrompt({ toolType: "DATA_TABLE", documentContent: text, documentId: getDocumentId(text), isRefresh });
-  const raw = await callGroq("Return ONLY valid JSON. No explanation, no markdown.", prompt, "llama-3.1-8b-instant");
+  const raw = await callGroq(SYSTEM_JSON, prompt, "llama-3.3-70b-versatile");
   await job.updateProgress({ stage: "Structuring table", percent: 80 });
   return safeParseJson<DataTableOutput>(raw);
 }

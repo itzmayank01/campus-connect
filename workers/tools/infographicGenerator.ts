@@ -5,7 +5,7 @@
 
 import { Job } from "bullmq";
 import { callGroq, safeParseJson } from "@/lib/studyToolPipeline";
-import { buildPrompt, getDocumentId } from "@/lib/studylab-prompt";
+import { buildPrompt, getDocumentId, SYSTEM_JSON } from "@/lib/studylab-prompt";
 export interface InfographicOutput {
   title: string;
   headlineStat: { value: string; label: string; context: string };
@@ -27,7 +27,7 @@ export async function generateInfographic(
 ): Promise<InfographicOutput> {
   await job.updateProgress({ stage: "Extracting visual data", percent: 40 });
   const prompt = buildPrompt({ toolType: "INFOGRAPHIC", documentContent: text, documentId: getDocumentId(text), isRefresh });
-  const raw = await callGroq("Return ONLY valid JSON. No explanation, no markdown.", prompt, "llama-3.1-8b-instant");
+  const raw = await callGroq(SYSTEM_JSON, prompt, "llama-3.3-70b-versatile");
   await job.updateProgress({ stage: "Building infographic", percent: 80 });
   return safeParseJson<InfographicOutput>(raw);
 }

@@ -460,16 +460,19 @@ model RatingReply {
 // ─── Study Tool Model ────────────────────────────────────────────────────────
 
 model StudyTool {
-  id           String        @id @default(uuid())
-  userId       String        @map("user_id")
-  resourceId   String        @map("resource_id")
-  type         StudyToolType
-  status       ToolStatus    @default(PENDING)
-  outputJson   String?       @db.Text
-  errorMessage String?       @map("error_message")
-  generatedAt  DateTime?     @map("generated_at")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
+  id                   String        @id @default(uuid())
+  userId               String        @map("user_id")
+  resourceId           String        @map("resource_id")
+  type                 StudyToolType
+  status               ToolStatus    @default(PENDING)
+  outputJson           String?       @db.Text
+  // open-notebook integration — null until first generation via open-notebook
+  openNotebookNbId     String?       @map("open_notebook_nb_id")   // notebook ID
+  openNotebookSrcId    String?       @map("open_notebook_src_id")  // source ID (PDF upload)
+  errorMessage         String?       @map("error_message")
+  generatedAt          DateTime?     @map("generated_at")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)

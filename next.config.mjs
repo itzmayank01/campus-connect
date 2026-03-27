@@ -7,14 +7,17 @@ const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
   },
+
   serverExternalPackages: [
     // Prisma
     '@prisma/client',
     '@prisma/client-runtime-utils',
     '@prisma/adapter-neon',
     '@prisma/adapter-pg',
-    // StudyLab AI pipeline packages — must NOT be bundled by webpack
-    'pdf-parse',
+    // StudyLab AI pipeline — must NOT be bundled by webpack
+    // NOTE: pdf-parse is intentionally removed — it causes Vercel crashes.
+    //       We use pdfjs-dist/legacy instead (pure JS, no fs side-effects).
+    'pdfjs-dist',
     'mammoth',
     'groq-sdk',
     'msedge-tts',
@@ -22,6 +25,7 @@ const nextConfig = {
     'bullmq',
     'ioredis',
     'file-type',
+    'jszip',
   ],
 }
 

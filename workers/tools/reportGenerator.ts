@@ -5,7 +5,7 @@
 
 import { Job } from "bullmq";
 import { callGroq, safeParseJson } from "@/lib/studyToolPipeline";
-import { buildPrompt, getDocumentId } from "@/lib/studylab-prompt";
+import { buildPrompt, getDocumentId, SYSTEM_JSON } from "@/lib/studylab-prompt";
 export interface ReportOutput {
   title: string;
   subject: string;
@@ -29,7 +29,7 @@ export async function generateReport(
 ): Promise<ReportOutput> {
   await job.updateProgress({ stage: "Writing study report", percent: 40 });
   const prompt = buildPrompt({ toolType: "REPORT", documentContent: text, documentId: getDocumentId(text), isRefresh });
-  const raw = await callGroq("Return ONLY valid JSON. No explanation, no markdown.", prompt, "llama-3.1-8b-instant");
+  const raw = await callGroq(SYSTEM_JSON, prompt, "llama-3.3-70b-versatile");
   await job.updateProgress({ stage: "Reviewing report", percent: 80 });
   return safeParseJson<ReportOutput>(raw);
 }

@@ -1,15 +1,24 @@
 /**
  * @file studyToolPipeline.ts
  * @description Shared pipeline helpers used by all StudyLab tool generators.
+ *
  * Every tool follows the same flow:
  *   fetchFromS3 → extractText → cleanAndChunk → callGroq → safeParseJson
+ *
+ * PDF Extraction: uses pdfjs-dist/legacy (pure JS, Vercel-safe).
+ *   pdf-parse is NOT used — it crashes on Vercel serverless due to a
+ *   fs.readFileSync call at module load time on a path that doesn't exist.
+ *
+ * Model selection: llama-3.3-70b-versatile for all tools.
+ *   The fast 8b model hallucinates heavily on structured JSON tasks.
+ *   70b consistently follows constraints and stays grounded in the document.
  */
 
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-import { Readable } from "stream";
-import mammoth from "mammoth";
-import Groq from "groq-sdk";
-import pdfParse from "pdf-parse";
+import { Readable }                   from "stream";
+import mammoth                        from "mammoth";
+import Groq                           from "groq-sdk";
+import { extractTextFromBuffer }      from "./pdf-extractor";
 
 // ─── Clients (lazy-initialized to avoid build-time failures) ─────────────────
 
@@ -19,7 +28,7 @@ function getS3() {
     _s3 = new S3Client({
       region: process.env.AWS_REGION!,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        accessKeyId:     process.env.AWS_ACCESS_KEY_ID!,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
       },
     });
@@ -30,29 +39,31 @@ function getS3() {
 let _groq: Groq | null = null;
 function getGroq() {
   if (!_groq) {
-    _groq = new Groq({
-      apiKey: process.env.GROQ_API_KEY!,
-    });
+    _groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
   }
   return _groq;
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+/**
+ * Use llama-3.3-70b-versatile for all tools.
+ * It reads and follows the document much more faithfully than 8b.
+ * Groq free tier allows it — no cost difference for the user.
+ */
 export type GroqModel =
-  | "llama-3.1-8b-instant"        // fast, cheap — use for data extraction tasks
-  | "llama-3.3-70b-versatile";    // powerful — replaces retired llama-3.1-70b-versatile
+  | "llama-3.3-70b-versatile"     // primary — grounded, accurate, JSON-faithful
+  | "llama-3.1-8b-instant";       // fallback only — not recommended for study tools
 
 // ─── Step 1: Fetch file buffer from S3 ───────────────────────────────────────
 
 /**
  * Downloads a file from S3 and returns its raw Buffer.
- * Uses the s3Key stored on the Resource model.
  */
 export async function fetchFromS3(s3Key: string): Promise<Buffer> {
   const command = new GetObjectCommand({
     Bucket: process.env.AWS_S3_BUCKET!,
-    Key: s3Key,
+    Key:    s3Key,
   });
 
   const response = await getS3().send(command);
@@ -72,26 +83,25 @@ export async function fetchFromS3(s3Key: string): Promise<Buffer> {
 
 /**
  * Extracts plain text from a PDF or DOCX buffer.
- * Falls back to UTF-8 string decode for plain text files.
+ * PDF: uses pdfjs-dist/legacy (Vercel-safe, no native deps).
+ * DOCX: uses mammoth.
+ * Plain text: UTF-8 decode.
  */
-export async function extractText(
-  buffer: Buffer,
-  mimeType: string
-): Promise<string> {
+export async function extractText(buffer: Buffer, mimeType: string): Promise<string> {
   const type = mimeType.toLowerCase();
 
   if (type.includes("pdf")) {
-    // pdf-parse v1.1.1 — pure Node.js, NO browser APIs, works on Vercel serverless
-    // pdfjs-dist was replaced because it requires DOMMatrix (browser-only API)
-    const data = await pdfParse(buffer);
-    return data.text;
+    // pdfjs-dist/legacy — pure JS, no fs.readFileSync at import, works on Vercel
+    const filename = "document.pdf";
+    return extractTextFromBuffer(buffer, filename, mimeType);
   }
 
-  if (type.includes("word") || type.includes("docx") || type.includes("openxmlformats")) {
+  if (
+    type.includes("word") ||
+    type.includes("docx") ||
+    type.includes("openxmlformats")
+  ) {
     const result = await mammoth.extractRawText({ buffer });
-    if (result.messages.length > 0) {
-      console.warn("[extractText] mammoth warnings:", result.messages);
-    }
     return result.value;
   }
 
@@ -102,59 +112,66 @@ export async function extractText(
 // ─── Step 3: Clean and chunk text ─────────────────────────────────────────────
 
 /**
- * Cleans extracted text (removes junk characters, collapses whitespace)
- * and truncates to maxWords to fit within Groq context window.
- * Default 4000 words ≈ 5500 tokens — safe for all Groq models.
+ * Cleans extracted text and truncates to maxChars to fit within context limits.
+ *
+ * Why chars not words: pdfjs outputs variable-length runs. Char limit is safer.
+ * 20,000 chars ≈ 5,000–6,000 tokens — comfortably fits llama-3.3-70b context.
  */
-export function cleanAndChunk(rawText: string, maxWords = 4000): string {
+export function cleanAndChunk(rawText: string, maxChars = 20_000): string {
   const cleaned = rawText
     .replace(/\r\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/[^\x20-\x7E\n]/g, " ")
-    .replace(/\s{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")               // collapse blank lines
+    .replace(/[^\x20-\x7E\n]/g, " ")          // remove non-ASCII
+    .replace(/ {2,}/g, " ")                   // collapse multiple spaces
     .trim();
 
-  const words = cleaned.split(/\s+/);
+  if (cleaned.length <= maxChars) return cleaned;
 
-  if (words.length <= maxWords) return cleaned;
-
-  return words.slice(0, maxWords).join(" ") +
-    "\n\n[Document truncated to first 4000 words for processing]";
+  return (
+    cleaned.slice(0, maxChars) +
+    "\n\n[Document truncated — showing first 20,000 characters]"
+  );
 }
 
 // ─── Step 4: Call Groq LLM ────────────────────────────────────────────────────
 
 /**
  * Makes a chat completion call to Groq.
- * Uses temperature 0.7 for creative but consistent output.
- * Max tokens 4096 — enough for any StudyLab tool output.
+ *
+ * Temperature 0.2 — much lower than before.
+ * Higher temperature causes the model to "drift" from the document into
+ * training-data hallucinations. 0.2 keeps it tight to the source material.
+ *
+ * max_tokens 4096 — sufficient for all StudyLab output formats.
  */
 export async function callGroq(
   systemPrompt: string,
-  userContent: string,
+  userContent:  string,
   model: GroqModel = "llama-3.3-70b-versatile"
 ): Promise<string> {
   const completion = await getGroq().chat.completions.create({
     model,
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: userContent },
+      { role: "user",   content: userContent },
     ],
-    temperature: 0.7,
-    max_tokens: 4096,
+    temperature: 0.2,    // low = document-faithful, high = hallucination
+    max_tokens:  4096,
   });
 
   const content = completion.choices[0]?.message?.content;
-  if (!content) {
-    throw new Error("Groq returned empty response");
-  }
+  if (!content) throw new Error("Groq returned empty response");
   return content;
 }
 
 /**
  * Extracts the first complete JSON object or array from an LLM response.
- * Handles trailing prose after JSON (llama-3.1-8b-instant appends explanations),
- * markdown fences, smart quotes, trailing commas.
+ *
+ * Handles:
+ * - Trailing prose after JSON (model explains its output)
+ * - Markdown code fences (```json ... ```)
+ * - Smart quotes (Word-style curly quotes)
+ * - Trailing commas before } or ]
  */
 export function safeParseJson<T>(raw: string): T {
   // 1. Strip markdown fences + fix smart quotes + trailing commas
@@ -166,19 +183,19 @@ export function safeParseJson<T>(raw: string): T {
     .replace(/,(\s*[}\]])/g, "$1")
     .trim();
 
-  // 2. Direct parse (fast path — works when model behaves)
+  // 2. Direct parse (fast path)
   try { return JSON.parse(defenced) as T; } catch { /* fall through */ }
 
-  // 3. Balanced-brace extractor — stops at the real closing brace,
-  //    ignoring any trailing prose the model adds after the JSON.
-  const startChar = (defenced.indexOf("{") !== -1 && defenced.indexOf("[") !== -1)
-    ? (defenced.indexOf("{") < defenced.indexOf("[") ? "{" : "[")
-    : defenced.includes("{") ? "{" : "[";
+  // 3. Balanced-brace extractor — handles trailing prose after JSON
+  const startChar =
+    defenced.includes("{") && defenced.includes("[")
+      ? defenced.indexOf("{") < defenced.indexOf("[") ? "{" : "["
+      : defenced.includes("{") ? "{" : "[";
   const closeChar = startChar === "{" ? "}" : "]";
   const start = defenced.indexOf(startChar);
 
   if (start === -1) {
-    throw new Error(`No JSON in model response. Raw: ${raw.slice(0, 300)}`);
+    throw new Error(`No JSON in model response. Raw (first 300): ${raw.slice(0, 300)}`);
   }
 
   let depth = 0, inString = false, escaped = false;
@@ -190,20 +207,23 @@ export function safeParseJson<T>(raw: string): T {
     if (inString)         continue;
     if (ch === startChar) depth++;
     else if (ch === closeChar && --depth === 0) {
-      try { return JSON.parse(defenced.slice(start, i + 1)) as T; }
-      catch (e) { throw new Error(`JSON slice parse failed: ${e}\nSlice: ${defenced.slice(start, i + 1).slice(0, 300)}`); }
+      try {
+        return JSON.parse(defenced.slice(start, i + 1)) as T;
+      } catch (e) {
+        throw new Error(
+          `JSON slice parse failed: ${e}\nSlice: ${defenced.slice(start, i + 1).slice(0, 300)}`
+        );
+      }
     }
   }
 
-  throw new Error(`Unbalanced JSON in model response. Raw: ${raw.slice(0, 300)}`);
+  throw new Error(`Unbalanced JSON in model response. Raw (first 300): ${raw.slice(0, 300)}`);
 }
-
 
 // ─── Audio helper: stream to Buffer ──────────────────────────────────────────
 
 /**
  * Collects a Node.js Readable stream into a single Buffer.
- * Used by Audio Overview and Video Overview generators.
  */
 export async function streamToBuffer(readable: Readable): Promise<Buffer> {
   const chunks: Buffer[] = [];
