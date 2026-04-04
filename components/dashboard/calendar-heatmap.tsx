@@ -2,136 +2,229 @@
 
 import { useState, useMemo } from "react"
 
-interface CalendarHeatmapProps {
-  month?: number // 0-indexed
-  year?: number
+interface GitHubHeatmapProps {
   data?: Record<string, number> // "YYYY-MM-DD" → activity count
+  totalContributions?: number
+  loading?: boolean
 }
 
-const WEEKDAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"]
+const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""]
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 function getIntensityColor(count: number): string {
-  if (count === 0) return "#F1F5F9"
-  if (count <= 2) return "#BFDBFE"
-  if (count <= 5) return "#60A5FA"
-  if (count <= 10) return "#2563EB"
-  return "#1D4ED8"
+  if (count === 0) return "#161B22"
+  if (count <= 2) return "#0E4429"
+  if (count <= 5) return "#006D32"
+  if (count <= 10) return "#26A641"
+  return "#39D353"
 }
 
-function getIntensityLabel(count: number): string {
-  if (count === 0) return "No activity"
-  if (count <= 2) return "Low activity"
-  if (count <= 5) return "Medium activity"
-  if (count <= 10) return "High activity"
-  return "Peak activity"
+function getIntensityColorLight(count: number): string {
+  if (count === 0) return "#EBEDF0"
+  if (count <= 2) return "#9BE9A8"
+  if (count <= 5) return "#40C463"
+  if (count <= 10) return "#30A14E"
+  return "#216E39"
 }
 
-export function CalendarHeatmap({ month, year, data = {} }: CalendarHeatmapProps) {
-  const now = new Date()
-  const displayMonth = month ?? now.getMonth()
-  const displayYear = year ?? now.getFullYear()
+function getContributionText(count: number, date: string): string {
+  const d = new Date(date + "T00:00:00")
+  const formatted = d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+  if (count === 0) return `No contributions on ${formatted}`
+  return `${count} contribution${count !== 1 ? "s" : ""} on ${formatted}`
+}
 
+export function CalendarHeatmap({ data = {}, totalContributions = 0, loading = false }: GitHubHeatmapProps) {
   const [hoveredDay, setHoveredDay] = useState<string | null>(null)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
 
-  const calendarData = useMemo(() => {
-    const firstDay = new Date(displayYear, displayMonth, 1)
-    const lastDay = new Date(displayYear, displayMonth + 1, 0)
-    const daysInMonth = lastDay.getDate()
+  // Build 52-week grid ending today
+  const { weeks, monthLabels } = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
 
-    // Monday = 0, Sunday = 6
-    let startDow = firstDay.getDay() - 1
-    if (startDow < 0) startDow = 6
+    // Go back ~52 weeks from today (to the nearest Sunday)
+    const start = new Date(today)
+    start.setDate(start.getDate() - 364) // 52 weeks = 364 days
+    // Align to Sunday
+    const startDow = start.getDay()
+    start.setDate(start.getDate() - startDow)
 
-    const cells: { day: number; date: string; count: number; isBlank: boolean }[] = []
+    const weeks: { date: string; count: number; dayOfWeek: number }[][] = []
+    const monthPositions: { label: string; col: number }[] = []
+    let currentWeek: { date: string; count: number; dayOfWeek: number }[] = []
+    let lastMonth = -1
 
-    // Blank cells before first day
-    for (let i = 0; i < startDow; i++) {
-      cells.push({ day: 0, date: "", count: 0, isBlank: true })
-    }
+    const cursor = new Date(start)
+    let weekIndex = 0
 
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`
-      cells.push({
-        day: d,
+    while (cursor <= today || currentWeek.length > 0) {
+      if (cursor > today && currentWeek.length > 0) {
+        weeks.push(currentWeek)
+        break
+      }
+
+      const dateStr = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`
+      const dayOfWeek = cursor.getDay() // 0=Sun, 6=Sat
+
+      // Track month labels
+      if (cursor.getMonth() !== lastMonth) {
+        lastMonth = cursor.getMonth()
+        monthPositions.push({ label: MONTH_LABELS[lastMonth], col: weekIndex })
+      }
+
+      currentWeek.push({
         date: dateStr,
         count: data[dateStr] || 0,
-        isBlank: false,
+        dayOfWeek,
       })
+
+      // End of week (Saturday)
+      if (dayOfWeek === 6) {
+        weeks.push(currentWeek)
+        currentWeek = []
+        weekIndex++
+      }
+
+      cursor.setDate(cursor.getDate() + 1)
     }
 
-    return cells
-  }, [displayMonth, displayYear, data])
+    if (currentWeek.length > 0) {
+      weeks.push(currentWeek)
+    }
 
-  const monthName = new Date(displayYear, displayMonth).toLocaleString("en-US", { month: "long", year: "numeric" })
+    return { weeks, monthLabels: monthPositions }
+  }, [data])
 
-  const hoveredData = hoveredDay ? {
-    date: new Date(hoveredDay).toLocaleDateString("en-US", { month: "long", day: "numeric" }),
-    count: data[hoveredDay] || 0,
-  } : null
+  const hoveredData = hoveredDay
+    ? { text: getContributionText(data[hoveredDay] || 0, hoveredDay) }
+    : null
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-6 w-6 border-2 border-[#30A14E] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="relative">
-      {/* Month label */}
-      <p className="text-sm font-semibold text-[#334155] mb-3">{monthName}</p>
-
-      {/* Grid */}
-      <div className="flex gap-1.5">
-        {/* Day labels column */}
-        <div className="flex flex-col gap-1 pt-0">
-          {WEEKDAY_LABELS.map((label, i) => (
-            <div key={i} className="h-7 w-4 flex items-center justify-center text-[10px] font-medium text-[#94A3B8]">
-              {label}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar grid */}
-        <div className="grid grid-cols-[repeat(auto-fill,28px)] gap-1 flex-1" style={{ gridTemplateRows: "repeat(7, 28px)" }}>
-          {calendarData.map((cell, i) => (
-            <div
-              key={i}
-              className={`rounded transition-all duration-150 ${cell.isBlank ? "" : "cursor-pointer hover:ring-2 hover:ring-[#4F8EF7]/30"}`}
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 4,
-                backgroundColor: cell.isBlank ? "transparent" : getIntensityColor(cell.count),
-              }}
-              onMouseEnter={(e) => {
-                if (!cell.isBlank) {
-                  setHoveredDay(cell.date)
-                  const rect = e.currentTarget.getBoundingClientRect()
-                  setTooltipPos({ x: rect.left + 14, y: rect.top - 8 })
-                }
-              }}
-              onMouseLeave={() => setHoveredDay(null)}
-            />
-          ))}
-        </div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm font-semibold text-[#C9D1D9]">
+          <span className="text-[#E6EDF3] font-bold">{totalContributions}</span> contributions in the last year
+        </p>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-1.5 mt-3">
-        <span className="text-[10px] text-[#94A3B8]">Less</span>
-        {[0, 2, 5, 10, 15].map((v) => (
-          <div
-            key={v}
-            className="rounded"
-            style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: getIntensityColor(v) }}
-          />
-        ))}
-        <span className="text-[10px] text-[#94A3B8]">More</span>
+      {/* Graph Container */}
+      <div className="rounded-xl border border-[#30363D] bg-[#0D1117] p-4 overflow-x-auto">
+        {/* Month labels */}
+        <div className="flex ml-[30px] mb-1">
+          {monthLabels.map((m, i) => {
+            const nextCol = i < monthLabels.length - 1 ? monthLabels[i + 1].col : weeks.length
+            const span = nextCol - m.col
+            if (span < 2) return null // Skip if too narrow
+            return (
+              <div
+                key={`${m.label}-${m.col}`}
+                className="text-[10px] text-[#8B949E] font-medium"
+                style={{
+                  position: "relative",
+                  left: `${m.col * 14}px`,
+                  width: 0,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {m.label}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Grid with day labels */}
+        <div className="flex gap-0">
+          {/* Day labels */}
+          <div className="flex flex-col gap-[2px] mr-1 shrink-0" style={{ width: 28 }}>
+            {DAY_LABELS.map((label, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-end pr-1 text-[10px] text-[#8B949E] font-medium"
+                style={{ height: 12 }}
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+
+          {/* Weeks grid */}
+          <div className="flex gap-[2px]">
+            {weeks.map((week, weekIdx) => (
+              <div key={weekIdx} className="flex flex-col gap-[2px]">
+                {Array.from({ length: 7 }, (_, dayIdx) => {
+                  const cell = week.find((c) => c.dayOfWeek === dayIdx)
+                  if (!cell) {
+                    return (
+                      <div
+                        key={dayIdx}
+                        style={{ width: 12, height: 12, borderRadius: 2 }}
+                      />
+                    )
+                  }
+                  return (
+                    <div
+                      key={dayIdx}
+                      className="cursor-pointer transition-all duration-100"
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 2,
+                        backgroundColor: getIntensityColor(cell.count),
+                        outline: hoveredDay === cell.date ? "2px solid #58A6FF" : "none",
+                        outlineOffset: -1,
+                      }}
+                      onMouseEnter={(e) => {
+                        setHoveredDay(cell.date)
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setTooltipPos({ x: rect.left + 6, y: rect.top - 4 })
+                      }}
+                      onMouseLeave={() => setHoveredDay(null)}
+                    />
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-end gap-1 mt-2">
+          <span className="text-[10px] text-[#8B949E] mr-0.5">Less</span>
+          {[0, 2, 5, 10, 15].map((v) => (
+            <div
+              key={v}
+              style={{
+                width: 12,
+                height: 12,
+                borderRadius: 2,
+                backgroundColor: getIntensityColor(v),
+              }}
+            />
+          ))}
+          <span className="text-[10px] text-[#8B949E] ml-0.5">More</span>
+        </div>
       </div>
 
       {/* Tooltip */}
       {hoveredData && (
         <div
-          className="fixed z-50 pointer-events-none px-3 py-2 rounded-lg bg-[#1E293B] text-white text-xs shadow-lg"
+          className="fixed z-50 pointer-events-none px-3 py-1.5 rounded-md bg-[#6E7681] text-white text-[11px] font-semibold shadow-lg whitespace-nowrap"
           style={{ left: tooltipPos.x, top: tooltipPos.y, transform: "translate(-50%, -100%)" }}
         >
-          <p className="font-semibold">{hoveredData.date}</p>
-          <p className="text-[#94A3B8] text-[10px]">{hoveredData.count} actions • {getIntensityLabel(hoveredData.count)}</p>
+          {hoveredData.text}
+          <div
+            className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 rotate-45 bg-[#6E7681]"
+          />
         </div>
       )}
     </div>
