@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { Upload, Download, Bookmark, TrendingUp, ArrowUpRight, Loader2, BarChart3 } from "lucide-react"
 import { CalendarHeatmap } from "@/components/dashboard/calendar-heatmap"
 import { ActivityGraph } from "@/components/dashboard/activity-graph"
@@ -55,8 +55,8 @@ export default function AnalyticsPage() {
   // Convert activities to heatmap data
   const { heatmapData, totalContributions, uploads, downloads, currentMonthUploads, currentMonthDownloads } = useMemo(() => {
     const heatmap: Record<string, number> = {}
-    const uploads: Record<string, number> = {}
-    const downloads: Record<string, number> = {}
+    const uploadsMap: Record<string, number> = {}
+    const downloadsMap: Record<string, number> = {}
     let total = 0
     let monthUploads = 0
     let monthDownloads = 0
@@ -69,26 +69,23 @@ export default function AnalyticsPage() {
       const dateStr = new Date(a.activityDate).toISOString().split("T")[0]
       const count = a.totalPointsToday || 0
       heatmap[dateStr] = count
-      total += count > 0 ? 1 : 0 // Count active days as contributions
+      if (count > 0) total++
 
-      const uploadPts = a.pointsFromUploads || 0
-      const downloadPts = a.pointsFromDownloads || 0
-      uploads[dateStr] = uploadPts
-      downloads[dateStr] = downloadPts
+      uploadsMap[dateStr] = a.pointsFromUploads || 0
+      downloadsMap[dateStr] = a.pointsFromDownloads || 0
 
-      // Current month stats
       const d = new Date(a.activityDate)
       if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-        monthUploads += uploadPts
-        monthDownloads += downloadPts
+        monthUploads += a.pointsFromUploads || 0
+        monthDownloads += a.pointsFromDownloads || 0
       }
     }
 
     return {
       heatmapData: heatmap,
       totalContributions: total,
-      uploads,
-      downloads,
+      uploads: uploadsMap,
+      downloads: downloadsMap,
       currentMonthUploads: monthUploads,
       currentMonthDownloads: monthDownloads,
     }
@@ -100,8 +97,8 @@ export default function AnalyticsPage() {
     <div className="space-y-6 max-w-[1400px] mx-auto">
       {/* Page Header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#30A14E]/20 to-[#39D353]/20 shadow-sm">
-          <BarChart3 className="h-6 w-6 text-[#30A14E]" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6366F1]/20 to-[#818CF8]/20 shadow-sm">
+          <BarChart3 className="h-6 w-6 text-[#6366F1]" />
         </div>
         <div>
           <h1 className="text-[28px] font-bold tracking-tight text-[#0F1117] font-display">
@@ -113,9 +110,8 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* GitHub-style Contribution Graph — full width */}
+      {/* Contribution Graph — full width */}
       <div className="rounded-2xl bg-white border border-[#F1F5F9] p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <h2 className="text-base font-bold text-[#0F1117] font-display mb-4">Contribution Graph</h2>
         <CalendarHeatmap
           data={heatmapData}
           totalContributions={totalContributions}
@@ -132,7 +128,7 @@ export default function AnalyticsPage() {
             <h2 className="text-base font-bold text-[#0F1117] font-display mb-4">Activity Trends</h2>
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-[#4F8EF7]" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#6366F1]" />
               </div>
             ) : (
               <ActivityGraph
@@ -144,34 +140,28 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          {/* Stats Pills Row */}
+          {/* Stats Cards */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="flex items-center gap-2.5 rounded-2xl bg-[#EFF6FF] border border-[#BFDBFE]/50 px-4 py-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4F8EF7]/10">
-                <Upload className="h-5 w-5 text-[#4F8EF7]" strokeWidth={1.75} />
+            <div className="rounded-2xl bg-white border border-[#F1F5F9] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2FF] mb-2">
+                <Upload className="h-5 w-5 text-[#6366F1]" strokeWidth={1.75} />
               </div>
-              <div>
-                <span className="text-xl font-bold text-[#1E40AF]">{loading ? "—" : currentMonthUploads}</span>
-                <p className="text-[10px] text-[#64748B] uppercase tracking-wide font-medium">Uploads</p>
-              </div>
+              <div className="text-2xl font-bold text-[#0F1117]">{loading ? "—" : currentMonthUploads}</div>
+              <div className="text-[10px] text-[#94A3B8] font-medium uppercase tracking-wide">Uploads this month</div>
             </div>
-            <div className="flex items-center gap-2.5 rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0]/50 px-4 py-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#34D399]/10">
-                <Download className="h-5 w-5 text-[#34D399]" strokeWidth={1.75} />
+            <div className="rounded-2xl bg-white border border-[#F1F5F9] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ECFDF5] mb-2">
+                <Download className="h-5 w-5 text-[#10B981]" strokeWidth={1.75} />
               </div>
-              <div>
-                <span className="text-xl font-bold text-[#065F46]">{loading ? "—" : currentMonthDownloads}</span>
-                <p className="text-[10px] text-[#64748B] uppercase tracking-wide font-medium">Downloads</p>
-              </div>
+              <div className="text-2xl font-bold text-[#0F1117]">{loading ? "—" : currentMonthDownloads}</div>
+              <div className="text-[10px] text-[#94A3B8] font-medium uppercase tracking-wide">Downloads this month</div>
             </div>
-            <div className="flex items-center gap-2.5 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A]/50 px-4 py-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F5A623]/10">
-                <Bookmark className="h-5 w-5 text-[#F5A623]" strokeWidth={1.75} />
+            <div className="rounded-2xl bg-white border border-[#F1F5F9] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FEF3C7] mb-2">
+                <Bookmark className="h-5 w-5 text-[#F59E0B]" strokeWidth={1.75} />
               </div>
-              <div>
-                <span className="text-xl font-bold text-[#92400E]">{loading ? "—" : bookmarkCount}</span>
-                <p className="text-[10px] text-[#64748B] uppercase tracking-wide font-medium">Bookmarks</p>
-              </div>
+              <div className="text-2xl font-bold text-[#0F1117]">{loading ? "—" : bookmarkCount}</div>
+              <div className="text-[10px] text-[#94A3B8] font-medium uppercase tracking-wide">Total Bookmarks</div>
             </div>
           </div>
         </div>
@@ -194,20 +184,18 @@ export default function AnalyticsPage() {
                   const likeDays = activities.filter((a) => a.pointsFromLikesReceived > 0).length
                   const maxDays = Math.max(loginDays, uploadDays, downloadDays, likeDays, 1)
 
-                  const items = [
-                    { name: "Login Activity", count: loginDays, color: "#4F8EF7", percent: (loginDays / maxDays) * 100 },
+                  return [
+                    { name: "Login Activity", count: loginDays, color: "#6366F1", percent: (loginDays / maxDays) * 100 },
                     { name: "Uploads", count: uploadDays, color: "#8B5CF6", percent: (uploadDays / maxDays) * 100 },
-                    { name: "Downloads", count: downloadDays, color: "#34D399", percent: (downloadDays / maxDays) * 100 },
-                    { name: "Likes Received", count: likeDays, color: "#F5A623", percent: (likeDays / maxDays) * 100 },
-                  ]
-
-                  return items.map((item) => (
+                    { name: "Downloads", count: downloadDays, color: "#10B981", percent: (downloadDays / maxDays) * 100 },
+                    { name: "Likes Received", count: likeDays, color: "#F59E0B", percent: (likeDays / maxDays) * 100 },
+                  ].map((item) => (
                     <div key={item.name}>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-sm font-medium text-[#334155]">{item.name}</span>
                         <span className="text-xs font-bold text-[#64748B]">{item.count} days</span>
                       </div>
-                      <div className="h-1.5 w-full rounded-full bg-[#F1F5F9] overflow-hidden">
+                      <div className="h-2 w-full rounded-full bg-[#F1F5F9] overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-700"
                           style={{ width: `${item.percent}%`, backgroundColor: item.color }}
@@ -220,7 +208,7 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          {/* Streak Info */}
+          {/* Activity Summary */}
           <div className="rounded-2xl bg-white border border-[#F1F5F9] p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <h2 className="text-base font-bold text-[#0F1117] font-display mb-4">Activity Summary</h2>
             <div className="grid grid-cols-2 gap-3">
@@ -231,12 +219,12 @@ export default function AnalyticsPage() {
                 const avgDaily = activeDays > 0 ? Math.round(totalPoints / activeDays) : 0
 
                 return [
-                  { label: "Active Days", value: activeDays, color: "#30A14E" },
-                  { label: "Passive Days", value: passiveDays, color: "#8B949E" },
+                  { label: "Active Days", value: activeDays, color: "#6366F1" },
+                  { label: "Passive Days", value: passiveDays, color: "#94A3B8" },
                   { label: "Total Points", value: totalPoints, color: "#4F8EF7" },
-                  { label: "Avg / Active Day", value: avgDaily, color: "#F5A623" },
+                  { label: "Avg / Active Day", value: avgDaily, color: "#F59E0B" },
                 ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl bg-[#F8FAFC] p-3 text-center">
+                  <div key={stat.label} className="rounded-xl bg-[#F8FAFC] border border-[#F1F5F9] p-3.5 text-center">
                     <div className="text-2xl font-bold" style={{ color: stat.color }}>{loading ? "—" : stat.value}</div>
                     <div className="text-[10px] text-[#94A3B8] font-medium uppercase tracking-wide mt-0.5">{stat.label}</div>
                   </div>
@@ -246,17 +234,17 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Growth Card */}
-          <div className="rounded-2xl bg-white border border-[#F1F5F9] p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <div className="rounded-2xl bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] p-6 shadow-lg shadow-[#6366F1]/15">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ECFDF5]">
-                <TrendingUp className="h-5 w-5 text-[#059669]" strokeWidth={1.75} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur">
+                <TrendingUp className="h-5 w-5 text-white" strokeWidth={1.75} />
               </div>
               <div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold text-[#0F1117]">{totalContributions}</span>
-                  <ArrowUpRight className="h-4 w-4 text-[#059669]" />
+                  <span className="text-2xl font-bold text-white">{totalContributions}</span>
+                  <ArrowUpRight className="h-4 w-4 text-white/80" />
                 </div>
-                <p className="text-xs text-[#64748B]">Total active days this year</p>
+                <p className="text-xs text-white/70">Total active days this year</p>
               </div>
             </div>
           </div>
