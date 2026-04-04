@@ -29,7 +29,7 @@ const semesterAccents: Record<number, { color: string; bg: string; text: string;
 export default function SubjectsPage() {
   const [subjects, setSubjects] = useState<SubjectData[]>([])
   const [loading, setLoading] = useState(true)
-  const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set([1, 2, 3, 4]))
+  const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set())
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
