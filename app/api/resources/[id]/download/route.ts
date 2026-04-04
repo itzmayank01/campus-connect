@@ -57,6 +57,31 @@ export async function GET(
             userId: dbUser.id,
           },
         })
+        
+        // Update Daily Activity for downloads (5 points per download)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        await prisma.dailyActivity.upsert({
+          where: {
+            userId_activityDate: {
+              userId: dbUser.id,
+              activityDate: today
+            }
+          },
+          create: {
+            userId: dbUser.id,
+            activityDate: today,
+            pointsFromDownloads: 5,
+            totalPointsToday: 5,
+            isPassiveDay: false
+          },
+          update: {
+            pointsFromDownloads: { increment: 5 },
+            totalPointsToday: { increment: 5 },
+            isPassiveDay: false
+          }
+        })
       } catch {
         // Ignore duplicate download records
       }

@@ -5,6 +5,7 @@ import { s3Client, buildS3Key, S3_BUCKET } from "@/lib/s3"
 import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
 import { callAI, isAiConfigured } from "@/lib/anthropic"
 import { generateTags } from "@/lib/ai/tag-generator"
+import { extractTextFromBuffer } from "@/lib/pdf-extractor"
 
 export const maxDuration = 60;
 
@@ -102,8 +103,8 @@ export async function POST(request: NextRequest) {
     // Check via file-type library (deep MIME detection)
     let detectedMime = contentType
     try {
-      const fileType = await import("file-type")
-      const typeResult = await fileType.fromBuffer(buffer)
+      const { fileTypeFromBuffer } = await import("file-type")
+      const typeResult = await fileTypeFromBuffer(buffer)
       if (typeResult) {
         detectedMime = typeResult.mime
       }
@@ -242,9 +243,9 @@ Is this content relevant to the subject?`
     // ─── STEP 4: Safety Check ──────────────────────────────
     updateStep("safety", "running")
 
-    if (isAiConfigured() && extractedText.length > 50) {
+    if (isAiConfigured() && extractedText.length > 10) {
       const safetyResponse = await callAI(
-        `You are a content safety moderator. Check if academic content contains harmful, inappropriate, or dangerous material. Respond ONLY with JSON: {"is_safe": true/false, "flags": [], "severity": "none"|"low"|"medium"|"high", "action": "allow"|"warn"|"block"}`,
+        `You are a content safety moderator. Check if academic content contains harmful, inappropriate, dangerous, or sexually explicit material. Respond ONLY with JSON: {"is_safe": true/false, "flags": [], "severity": "none"|"low"|"medium"|"high", "action": "allow"|"warn"|"block"}`,
         `Check this content for harmful material: ${extractedText}`
       )
 
@@ -253,12 +254,12 @@ Is this content relevant to the subject?`
           const cleaned = safetyResponse.replace(/```json\n?|```\n?/g, "").trim()
           const safetyResult = JSON.parse(cleaned)
 
-          if (safetyResult.severity === "medium" || safetyResult.severity === "high") {
-            updateStep("safety", "failed", "Content flagged for safety concerns")
+          if (safetyResult.severity === "medium" || safetyResult.severity === "high" || !safetyResult.is_safe) {
+            updateStep("safety", "failed", "Content flagged for safety/inappropriate concerns")
             return NextResponse.json({
               passed: false,
               steps,
-              reason: "This content was flagged and cannot be uploaded. If you believe this is a mistake, contact support.",
+              reason: "This content was flagged as inappropriate and cannot be uploaded. If you believe this is a mistake, contact support.",
             } as ModerationResult)
           } else if (safetyResult.severity === "low") {
             updateStep("safety", "done", "Passed with warning flag")
@@ -267,19 +268,8 @@ Is this content relevant to the subject?`
             updateStep("safety", "done", "Content is safe")
           }
 
-          // Store moderation result
-          await prisma.resourceModeration.create({
-            data: {
-              relevanceScore: relevanceResult?.confidence,
-              isRelevant: relevanceResult?.is_relevant,
-              isSafe: safetyResult.is_safe,
-              safetyFlags: safetyResult.flags || [],
-              detectedTopics: relevanceResult?.detected_topics || [],
-              aiVerdict: relevanceResult?.verdict,
-              aiReason: relevanceResult?.reason,
-              moderationPassed,
-            },
-          })
+          // Log safety result inline (resourceModeration table not in schema)
+          console.log("Safety check result:", { isSafe: safetyResult.is_safe, severity: safetyResult.severity, flags: safetyResult.flags })
         } catch {
           updateStep("safety", "done", "Safety check completed")
         }
@@ -365,6 +355,31 @@ Is this content relevant to the subject?`
         aiTags,
       },
       include: { subject: true },
+    })
+
+    // Update Daily Activity for uploads (10 points per upload)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    await prisma.dailyActivity.upsert({
+      where: {
+        userId_activityDate: {
+          userId: dbUser.id,
+          activityDate: today
+        }
+      },
+      create: {
+        userId: dbUser.id,
+        activityDate: today,
+        pointsFromUploads: 10,
+        totalPointsToday: 10,
+        isPassiveDay: false
+      },
+      update: {
+        pointsFromUploads: { increment: 10 },
+        totalPointsToday: { increment: 10 },
+        isPassiveDay: false
+      }
     })
 
     updateStep("save", "done", "Resource saved successfully")
