@@ -17,8 +17,8 @@ import {
   Star,
   Heart,
   Shield,
-  ChevronDown,
-  SlidersHorizontal,
+  Bookmark,
+  BookmarkCheck,
   Sparkles,
 } from "lucide-react"
 
@@ -70,12 +70,30 @@ export default function StudyMaterialsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [youtubeModal, setYoutubeModal] = useState<ResourceItem | null>(null)
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set())
+  const [togglingBookmark, setTogglingBookmark] = useState<Set<string>>(new Set())
 
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300)
     return () => clearTimeout(timer)
   }, [searchQuery])
+
+  // Check which resources are bookmarked
+  const checkBookmarks = useCallback(async (resourceIds: string[]) => {
+    if (resourceIds.length === 0) return
+    try {
+      const res = await fetch("/api/user/bookmarks/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resourceIds }),
+      })
+      const data = await res.json()
+      if (Array.isArray(data.bookmarkedIds)) {
+        setBookmarkedIds(new Set(data.bookmarkedIds))
+      }
+    } catch {}
+  }, [])
 
   // Fetch resources from unified endpoint
   const fetchResources = useCallback(async () => {
@@ -89,7 +107,9 @@ export default function StudyMaterialsPage() {
       const res = await fetch(`/api/resources?${params.toString()}`)
       if (res.ok) {
         const data = await res.json()
-        setResources(data.resources || [])
+        const fetched = data.resources || []
+        setResources(fetched)
+        checkBookmarks(fetched.map((r: ResourceItem) => r.id))
       } else {
         // Fallback: try fetching from subjects endpoint (legacy)
         try {
@@ -119,6 +139,7 @@ export default function StudyMaterialsPage() {
                 (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
               )
               setResources(allResources)
+              checkBookmarks(allResources.map((r) => r.id))
             }
           }
         } catch {}
@@ -128,7 +149,7 @@ export default function StudyMaterialsPage() {
     } finally {
       setLoading(false)
     }
-  }, [activeTab, debouncedSearch])
+  }, [activeTab, debouncedSearch, checkBookmarks])
 
   useEffect(() => {
     fetchResources()
@@ -165,6 +186,30 @@ export default function StudyMaterialsPage() {
         window.open(resource.resourceUrl, "_blank")
       }
     }
+  }
+
+  const handleToggleBookmark = async (resourceId: string) => {
+    setTogglingBookmark((prev) => new Set(prev).add(resourceId))
+    try {
+      const res = await fetch(`/api/resources/${resourceId}/bookmark`, {
+        method: "POST",
+      })
+      const data = await res.json()
+      setBookmarkedIds((prev) => {
+        const next = new Set(prev)
+        if (data.bookmarked) {
+          next.add(resourceId)
+        } else {
+          next.delete(resourceId)
+        }
+        return next
+      })
+    } catch {}
+    setTogglingBookmark((prev) => {
+      const next = new Set(prev)
+      next.delete(resourceId)
+      return next
+    })
   }
 
   return (
@@ -242,6 +287,8 @@ export default function StudyMaterialsPage() {
               resource.mimeType === "youtube"
                 ? resource.youtubeTitle || resource.originalFilename
                 : resource.originalFilename
+            const isBookmarked = bookmarkedIds.has(resource.id)
+            const isToggling = togglingBookmark.has(resource.id)
 
             return (
               <div
@@ -343,6 +390,26 @@ export default function StudyMaterialsPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1.5 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                    {/* Bookmark Button */}
+                    <button
+                      onClick={() => handleToggleBookmark(resource.id)}
+                      disabled={isToggling}
+                      className={`flex items-center justify-center h-9 w-9 rounded-lg transition-all duration-200 ${
+                        isBookmarked
+                          ? "bg-[#F5A623]/10 text-[#F5A623] hover:bg-[#F5A623]/20"
+                          : "bg-[#F8FAFC] text-[#94A3B8] hover:bg-[#F1F5F9] hover:text-[#64748B]"
+                      }`}
+                      title={isBookmarked ? "Remove Bookmark" : "Bookmark"}
+                    >
+                      {isToggling ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : isBookmarked ? (
+                        <BookmarkCheck className="h-4 w-4" />
+                      ) : (
+                        <Bookmark className="h-4 w-4" />
+                      )}
+                    </button>
+
                     {resource.mimeType === "youtube" ? (
                       <>
                         <button

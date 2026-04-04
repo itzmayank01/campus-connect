@@ -86,6 +86,7 @@ model User {
   resourceFolders    ResourceFolder[]    @relation("UploadedFolders")
   resourceRatings    ResourceRating[]
   resourceDownloads  ResourceDownload[]
+  resourceBookmarks  ResourceBookmark[]
   streak             UserStreak?
   dailyActivities    DailyActivity[]
   activityEvents     ActivityEvent[]
@@ -249,10 +250,16 @@ model Resource {
   moderationPassed Boolean?            @default(true) @map("moderation_passed")
   needsReview      Boolean             @default(false) @map("needs_review")
   aiTags           String[]            @default([]) @map("ai_tags")
+  // Text extraction fields (Textract output cached at upload time)
+  originalMimeType  String?            @map("original_mime_type") // original mime before HEIC conversion
+  extractedText     String?            @db.Text @map("extracted_text") // Textract-extracted text
+  textExtracted     Boolean            @default(false) @map("text_extracted") // whether extraction succeeded
+  textExtractedAt   DateTime?          @map("text_extracted_at") // when extraction completed
 
   ratings          ResourceRating[]
   downloads        ResourceDownload[]
   likes            ResourceLike[]
+  resourceBookmarks ResourceBookmark[]
   verifications    ResourceVerification[]
   studyTools       StudyTool[]
 
@@ -482,4 +489,19 @@ model StudyTool {
   @@index([status])
   @@index([type, status])
   @@map("study_tools")
+}
+
+// ─── Resource Bookmark Model ─────────────────────────────────────────────────
+
+model ResourceBookmark {
+  id         String   @id @default(uuid())
+  resourceId String   @map("resource_id")
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([resourceId, userId])
+  @@index([userId])
+  @@map("resource_bookmarks")
 }
