@@ -70,7 +70,7 @@ const resourceTypeIcons: Record<string, typeof FileText> = {
 export function DashboardSidebar() {
   const pathname = usePathname()
   const [downloads, setDownloads] = useState<DownloadedResource[]>([])
-  const [showDownloads, setShowDownloads] = useState(true)
+  const [showDownloads, setShowDownloads] = useState(false)
   const [loadingDownloads, setLoadingDownloads] = useState(false)
 
   useEffect(() => {
