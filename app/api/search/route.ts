@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const resourceType = params.get("type") || undefined
     const semester = params.get("semester") ? parseInt(params.get("semester")!, 10) : undefined
     const sort = params.get("sort") || "relevance"
-    const limit = parseInt(params.get("limit") || "20", 10)
+    const limit = Math.min(Math.max(parseInt(params.get("limit") || "20", 10), 1), 50)
 
     // Build where clause
     const where: any = { deletedAt: null, isPublic: true }
@@ -122,10 +122,10 @@ export async function GET(request: NextRequest) {
       query,
       sort,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Search error:", error)
     return NextResponse.json(
-      { error: "Failed to search resources", details: error.message },
+      { error: "Failed to search resources" },
       { status: 500 }
     )
   }

@@ -28,7 +28,7 @@ export async function callAI(
       systemInstruction: systemPrompt,
     })
 
-    // Race between AI call and timeout — never block for more than 8 seconds
+    // Race between AI call and timeout — never block for more than 25 seconds
     const result = await Promise.race([
       model.generateContent(userMessage),
       new Promise<never>((_, reject) =>
@@ -40,7 +40,7 @@ export async function callAI(
     return response.text() || null
   } catch (error: any) {
     if (error?.message === "AI_TIMEOUT") {
-      console.warn("Gemini API timed out after 8 seconds — returning null")
+      console.warn(`Gemini API timed out after ${AI_TIMEOUT_MS / 1000}s — returning null`)
     } else {
       console.error("Gemini API error:", error)
     }
