@@ -1,93 +1,65 @@
+import Image from "next/image"
+import { Button } from "@/components/ui/button"
+import { ArrowRight } from "lucide-react"
 import Link from "next/link"
-
 export function Hero() {
   return (
-    <section className="relative w-full min-h-[90vh] flex items-center pt-[100px] overflow-hidden bg-white">
-      {/* 1280px max-width container */}
-      <div className="mx-auto w-full max-w-[1280px] px-6 md:px-[48px] relative z-10 flex flex-col xl:flex-row items-center justify-between gap-12 xl:gap-8">
-        
-        {/* Left Column (55%) */}
-        <div className="w-full xl:w-[55%] flex flex-col items-center text-center xl:items-start xl:text-left">
-          
-          {/* Badge */}
-          <div className="mb-6 flex items-center gap-2 rounded-full bg-[#E6F1FB] px-[14px] py-[6px] text-[13px] font-medium text-[#185FA5]">
-            <span className="h-2 w-2 rounded-full bg-[#185FA5]" />
+    <section className="relative overflow-hidden px-6 pt-10 pb-20 lg:pt-16 lg:pb-32">
+      {/* Subtle background dot pattern */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: "radial-gradient(circle, currentColor 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
+      />
+
+      <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-14 lg:flex-row lg:items-center lg:gap-20">
+        {/* Left content */}
+        <div className="flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm text-muted-foreground shadow-sm">
+            <span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse" />
             AI-Powered Academic Platform
           </div>
 
-          {/* Headline */}
-          <h1 className="text-[28px] md:text-[36px] xl:text-[56px] leading-[1.1] tracking-tight">
-            <span className="font-normal text-[#0f172a]">Smarter Academic Resource Platform for</span>{" "}
-            <span className="font-bold text-[#185FA5]">Engineers</span>
+          <h1 className="text-balance text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            Smarter Academic Resource Platform for{" "}
+            <span className="text-primary">Engineers</span>
           </h1>
 
-          {/* Subheadline */}
-          <p className="mt-6 w-full max-w-[480px] text-[18px] leading-[1.6] text-[#475569]">
+          <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground">
             Harness AI-driven recommendations, semester-wise study materials, and
             secure cloud infrastructure to accelerate your engineering journey.
           </p>
 
-          {/* CTAs */}
-          <div className="mt-8 flex flex-col md:flex-row items-center xl:items-start justify-center xl:justify-start gap-[12px] w-full md:w-auto">
-            <Link href="/login" className="w-full md:w-auto">
-              <button className="w-full md:w-auto bg-[#185FA5] hover:bg-[#0C447C] text-white rounded-[8px] px-[28px] py-[14px] font-medium text-[15px] transition duration-200">
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+            <Link href="/login">
+              <Button size="lg">
                 Get Started →
-              </button>
+              </Button>
             </Link>
-            <button className="w-full md:w-auto bg-transparent border-[1.5px] border-[#185FA5] text-[#185FA5] hover:bg-[#E6F1FB] rounded-[8px] px-[24px] py-[14px] font-medium text-[15px] transition duration-200">
+            <Button variant="outline" size="lg" className="px-8 text-base">
               Learn More
-            </button>
+            </Button>
           </div>
-
-          {/* Social Proof */}
-          <div className="mt-[28px] text-[13px] text-[#64748b]">
-            <span className="text-[#EF9F27] tracking-widest mr-2 text-[14px]">★★★★★</span>
-            Trusted by 500+ engineering students across 12 colleges
-          </div>
-
         </div>
 
-        {/* Right Column (45%) */}
-        <div className="w-full xl:w-[45%] hidden md:flex flex-col items-center xl:items-end justify-center">
-           <div 
-              className="relative w-full max-w-[480px] xl:max-w-full rounded-[20px] bg-[#F8FAFC] p-[24px]" 
-              style={{ 
-                 boxShadow: '0 20px 60px rgba(0,0,0,0.10)',
-                 animation: 'float 4s ease-in-out infinite' 
-              }}
-           >
-              {/* Inline style for the float animation as requested */}
-              <style dangerouslySetInnerHTML={{__html: `
-                @keyframes float {
-                  0%, 100% { transform: translateY(0px); }
-                  50% { transform: translateY(-10px); }
-                }
-              `}} />
-              
-              <div className="grid grid-cols-2 gap-4">
-                 {['Data Structures', 'Machine Learning', 'Cloud Computing', 'Database Systems'].map((sub, i) => (
-                    <div key={i} className="rounded-[12px] bg-white p-[16px] text-[13px] font-medium text-[#0f172a] shadow-sm border border-slate-100 flex items-center justify-center text-center lg:min-h-[80px]">
-                       {sub}
-                    </div>
-                 ))}
-              </div>
-              
-              {/* Verified Badge */}
-              <div className="mt-6 flex justify-center">
-                 <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-600 border border-emerald-100">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Verified by Faculty
-                 </div>
-              </div>
-           </div>
+        {/* Right mockup */}
+        <div className="flex-1">
+          <div className="relative rounded-2xl border border-border bg-card p-2 shadow-xl shadow-primary/5">
+            <Image
+              src="/images/dashboard-mockup.jpg"
+              alt="Campus Connect dashboard showing study materials and analytics"
+              width={960}
+              height={640}
+              className="w-full h-auto object-cover rounded-xl"
+              priority
+              fetchPriority="high"
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+          </div>
         </div>
-
       </div>
-
-      {/* 32px gradient fade into next section */}
-      <div className="absolute bottom-0 left-0 w-full h-[32px] bg-gradient-to-t from-white to-transparent z-20 pointer-events-none" />
     </section>
   )
 }
