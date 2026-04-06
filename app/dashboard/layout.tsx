@@ -14,5 +14,5 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
-  return <DashboardShell user={user}>{children}</DashboardShell>
+  return <DashboardShell>{children}</DashboardShell>
 }

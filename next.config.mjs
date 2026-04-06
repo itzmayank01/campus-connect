@@ -20,6 +20,7 @@ const nextConfig = {
     'pdfjs-dist',
     'mammoth',
     'groq-sdk',
+    'sharp',         // HEIC→JPEG conversion (native libvips binary)
     'msedge-tts',
     'fluent-ffmpeg',
     'bullmq',

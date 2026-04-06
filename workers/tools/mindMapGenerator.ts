@@ -12,7 +12,7 @@
  * than 8b on structured extraction tasks.
  */
 
-import { Job }           from "bullmq";
+import { Job } from "bullmq";
 import { callGroq, safeParseJson } from "@/lib/studyToolPipeline";
 import { buildPrompt, getDocumentId } from "@/lib/studylab-prompt";
 
@@ -34,10 +34,10 @@ interface MindMapJSON {
 }
 
 export interface MindMapOutput {
-  markdown:  string;
-  title:     string;
+  markdown: string;
+  title: string;
   nodeCount: number;
-  depth:     number;
+  depth: number;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -82,17 +82,17 @@ function countNodes(json: MindMapJSON): number {
 // ─── Generator ────────────────────────────────────────────────────────────────
 
 export async function generateMindMap(
-  text:      string,
-  resource:  { originalFilename: string },
-  job:       Job,
-  isRefresh  = false
+  text: string,
+  resource: { originalFilename: string },
+  job: Job,
+  isRefresh = false
 ): Promise<MindMapOutput> {
   await job.updateProgress({ stage: "Reading document", percent: 20 });
 
   const prompt = buildPrompt({
-    toolType:        "MIND_MAP",
+    toolType: "MIND_MAP",
     documentContent: text,
-    documentId:      getDocumentId(text),
+    documentId: getDocumentId(text),
     isRefresh,
   });
 

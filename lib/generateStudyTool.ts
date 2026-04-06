@@ -60,15 +60,34 @@ export async function generateStudyTool(
       where: { id: resourceId },
     });
 
-    if (!resource.s3Key) {
-      throw new Error("Resource has no S3 file — cannot generate study tools");
-    }
+    // ── Get text: prefer cached extractedText, fallback to S3 pipeline ──
+    let text: string;
 
-    // ── Shared pipeline ──
-    const buffer  = await fetchFromS3(resource.s3Key);
-    // Pass s3Key so extractText can trigger Textract OCR for handwritten/scanned PDFs
-    const rawText = await extractText(buffer, resource.mimeType, resource.s3Key);
-    const text    = cleanAndChunk(rawText);
+    if (resource.textExtracted && resource.extractedText && resource.extractedText.trim().length > 50) {
+      // Use cached text from upload-time Textract extraction
+      text = cleanAndChunk(resource.extractedText);
+      console.log(`[generateStudyTool] Using cached extractedText (${text.length} chars) for ${type}`);
+    } else if (resource.s3Key) {
+      // Fallback: download from S3 and extract (legacy path)
+      console.log(`[generateStudyTool] No cached text — falling back to S3 pipeline for ${type}`);
+      const buffer  = await fetchFromS3(resource.s3Key);
+      const rawText = await extractText(buffer, resource.mimeType, resource.s3Key);
+      text = cleanAndChunk(rawText);
+
+      // Cache the extracted text for future tools (best-effort update)
+      if (rawText.trim().length > 50) {
+        await prisma.resource.update({
+          where: { id: resourceId },
+          data: {
+            extractedText:   rawText,
+            textExtracted:   true,
+            textExtractedAt: new Date(),
+          },
+        }).catch(err => console.warn("[generateStudyTool] Failed to cache extracted text:", err));
+      }
+    } else {
+      throw new Error("Resource has no extracted text and no S3 file — cannot generate study tools");
+    }
 
     const fakeJob = makeFakeJob(toolId);
 

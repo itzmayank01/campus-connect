@@ -25,14 +25,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false }, { status: 404 })
     }
 
-    // Insert search event — fast single INSERT, no complex queries
-    await prisma.userBehaviorEvent.create({
-      data: {
+    // Track search interaction via UserBehaviorProfile (upsert — fast, no heavy queries)
+    await prisma.userBehaviorProfile.upsert({
+      where: { userId: dbUser.id },
+      create: {
         userId: dbUser.id,
-        eventType: "search",
-        searchQuery: query,
-        subjectId: body.subjectId || null,
-        subjectCode: body.subjectCode || null,
+        totalInteractions: 1,
+        preferredSubjects: body.subjectCode ? [body.subjectCode] : [],
+        lastProfileUpdate: new Date(),
+      },
+      update: {
+        totalInteractions: { increment: 1 },
+        lastProfileUpdate: new Date(),
       },
     })
 
