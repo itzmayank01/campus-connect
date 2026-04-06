@@ -12,6 +12,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [scrolled, setScrolled] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -31,7 +32,18 @@ export function Navbar() {
       }
     )
 
-    return () => subscription.unsubscribe()
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 80)
+    }
+    
+    window.addEventListener("scroll", handleScroll)
+    // init
+    handleScroll()
+
+    return () => {
+      subscription.unsubscribe()
+      window.removeEventListener("scroll", handleScroll)
+    }
   }, [])
 
   const handleSignOut = async () => {
@@ -51,7 +63,7 @@ export function Navbar() {
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
+    <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${scrolled ? "bg-white/80 backdrop-blur-[12px] border-b border-[rgba(0,0,0,0.08)]" : "bg-transparent border-transparent"}`}>
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
@@ -107,15 +119,13 @@ export function Navbar() {
             </div>
           ) : (
             <>
-              <Link href="/login">
-                <Button variant="ghost" size="sm">
-                  Login
-                </Button>
+              <Link href="/login" className="text-[#374151] font-normal text-sm hover:opacity-80 transition-opacity">
+                Login
               </Link>
               <Link href="/signup">
-                <Button size="sm">
+                <button className="bg-[#185FA5] hover:bg-[#0C447C] text-white rounded-[8px] px-[28px] py-[14px] font-medium text-[15px] transition duration-200 max-h-[44px] flex items-center">
                   Get Started
-                </Button>
+                </button>
               </Link>
             </>
           )}

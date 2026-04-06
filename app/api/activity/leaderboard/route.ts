@@ -6,7 +6,8 @@ export async function GET() {
     // Optional: read time range from query parameters, currently limited
     const leaderboard = await getLeaderboard(20);
     return NextResponse.json({ leaderboard });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
