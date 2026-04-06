@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-6 py-20 lg:py-32">
+    <section className="relative overflow-hidden px-6 pt-2 pb-20 lg:pt-4 lg:pb-32">
       {/* Subtle background dot pattern */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
@@ -14,7 +14,7 @@ export function Hero() {
         }}
       />
 
-      <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-16 lg:flex-row lg:items-center lg:gap-20">
+      <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-16">
         {/* Left content */}
         <div className="flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm text-muted-foreground shadow-sm">
