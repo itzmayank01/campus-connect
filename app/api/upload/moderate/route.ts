@@ -269,7 +269,33 @@ Is this content relevant to the subject?`
     // ─── STEP 4: Safety Check (STRICT — blocks adult/inappropriate content) ──
     updateStep("safety", "running")
 
-    if (isAiConfigured() && extractedText.length > 10) {
+    // 4a. Filename keyword check — instant block for obviously inappropriate filenames
+    const BLOCKED_FILENAME_KEYWORDS = [
+      "porn", "xxx", "sex", "nude", "naked", "nsfw", "adult", "erotic",
+      "hentai", "onlyfans", "playboy", "brazzers", "xvideos", "pornhub",
+      "milf", "lesbian", "fetish", "bdsm", "orgasm", "masturbat",
+      "cocaine", "heroin", "meth", "weed", "marijuana", "drug",
+      "gore", "murder", "torture", "terrorist", "bomb", "weapon",
+      "hack", "crack", "keygen", "pirat", "torrent", "warez",
+    ]
+    const filenameLower = filename.toLowerCase().replace(/[^a-z0-9]/g, "")
+    const blockedKeyword = BLOCKED_FILENAME_KEYWORDS.find(kw => filenameLower.includes(kw))
+    if (blockedKeyword) {
+      updateStep("safety", "failed", "Blocked: inappropriate filename detected")
+      return NextResponse.json({
+        passed: false,
+        steps,
+        reason: "This file was blocked because its filename suggests inappropriate content. Only legitimate academic materials are allowed on this platform.",
+      } as ModerationResult)
+    }
+
+    // 4b. AI-powered content safety check
+    // Always run AI check — even if extracted text is short, we still send filename + metadata
+    const safetyContent = extractedText.length > 10 
+      ? extractedText 
+      : `[No text could be extracted from this file — it may be image-based or encrypted]\nFilename: ${filename}\nFile type: ${contentType}\nFile size: ${(fileSize / (1024 * 1024)).toFixed(1)} MB`
+
+    if (isAiConfigured()) {
       const safetyResponse = await callAI(
         `You are a STRICT content safety moderator for a university academic platform. Your job is to ensure NO adult, NSFW, sexual, violent, drug-related, hateful, or otherwise inappropriate content is uploaded.
 
@@ -283,10 +309,12 @@ You MUST flag content as unsafe if it contains ANY of the following:
 - Gambling, scam, or fraud content
 - Any content clearly NOT academic/educational in nature
 
+IMPORTANT: Also check the FILENAME carefully. If the filename itself suggests adult, sexual, violent, drug-related, or any non-academic content, you MUST flag it as unsafe regardless of the text content.
+
 Be STRICT. When in doubt, flag it. This is a college platform used by students.
 
 Respond ONLY with valid JSON (no markdown): {"is_safe": true/false, "flags": ["list of specific concerns"], "severity": "none"|"low"|"medium"|"high", "category": "safe"|"adult"|"violence"|"drugs"|"hate"|"self_harm"|"spam"|"non_academic", "action": "allow"|"block", "reason": "brief explanation"}`,
-        `Analyze this content uploaded to a college academic resource platform for ANY inappropriate, adult, or non-academic material:\n\nFilename: ${filename}\nClaimed subject: ${subject?.name || "Unknown"}\nContent:\n${extractedText}`
+        `Analyze this content uploaded to a college academic resource platform for ANY inappropriate, adult, or non-academic material:\n\nFilename: ${filename}\nClaimed subject: ${subject?.name || "Unknown"} (${subject?.code || "N/A"})\nResource type: ${type}\nFile size: ${(fileSize / (1024 * 1024)).toFixed(1)} MB\n\nExtracted content:\n${safetyContent}`
       )
 
       if (safetyResponse) {
@@ -294,7 +322,7 @@ Respond ONLY with valid JSON (no markdown): {"is_safe": true/false, "flags": ["l
           const cleaned = safetyResponse.replace(/```json\n?|```\n?/g, "").trim()
           const safetyResult = JSON.parse(cleaned)
 
-          console.log("[Safety] AI result:", { isSafe: safetyResult.is_safe, severity: safetyResult.severity, category: safetyResult.category, flags: safetyResult.flags })
+          console.log("[Safety] AI result:", { isSafe: safetyResult.is_safe, severity: safetyResult.severity, category: safetyResult.category, flags: safetyResult.flags, reason: safetyResult.reason })
 
           if (!safetyResult.is_safe || safetyResult.action === "block" || 
               safetyResult.severity === "low" || safetyResult.severity === "medium" || safetyResult.severity === "high") {
@@ -335,7 +363,7 @@ Respond ONLY with valid JSON (no markdown): {"is_safe": true/false, "flags": ["l
           reason: "Safety verification is temporarily unavailable. Your file cannot be uploaded without a safety check. Please try again in a few minutes.",
         } as ModerationResult)
       }
-    } else if (!isAiConfigured()) {
+    } else {
       // AI not configured at all — STRICT: block the upload
       updateStep("safety", "failed", "Safety system not configured — upload blocked")
       return NextResponse.json({
@@ -343,10 +371,6 @@ Respond ONLY with valid JSON (no markdown): {"is_safe": true/false, "flags": ["l
         steps,
         reason: "Content safety system is not configured. Uploads are blocked until safety checks are enabled. Please contact the administrator.",
       } as ModerationResult)
-    } else {
-      // extractedText too short to analyze — allow but flag for review
-      updateStep("safety", "done", "Insufficient text to analyze — flagged for manual review")
-      needsReview = true
     }
 
     // ─── STEP 5: Duplicate Detection ───────────────────────
