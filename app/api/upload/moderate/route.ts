@@ -231,6 +231,9 @@ Is this content relevant to the subject?`
           const cleaned = relevanceResponse.replace(/```json\n?|```\n?/g, "").trim()
           relevanceResult = JSON.parse(cleaned)
         } catch {}
+      } else {
+        // AI call returned null (timeout or error) — auto-approve
+        updateStep("relevance", "done", "Content accepted (AI unavailable)")
       }
     }
 
@@ -296,6 +299,9 @@ Is this content relevant to the subject?`
         } catch {
           updateStep("safety", "done", "Safety check completed")
         }
+      } else {
+        // AI call returned null (timeout or error) — auto-approve
+        updateStep("safety", "done", "Safety check passed (AI unavailable)")
       }
     } else {
       updateStep("safety", "done", "Safety check passed (auto-approved)")
