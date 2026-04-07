@@ -266,13 +266,27 @@ Is this content relevant to the subject?`
       updateStep("relevance", "done", "Content accepted (auto-approved)")
     }
 
-    // ─── STEP 4: Safety Check ──────────────────────────────
+    // ─── STEP 4: Safety Check (STRICT — blocks adult/inappropriate content) ──
     updateStep("safety", "running")
 
     if (isAiConfigured() && extractedText.length > 10) {
       const safetyResponse = await callAI(
-        `You are a content safety moderator. Check if academic content contains harmful, inappropriate, dangerous, or sexually explicit material. Respond ONLY with JSON: {"is_safe": true/false, "flags": [], "severity": "none"|"low"|"medium"|"high", "action": "allow"|"warn"|"block"}`,
-        `Check this content for harmful material: ${extractedText}`
+        `You are a STRICT content safety moderator for a university academic platform. Your job is to ensure NO adult, NSFW, sexual, violent, drug-related, hateful, or otherwise inappropriate content is uploaded.
+
+You MUST flag content as unsafe if it contains ANY of the following:
+- Sexual or sexually suggestive content, pornography, nudity descriptions
+- Explicit violence, gore, torture, or graphic injury descriptions  
+- Drug manufacturing instructions, substance abuse promotion
+- Hate speech, discrimination, slurs, or targeted harassment
+- Self-harm, suicide instructions or encouragement
+- Terrorism, weapons manufacturing, or extremist content
+- Gambling, scam, or fraud content
+- Any content clearly NOT academic/educational in nature
+
+Be STRICT. When in doubt, flag it. This is a college platform used by students.
+
+Respond ONLY with valid JSON (no markdown): {"is_safe": true/false, "flags": ["list of specific concerns"], "severity": "none"|"low"|"medium"|"high", "category": "safe"|"adult"|"violence"|"drugs"|"hate"|"self_harm"|"spam"|"non_academic", "action": "allow"|"block", "reason": "brief explanation"}`,
+        `Analyze this content uploaded to a college academic resource platform for ANY inappropriate, adult, or non-academic material:\n\nFilename: ${filename}\nClaimed subject: ${subject?.name || "Unknown"}\nContent:\n${extractedText}`
       )
 
       if (safetyResponse) {
@@ -280,31 +294,59 @@ Is this content relevant to the subject?`
           const cleaned = safetyResponse.replace(/```json\n?|```\n?/g, "").trim()
           const safetyResult = JSON.parse(cleaned)
 
-          if (safetyResult.severity === "medium" || safetyResult.severity === "high" || !safetyResult.is_safe) {
-            updateStep("safety", "failed", "Content flagged for safety/inappropriate concerns")
+          console.log("[Safety] AI result:", { isSafe: safetyResult.is_safe, severity: safetyResult.severity, category: safetyResult.category, flags: safetyResult.flags })
+
+          if (!safetyResult.is_safe || safetyResult.action === "block" || 
+              safetyResult.severity === "low" || safetyResult.severity === "medium" || safetyResult.severity === "high") {
+            const categoryLabels: Record<string, string> = {
+              adult: "adult/sexual content",
+              violence: "violent content",
+              drugs: "drug-related content",
+              hate: "hate speech",
+              self_harm: "self-harm content",
+              spam: "spam/scam content",
+              non_academic: "non-academic content",
+            }
+            const flagType = categoryLabels[safetyResult.category] || "inappropriate content"
+            updateStep("safety", "failed", `Blocked: ${flagType} detected`)
             return NextResponse.json({
               passed: false,
               steps,
-              reason: "This content was flagged as inappropriate and cannot be uploaded. If you believe this is a mistake, contact support.",
+              reason: `This file was blocked because it contains ${flagType}. Only legitimate academic materials are allowed on this platform. If you believe this is a mistake, please contact support.`,
             } as ModerationResult)
-          } else if (safetyResult.severity === "low") {
-            updateStep("safety", "done", "Passed with warning flag")
-            needsReview = true
           } else {
-            updateStep("safety", "done", "Content is safe")
+            updateStep("safety", "done", "Content is safe ✓")
           }
-
-          // Log safety result inline (resourceModeration table not in schema)
-          console.log("Safety check result:", { isSafe: safetyResult.is_safe, severity: safetyResult.severity, flags: safetyResult.flags })
         } catch {
-          updateStep("safety", "done", "Safety check completed")
+          // AI returned something unparseable — block to be safe
+          updateStep("safety", "failed", "Safety verification failed — upload blocked")
+          return NextResponse.json({
+            passed: false,
+            steps,
+            reason: "Safety check could not verify this content. Please try again or contact support.",
+          } as ModerationResult)
         }
       } else {
-        // AI call returned null (timeout or error) — auto-approve
-        updateStep("safety", "done", "Safety check passed (AI unavailable)")
+        // AI unavailable (timeout/error) — STRICT: block the upload
+        updateStep("safety", "failed", "Safety check unavailable — upload blocked for safety")
+        return NextResponse.json({
+          passed: false,
+          steps,
+          reason: "Safety verification is temporarily unavailable. Your file cannot be uploaded without a safety check. Please try again in a few minutes.",
+        } as ModerationResult)
       }
+    } else if (!isAiConfigured()) {
+      // AI not configured at all — STRICT: block the upload
+      updateStep("safety", "failed", "Safety system not configured — upload blocked")
+      return NextResponse.json({
+        passed: false,
+        steps,
+        reason: "Content safety system is not configured. Uploads are blocked until safety checks are enabled. Please contact the administrator.",
+      } as ModerationResult)
     } else {
-      updateStep("safety", "done", "Safety check passed (auto-approved)")
+      // extractedText too short to analyze — allow but flag for review
+      updateStep("safety", "done", "Insufficient text to analyze — flagged for manual review")
+      needsReview = true
     }
 
     // ─── STEP 5: Duplicate Detection ───────────────────────
