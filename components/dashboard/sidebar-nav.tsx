@@ -15,6 +15,7 @@ import {
   Sparkles,
   FlaskConical,
   Download,
+  Eraser,
 } from "lucide-react"
 import {
   Sidebar,
@@ -39,6 +40,7 @@ const navItems = [
   { title: "Semesters", href: "/dashboard/semesters", icon: Calendar },
   { title: "Downloads", href: "/dashboard/downloads", icon: Download },
   { title: "Bookmarks", href: "/dashboard/bookmarks", icon: Bookmark },
+  { title: "Text Cleaner", href: "/dashboard/text-cleaner", icon: Eraser },
   { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { title: "Smart Feed", href: "/dashboard/smart-feed", icon: Sparkles, hasNewBadge: true },
   { title: "Leaderboard", href: "/dashboard/leaderboard", icon: Trophy, hasLiveBadge: true },

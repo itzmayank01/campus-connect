@@ -254,7 +254,8 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Upload error:", message);
-    return NextResponse.json({ error: "Failed to process upload", details: message }, { status: 500 });
+
+    return NextResponse.json({ error: "Failed to process upload" }, { status: 500 });
   }
 }
 
@@ -313,7 +314,6 @@ export async function GET() {
 
     return NextResponse.json(mappedResources);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: "Failed to fetch uploads", details: message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch uploads" }, { status: 500 });
   }
 }

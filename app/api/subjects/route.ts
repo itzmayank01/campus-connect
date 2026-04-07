@@ -56,9 +56,8 @@ export async function GET() {
       },
     })
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to fetch subjects", details: message },
+      { error: "Failed to fetch subjects" },
       { status: 500 }
     )
   }

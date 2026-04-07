@@ -55,9 +55,8 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: unknown) {
     console.error("Resources fetch error:", error)
-    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to fetch resources", details: message },
+      { error: "Failed to fetch resources" },
       { status: 500 }
     )
   }

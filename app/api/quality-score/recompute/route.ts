@@ -94,10 +94,10 @@ export async function POST(request: NextRequest) {
       trendingScore,
       breakdown,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Quality score recompute error:", error)
     return NextResponse.json(
-      { error: "Failed to recompute quality score", details: error.message },
+      { error: "Failed to recompute quality score" },
       { status: 500 }
     )
   }

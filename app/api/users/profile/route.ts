@@ -70,8 +70,8 @@ export async function PATCH(request: NextRequest) {
         created_at: updatedUser.createdAt
       }
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Profile update error:", error)
-    return NextResponse.json({ error: "Failed to update profile", details: error.message }, { status: 500 })
+    return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
   }
 }

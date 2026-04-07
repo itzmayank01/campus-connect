@@ -12,8 +12,8 @@ export async function GET() {
       include: { subject: true, semester: true },
     })
     return NextResponse.json(exams)
-  } catch (error: any) {
-    return NextResponse.json({ error: "Exam table not available yet. Run prisma db push first.", details: error.message }, { status: 500 })
+  } catch (error: unknown) {
+    return NextResponse.json({ error: "Exam table not available yet. Run prisma db push first." }, { status: 500 })
   }
 }
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(exam, { status: 201 })
-  } catch (error: any) {
-    return NextResponse.json({ error: "Failed to create exam", details: error.message }, { status: 500 })
+  } catch (error: unknown) {
+    return NextResponse.json({ error: "Failed to create exam" }, { status: 500 })
   }
 }

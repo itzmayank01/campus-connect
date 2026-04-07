@@ -58,9 +58,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ trending: enriched })
   } catch (error: unknown) {
     console.error("Trending error:", error)
-    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to fetch trending", details: message },
+      { error: "Failed to fetch trending" },
       { status: 500 }
     )
   }

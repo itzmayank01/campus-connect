@@ -204,10 +204,10 @@ export async function GET(request: NextRequest) {
       last_updated: new Date().toISOString()
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Leaderboard error:", error)
     return NextResponse.json(
-      { error: "Failed to fetch leaderboard", details: error.message },
+      { error: "Failed to fetch leaderboard" },
       { status: 500 }
     )
   }

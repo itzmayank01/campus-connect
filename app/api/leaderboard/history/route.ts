@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ history })
-  } catch (error: any) {
+  } catch (error: unknown) {
     // If the model doesn't exist yet, return null gracefully
     console.error("Leaderboard history error:", error)
     return NextResponse.json({ history: null })

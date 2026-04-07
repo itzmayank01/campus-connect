@@ -70,10 +70,10 @@ export async function GET(request: NextRequest) {
     updateBehaviorProfile(dbUser.id).catch(console.error)
 
     return NextResponse.json({ recommendations: enriched })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Recommendations error:", error)
     return NextResponse.json(
-      { error: "Failed to fetch recommendations", details: error.message },
+      { error: "Failed to fetch recommendations" },
       { status: 500 }
     )
   }

@@ -54,9 +54,8 @@ export async function POST(
     }
   } catch (error: unknown) {
     console.error("Bookmark error:", error)
-    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to toggle bookmark", details: message },
+      { error: "Failed to toggle bookmark" },
       { status: 500 }
     )
   }

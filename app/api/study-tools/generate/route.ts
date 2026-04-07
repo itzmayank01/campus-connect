@@ -81,11 +81,25 @@ async function fetchPDFFromS3(s3Key: string): Promise<Buffer> {
   });
   const response = await getS3().send(cmd);
   if (!response.Body) throw new Error(`S3 returned empty body for key: ${s3Key}`);
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
-    chunks.push(chunk);
+
+  const body = response.Body;
+
+  // Prefer AWS SDK v3 utility method (safest — no async iteration needed)
+  if (typeof (body as any).transformToByteArray === "function") {
+    const bytes = await (body as any).transformToByteArray();
+    return Buffer.from(bytes);
   }
-  return Buffer.concat(chunks);
+
+  // Fallback: check for async iterability before using for-await
+  if (Symbol.asyncIterator in Object(body)) {
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of body as AsyncIterable<Uint8Array>) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  }
+
+  throw new Error(`S3 response.Body is not in a supported format for key: ${s3Key}`);
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────

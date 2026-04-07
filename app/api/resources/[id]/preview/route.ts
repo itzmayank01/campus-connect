@@ -55,9 +55,8 @@ export async function GET(
     })
   } catch (error: unknown) {
     console.error("Preview error:", error)
-    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to generate preview URL", details: message },
+      { error: "Failed to generate preview URL" },
       { status: 500 }
     )
   }

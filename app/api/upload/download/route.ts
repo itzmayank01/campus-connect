@@ -53,10 +53,10 @@ export async function GET(request: NextRequest) {
     const presignedUrl = await getPresignedDownloadUrl(s3Key)
 
     return NextResponse.json({ url: presignedUrl })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Download URL error:", error)
     return NextResponse.json(
-      { error: "Failed to generate download URL", details: error.message },
+      { error: "Failed to generate download URL" },
       { status: 500 }
     )
   }

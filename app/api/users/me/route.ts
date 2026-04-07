@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
         created_at: dbUser.createdAt
       }
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Fetch me error:", error)
-    return NextResponse.json({ error: "Failed to fetch user", details: error.message }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch user" }, { status: 500 })
   }
 }

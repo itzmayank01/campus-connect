@@ -79,10 +79,10 @@ export async function POST(request: NextRequest) {
       errors,
       message: `${deletedIds.length} file(s) deleted successfully${errors.length > 0 ? `, ${errors.length} failed` : ""}`,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Delete error:", error)
     return NextResponse.json(
-      { error: "Failed to delete files", details: error.message },
+      { error: "Failed to delete files" },
       { status: 500 }
     )
   }

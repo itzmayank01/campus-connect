@@ -107,9 +107,8 @@ export async function GET(
     })
   } catch (error: unknown) {
     console.error("Semester subjects error:", error)
-    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to fetch semester subjects", details: message },
+      { error: "Failed to fetch semester subjects" },
       { status: 500 }
     )
   }

@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({ available: !existing })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Username check error:", error)
-    return NextResponse.json({ error: "Failed to check username", details: error.message }, { status: 500 })
+    return NextResponse.json({ error: "Failed to check username" }, { status: 500 })
   }
 }

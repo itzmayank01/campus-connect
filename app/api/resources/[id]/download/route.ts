@@ -90,9 +90,8 @@ export async function GET(
     return NextResponse.json({ downloadUrl, type: "file" })
   } catch (error: unknown) {
     console.error("Download error:", error)
-    const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to generate download URL", details: message },
+      { error: "Failed to generate download URL" },
       { status: 500 }
     )
   }

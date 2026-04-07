@@ -75,11 +75,26 @@ export async function fetchFromS3(s3Key: string): Promise<Buffer> {
     throw new Error(`S3 returned empty body for key: ${s3Key}`);
   }
 
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
-    chunks.push(chunk);
+  const body = response.Body;
+
+  // Prefer AWS SDK v3 utility method (safest — no async iteration needed)
+  if (typeof (body as any).transformToByteArray === "function") {
+    const bytes = await (body as any).transformToByteArray();
+    return Buffer.from(bytes);
   }
-  return Buffer.concat(chunks);
+
+  // Fallback: check for async iterability before using for-await
+  if (Symbol.asyncIterator in Object(body)) {
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of body as AsyncIterable<Uint8Array>) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  }
+
+  throw new Error(
+    `S3 response.Body is not in a supported format for key: ${s3Key}`
+  );
 }
 
 // ─── Step 2: Extract plain text from buffer ───────────────────────────────────
@@ -261,11 +276,48 @@ export function safeParseJson<T>(raw: string): T {
 
 /**
  * Collects a Node.js Readable stream into a single Buffer.
+ *
+ * Uses event-based collection (.on data/end/error) instead of `for await`
+ * because msedge-tts toStream() returns an object that does NOT properly
+ * implement Symbol.asyncIterator, causing "e is not async iterable" errors.
  */
 export async function streamToBuffer(readable: Readable): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of readable) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  // Guard: ensure we received a valid Node.js stream
+  if (!readable || typeof readable.on !== "function") {
+    throw new Error(
+      "streamToBuffer received a non-stream value. " +
+      "This usually means Edge TTS toStream() failed silently."
+    );
   }
-  return Buffer.concat(chunks);
+
+  return new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+
+    readable.on("data", (chunk: Buffer | Uint8Array) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    });
+
+    readable.on("end", () => {
+      const result = Buffer.concat(chunks);
+      if (result.length === 0) {
+        reject(new Error("Stream ended with zero bytes — TTS may have failed"));
+      } else {
+        resolve(result);
+      }
+    });
+
+    readable.on("error", (err: Error) => {
+      reject(new Error(`Stream error: ${err.message}`));
+    });
+
+    // Safety timeout: TTS should never take more than 30s per turn
+    const timer = setTimeout(() => {
+      readable.destroy();
+      reject(new Error("streamToBuffer timed out after 30 seconds"));
+    }, 30_000);
+
+    // Clear timeout on completion
+    readable.once("end", () => clearTimeout(timer));
+    readable.once("error", () => clearTimeout(timer));
+  });
 }

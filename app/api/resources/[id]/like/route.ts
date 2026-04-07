@@ -52,12 +52,13 @@ export async function POST(
         where: { id },
         data: { likeCount: { decrement: 1 } },
       })
-      // Recompute trending score
-      await prisma.resource.update({
+      // Recompute trending score in single update
+      const final = await prisma.resource.update({
         where: { id },
         data: { trendingScore: computeTrendingScore(updated) },
+        select: { likeCount: true },
       })
-      return NextResponse.json({ liked: false, likeCount: updated.likeCount })
+      return NextResponse.json({ liked: false, likeCount: final.likeCount })
     } else {
       // Like
       await prisma.resourceLike.create({
@@ -67,16 +68,16 @@ export async function POST(
         where: { id },
         data: { likeCount: { increment: 1 } },
       })
-      await prisma.resource.update({
+      const final = await prisma.resource.update({
         where: { id },
         data: { trendingScore: computeTrendingScore(updated) },
+        select: { likeCount: true },
       })
-      return NextResponse.json({ liked: true, likeCount: updated.likeCount })
+      return NextResponse.json({ liked: true, likeCount: final.likeCount })
     }
   } catch (error: unknown) {
     console.error("Like error:", error)
-    const message = error instanceof Error ? error.message : "Unknown error"
-    return NextResponse.json({ error: "Failed to toggle like", details: message }, { status: 500 })
+    return NextResponse.json({ error: "Failed to toggle like" }, { status: 500 })
   }
 }
 

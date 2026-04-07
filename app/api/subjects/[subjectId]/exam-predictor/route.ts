@@ -168,7 +168,7 @@ export async function GET(
 
     return NextResponse.json(predictions)
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Exam predictor error:", error)
     return NextResponse.json(getDefaultPredictions(subject), { status: 200 })
   }

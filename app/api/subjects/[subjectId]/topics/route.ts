@@ -161,7 +161,7 @@ export async function GET(
 
     return NextResponse.json(finalData)
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Syllabus topics error:", error)
     return NextResponse.json({ error: "Failed to extract topics", success: false }, { status: 200 })
   }
