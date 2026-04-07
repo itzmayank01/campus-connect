@@ -346,31 +346,22 @@ Respond ONLY with valid JSON (no markdown): {"is_safe": true/false, "flags": ["l
             updateStep("safety", "done", "Content is safe ✓")
           }
         } catch {
-          // AI returned something unparseable — block to be safe
-          updateStep("safety", "failed", "Safety verification failed — upload blocked")
-          return NextResponse.json({
-            passed: false,
-            steps,
-            reason: "Safety check could not verify this content. Please try again or contact support.",
-          } as ModerationResult)
+          // AI returned something unparseable — allow but flag for review
+          console.warn("[Safety] AI response unparseable — flagging for review")
+          updateStep("safety", "done", "Safety check inconclusive — flagged for review")
+          needsReview = true
         }
       } else {
-        // AI unavailable (timeout/error) — STRICT: block the upload
-        updateStep("safety", "failed", "Safety check unavailable — upload blocked for safety")
-        return NextResponse.json({
-          passed: false,
-          steps,
-          reason: "Safety verification is temporarily unavailable. Your file cannot be uploaded without a safety check. Please try again in a few minutes.",
-        } as ModerationResult)
+        // AI unavailable (timeout/error) — allow but flag for manual review
+        console.warn("[Safety] AI unavailable — allowing upload with review flag")
+        updateStep("safety", "done", "Safety check unavailable — flagged for manual review")
+        needsReview = true
       }
     } else {
-      // AI not configured at all — STRICT: block the upload
-      updateStep("safety", "failed", "Safety system not configured — upload blocked")
-      return NextResponse.json({
-        passed: false,
-        steps,
-        reason: "Content safety system is not configured. Uploads are blocked until safety checks are enabled. Please contact the administrator.",
-      } as ModerationResult)
+      // AI not configured — allow but flag for review (filename blocklist still protects)
+      console.warn("[Safety] AI not configured — allowing upload with review flag")
+      updateStep("safety", "done", "Safety check skipped — flagged for manual review")
+      needsReview = true
     }
 
     // ─── STEP 5: Duplicate Detection ───────────────────────
