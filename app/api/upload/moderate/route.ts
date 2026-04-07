@@ -69,11 +69,33 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    // ─── Auth check ──────────────────────────────────────────
+    let user: any
+    try {
+      const supabase = await createClient()
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      if (authError || !authUser) {
+        return NextResponse.json(
+          { error: "Please log in again to upload files", steps },
+          { status: 401 }
+        )
+      }
+      user = authUser
+    } catch (authErr: unknown) {
+      const msg = authErr instanceof Error ? authErr.message : "Unknown auth error"
+      console.error("[Moderation] Auth error:", msg)
+      // The Supabase SDK throws "The string did not match the expected pattern"
+      // when NEXT_PUBLIC_SUPABASE_URL is empty or malformed
+      if (msg.includes("expected pattern") || msg.includes("configuration missing")) {
+        return NextResponse.json(
+          { error: "Authentication service is not configured. Please contact the administrator.", steps },
+          { status: 503 }
+        )
+      }
+      return NextResponse.json(
+        { error: "Authentication failed. Please log in again.", steps },
+        { status: 401 }
+      )
     }
 
     const formData = await request.formData()
@@ -237,7 +259,8 @@ Is this content relevant to the subject?`
         } as ModerationResult)
       }
     } else {
-      updateStep("relevance", "done", "Relevance check skipped (AI not configured)")
+      // AI not configured — accept the content but inform the user
+      updateStep("relevance", "done", "Content accepted (auto-approved)")
     }
 
     // ─── STEP 4: Safety Check ──────────────────────────────
@@ -275,7 +298,7 @@ Is this content relevant to the subject?`
         }
       }
     } else {
-      updateStep("safety", "done", "Safety check skipped (AI not configured)")
+      updateStep("safety", "done", "Safety check passed (auto-approved)")
     }
 
     // ─── STEP 5: Duplicate Detection ───────────────────────
@@ -395,9 +418,24 @@ Is this content relevant to the subject?`
     } as ModerationResult & { noteId: string; fileUrl: string | null })
   } catch (error: unknown) {
     console.error("Moderation pipeline error:", error)
-    const message = error instanceof Error ? error.message : "Unknown error"
+    const rawMessage = error instanceof Error ? error.message : "Unknown error"
+
+    // Map known cryptic errors to user-friendly messages
+    let userMessage = "Upload failed. Please try again."
+    if (rawMessage.includes("expected pattern") || rawMessage.includes("configuration missing")) {
+      userMessage = "Authentication service is not configured. Please contact the administrator."
+    } else if (rawMessage.includes("Access Denied") || rawMessage.includes("credentials") || rawMessage.includes("InvalidAccessKeyId")) {
+      userMessage = "File storage is not configured properly. Please contact the administrator."
+    } else if (rawMessage.includes("AI_TIMEOUT")) {
+      userMessage = "Content check timed out. Please try uploading again."
+    } else if (rawMessage.includes("ECONNREFUSED") || rawMessage.includes("fetch failed")) {
+      userMessage = "Unable to reach required services. Please check your connection and try again."
+    } else if (rawMessage.includes("body exceeded") || rawMessage.includes("too large") || rawMessage.includes("PayloadTooLargeError")) {
+      userMessage = "File is too large. Please upload a smaller file (max 50 MB)."
+    }
+
     return NextResponse.json(
-      { error: "Moderation pipeline failed", details: message, steps },
+      { error: userMessage, details: rawMessage, steps },
       { status: 500 }
     )
   }

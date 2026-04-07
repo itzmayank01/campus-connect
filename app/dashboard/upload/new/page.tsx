@@ -297,19 +297,38 @@ export default function UploadNewPage() {
         setTitle("")
         if (fileInputRef.current) fileInputRef.current.value = ""
       } else if (data.error) {
-        throw new Error(data.details || data.error)
+        // Use the user-friendly error message from the server
+        const errorMsg = data.error || data.details || "Upload failed"
+        // Mark any running steps as failed
+        if (data.steps) {
+          setModerationSteps(data.steps.map((s: any) => 
+            s.status === "running" ? { ...s, status: "failed" as const } : s
+          ))
+        }
+        setModerationPassed(false)
+        setModerationReason(errorMsg)
+        setModerationRejection(data.rejection)
+        setUploadStatus("error")
+        setUploadMessage(errorMsg)
       } else {
         setModerationPassed(false)
-        setModerationReason(data.reason)
+        setModerationReason(data.reason || "Upload was not approved")
         setModerationRejection(data.rejection)
         setUploadStatus("error")
         setUploadMessage(data.reason || "Upload was not approved")
       }
     } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : "Upload failed"
+      // Mark all pending/running steps as failed
+      setModerationSteps(prev => prev.map(s => 
+        s.status === "running" || s.status === "pending" 
+          ? { ...s, status: "failed" as const, message: "Connection error" } 
+          : s
+      ))
       setModerationPassed(false)
-      setModerationReason(error instanceof Error ? error.message : "Upload failed")
+      setModerationReason(errorMsg)
       setUploadStatus("error")
-      setUploadMessage(error instanceof Error ? error.message : "Upload failed")
+      setUploadMessage(errorMsg)
     } finally {
       setUploading(false)
     }
