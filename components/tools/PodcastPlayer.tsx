@@ -10,7 +10,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, ListMusic } from "lucide-react";
 
 interface ScriptTurn {
   speaker:     "A" | "B";
@@ -84,6 +84,16 @@ export function PodcastPlayer({ scriptJson, speakerA, speakerB, totalTurns }: Po
     setTimeout(() => audioRef.current?.play().catch(() => {}), 50);
   }, []);
 
+  const playAll = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || !turns[0]?.audioBase64) return;
+    audio.src = `data:audio/mpeg;base64,${turns[0].audioBase64}`;
+    audio.playbackRate = speed;
+    setCurrentIdx(0);
+    setPlaying(true);
+    setTimeout(() => audio.play().catch(() => {}), 50);
+  }, [turns, speed]);
+
   const changeSpeed = useCallback((s: number) => {
     const audio = audioRef.current;
     if (audio) audio.playbackRate = s;
@@ -108,6 +118,10 @@ export function PodcastPlayer({ scriptJson, speakerA, speakerB, totalTurns }: Po
       <audio
         ref={audioRef}
         onEnded={handleEnded}
+        onError={(e) => {
+          console.error("Audio playback error on turn", currentIdx, e);
+          handleEnded(); // Skip to next turn on error instead of stalling
+        }}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
       />
@@ -214,6 +228,15 @@ export function PodcastPlayer({ scriptJson, speakerA, speakerB, totalTurns }: Po
               </button>
             ))}
           </div>
+
+          {/* Play All button */}
+          <button
+            onClick={playAll}
+            className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition-all font-semibold text-sm tracking-wide shadow-inner"
+          >
+            <ListMusic className="w-4 h-4" />
+            Play All from Start
+          </button>
         </div>
       </div>
 
