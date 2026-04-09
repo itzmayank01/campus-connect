@@ -13,10 +13,11 @@ interface QuizQuestion {
   type: "mcq" | "true_false" | "short_answer";
   question: string;
   options?: string[];
-  correct: string;
+  correct?: string;
+  answer?: string; // legacy support
   explanation: string;
   difficulty: "easy" | "medium" | "hard";
-  concept: string;
+  concept?: string;
 }
 
 interface QuizViewerProps {
@@ -31,17 +32,26 @@ export function QuizViewer({ topic, questions }: QuizViewerProps) {
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [showScore, setShowScore] = useState(false);
 
-  const q = questions[current];
+  const qraw = questions[current];
   const totalQ = questions.length;
-  const userAnswer = answers[q?.id];
-  const isRevealed = revealed.has(q?.id);
+  
+  // Backwards compatibility for cached quizzes before the schema update
+  const q = qraw ? {
+    ...qraw,
+    type: qraw.type || "mcq",
+    correct: qraw.correct || qraw.answer || "",
+  } : null;
+
+  const userAnswer = q ? answers[q.id] : undefined;
+  const isRevealed = q ? revealed.has(q.id) : false;
 
   const handleSelect = (answer: string) => {
-    if (isRevealed) return;
+    if (isRevealed || !q) return;
     setAnswers((prev) => ({ ...prev, [q.id]: answer }));
   };
 
   const handleReveal = () => {
+    if (!q) return;
     setRevealed((prev) => new Set(prev).add(q.id));
   };
 
@@ -53,11 +63,15 @@ export function QuizViewer({ topic, questions }: QuizViewerProps) {
     }
   };
 
-  const score = questions.filter((qq) => {
-    const ans = answers[qq.id];
+  const score = questions.filter((qqraw) => {
+    const ans = answers[qqraw.id];
     if (!ans) return false;
-    if (qq.type === "mcq") return ans.charAt(0) === qq.correct.charAt(0);
-    if (qq.type === "true_false") return ans.toLowerCase() === qq.correct.toLowerCase();
+    
+    const qqType = qqraw.type || "mcq";
+    const qqCorrect = qqraw.correct || qqraw.answer || "";
+    
+    if (qqType === "mcq") return ans.charAt(0) === qqCorrect.charAt(0);
+    if (qqType === "true_false") return ans.toLowerCase() === qqCorrect.toLowerCase();
     return false; // short_answer — manual check
   }).length;
 
