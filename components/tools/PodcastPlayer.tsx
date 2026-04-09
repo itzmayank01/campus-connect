@@ -46,9 +46,18 @@ export function PodcastPlayer({ scriptJson, speakerA, speakerB, totalTurns }: Po
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !turns[currentIdx]?.audioBase64) return;
+    
+    const wasPlaying = playing;
+    
     audio.src = `data:audio/mpeg;base64,${turns[currentIdx].audioBase64}`;
     audio.playbackRate = speed;
-    if (playing) audio.play().catch(() => {});
+    
+    if (wasPlaying) {
+      // Use setTimeout to bypass browser synchronous pause events emitted during src change
+      setTimeout(() => {
+        audio.play().catch(() => setPlaying(false));
+      }, 50);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIdx]);
 
@@ -122,8 +131,6 @@ export function PodcastPlayer({ scriptJson, speakerA, speakerB, totalTurns }: Po
           console.error("Audio playback error on turn", currentIdx, e);
           handleEnded(); // Skip to next turn on error instead of stalling
         }}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
       />
 
       {/* ─── LEFT: Player Card ──────────────────────────────────── */}
