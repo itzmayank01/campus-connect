@@ -127,25 +127,45 @@ Generate the flashcards JSON array now:`;
 // ── QUIZ ──────────────────────────────────────────────────────────────────────
 
 function buildQuizPrompt(content: string, isRefresh: boolean): string {
-  return `You are an exam question writer. Read the document below and generate 10 quiz questions.
+  return `You are an exam question writer. Read the document below and generate 15 quiz questions.
 
 ${isRefresh ? `${nonce()} Generate DIFFERENT questions than any previous attempt.` : ""}
 
 RULES (zero exceptions):
 1. Every question must be answerable using ONLY information in the document.
-2. All answer options (A, B, C, D) must be plausible — no obviously wrong options.
-3. "explanation" must cite the specific part of the document where the answer appears.
-4. Do NOT ask about things not mentioned in the document.
-5. Mix: include both factual recall questions AND concept application questions.
+2. Mix the types: Include "mcq" (multiple choice), "true_false", and "short_answer".
+3. For "mcq", provide 4 plausible options (A, B, C, D). "correct" should be the correct letter.
+4. For "true_false", "correct" must be either "True" or "False".
+5. For "short_answer", "correct" must be the exact short phrase from the document.
+6. "explanation" must cite the specific part of the document where the answer appears.
+7. Do NOT ask about things not mentioned in the document.
 
 OUTPUT — return ONLY a valid JSON array, nothing else:
 [
   {
+    "type": "mcq",
     "question": "<question based on document content>",
     "options": ["A. <plausible option>", "B. <plausible option>", "C. <plausible option>", "D. <plausible option>"],
-    "answer": "A" | "B" | "C" | "D",
-    "explanation": "<why correct, citing the document — max 60 words>",
-    "difficulty": "easy" | "medium" | "hard"
+    "correct": "A",
+    "explanation": "<why correct, citing the document>",
+    "difficulty": "easy" | "medium" | "hard",
+    "concept": "<main concept being tested>"
+  },
+  {
+    "type": "true_false",
+    "question": "<statement based on document content>",
+    "correct": "True" | "False",
+    "explanation": "<why correct>",
+    "difficulty": "easy",
+    "concept": "<concept>"
+  },
+  {
+    "type": "short_answer",
+    "question": "<question based on document content>",
+    "correct": "<short exact answer>",
+    "explanation": "<why correct>",
+    "difficulty": "hard",
+    "concept": "<concept>"
   }
 ]
 

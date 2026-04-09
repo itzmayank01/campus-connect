@@ -4,6 +4,7 @@
  */
 
 import { Job } from "bullmq";
+import { randomUUID } from "crypto";
 import { callGroq, safeParseJson } from "@/lib/studyToolPipeline";
 import { buildPrompt, getDocumentId, SYSTEM_JSON } from "@/lib/studylab-prompt";
 
@@ -50,7 +51,31 @@ export async function generateQuiz(
   const parsed = safeParseJson<QuizOutput>(raw);
   // Normalise array response from master prompt
   if (Array.isArray(parsed)) {
-    return { topic: resource.originalFilename, totalQuestions: parsed.length, questions: parsed as unknown as QuizQuestion[] };
+    const questionsWithIds = (parsed as any[]).map(q => ({
+      ...q,
+      id: randomUUID(),
+    })) as QuizQuestion[];
+    
+    return { 
+      topic: resource.originalFilename, 
+      totalQuestions: questionsWithIds.length, 
+      questions: questionsWithIds 
+    };
   }
-  return parsed;
+  
+  // If somehow it returned an object with a nested questions array
+  if (parsed && Array.isArray((parsed as any).questions)) {
+    const questionsWithIds = (parsed as any).questions.map((q: any) => ({
+      ...q,
+      id: randomUUID(),
+    })) as QuizQuestion[];
+
+    return { 
+      topic: resource.originalFilename, 
+      totalQuestions: questionsWithIds.length, 
+      questions: questionsWithIds 
+    };
+  }
+  
+  return parsed as unknown as QuizOutput;
 }
