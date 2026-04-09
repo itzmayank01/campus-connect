@@ -8,6 +8,7 @@
 import { prisma } from "@/lib/prisma";
 import { StudyToolType } from "@/lib/generated/prisma";
 import { fetchFromS3, extractText, cleanAndChunk } from "@/lib/studyToolPipeline";
+import { YoutubeTranscript } from "youtube-transcript";
 
 import { generateMindMap }       from "@/workers/tools/mindMapGenerator";
 import { generateFlashcards }    from "@/workers/tools/flashcardGenerator";
@@ -64,9 +65,31 @@ export async function generateStudyTool(
     let text: string;
 
     if (resource.textExtracted && resource.extractedText && resource.extractedText.trim().length > 50) {
-      // Use cached text from upload-time Textract extraction
+      // Use cached text from upload-time Textract extraction or YouTube transcript
       text = cleanAndChunk(resource.extractedText);
       console.log(`[generateStudyTool] Using cached extractedText (${text.length} chars) for ${type}`);
+    } else if (resource.mimeType === "youtube" && resource.youtubeVideoId) {
+      // Extract transcript dynamically for YouTube videos
+      console.log(`[generateStudyTool] Fetching YouTube transcript for videoId=${resource.youtubeVideoId}`);
+      try {
+        const transcript = await YoutubeTranscript.fetchTranscript(resource.youtubeVideoId);
+        const rawText = transcript.map(t => t.text).join(" ");
+        text = cleanAndChunk(rawText);
+
+        // Cache the transcript
+        if (rawText.trim().length > 50) {
+          await prisma.resource.update({
+            where: { id: resourceId },
+            data: {
+              extractedText: rawText,
+              textExtracted: true,
+              textExtractedAt: new Date(),
+            },
+          }).catch(err => console.warn("[generateStudyTool] Failed to cache youtube transcript:", err));
+        }
+      } catch (err: any) {
+        throw new Error(`Failed to fetch YouTube transcript: ${err.message}. The video might not have closed captions enabled.`);
+      }
     } else if (resource.s3Key) {
       // Fallback: download from S3 and extract (legacy path)
       console.log(`[generateStudyTool] No cached text — falling back to S3 pipeline for ${type}`);
@@ -86,7 +109,7 @@ export async function generateStudyTool(
         }).catch(err => console.warn("[generateStudyTool] Failed to cache extracted text:", err));
       }
     } else {
-      throw new Error("Resource has no extracted text and no S3 file — cannot generate study tools");
+      throw new Error("Resource has no extracted text, no S3 file, and is not a YouTube video — cannot generate study tools");
     }
 
     const fakeJob = makeFakeJob(toolId);
