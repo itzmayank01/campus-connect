@@ -169,39 +169,45 @@ export default function StudyLabPage() {
 
   const activeTools = activeTab === "documents" ? DOC_TOOLS : VIDEO_TOOLS;
 
+  // Combine and deduplicate tools by label to show in the hero header
+  const allTools = [...DOC_TOOLS, ...VIDEO_TOOLS].filter(
+    (tool, index, self) => index === self.findIndex((t) => t.label === tool.label)
+  );
+
   return (
     <div className="space-y-8 max-w-[1400px] mx-auto pb-12">
       {/* Hero Header */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1E1B4B] via-[#312E81] to-[#4338CA] p-8 md:p-10 shadow-xl">
         <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-violet-400/20 to-transparent rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-60 h-60 bg-gradient-to-tr from-indigo-400/15 to-transparent rounded-full blur-3xl" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
-                <FlaskConical className="h-6 w-6 text-violet-300" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+              <FlaskConical className="h-6 w-6 text-violet-300" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+                  Study Lab
+                </h1>
+                <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/30 border border-violet-400/30 px-2.5 py-0.5 text-[10px] font-bold text-violet-200 uppercase tracking-wider">
+                  <Sparkles className="h-3 w-3" />
+                  2.0
+                </span>
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
-                    Study Lab
-                  </h1>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/30 border border-violet-400/30 px-2.5 py-0.5 text-[10px] font-bold text-violet-200 uppercase tracking-wider">
-                    <Sparkles className="h-3 w-3" />
-                    2.0
-                  </span>
-                </div>
-                <p className="text-sm text-indigo-200/70 mt-0.5">
-                  Transform any document or YouTube video into interactive study tools
-                </p>
-              </div>
+              <p className="text-sm text-indigo-200/70 mt-0.5">
+                Transform any document or YouTube video into interactive study tools
+              </p>
             </div>
           </div>
           
-          <div className="grid grid-cols-4 gap-2 opacity-80 pointer-events-none hidden md:grid">
-            {DOC_TOOLS.slice(0, 4).map((tool) => (
-              <div key={tool.key} className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-lg`}>
-                <tool.icon className="h-5 w-5 text-white" strokeWidth={1.75} />
+          <div className="flex flex-wrap gap-4 mt-6">
+            {allTools.map((tool) => (
+              <div key={tool.key} className="flex flex-col items-center text-center w-16">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-lg mb-1.5`}>
+                  <tool.icon className="h-5 w-5 text-white" strokeWidth={1.75} />
+                </div>
+                <span className="text-[10px] text-indigo-200/60 font-medium leading-tight">{tool.label}</span>
               </div>
             ))}
           </div>
