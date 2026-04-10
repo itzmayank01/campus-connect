@@ -135,7 +135,7 @@ export default function StudyLabPage() {
     try {
       const res = await fetch("/api/studylab-bookmarks");
       const data = await res.json();
-      setDocs(data.resources ?? []);
+      setDocs(data.documents ?? []);
       setVideos(data.videos ?? []);
     } catch {}
     setLoading(false)
