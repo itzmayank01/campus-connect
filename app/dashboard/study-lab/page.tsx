@@ -95,13 +95,12 @@ const VIDEO_TOOLS = [
   },
 ];
 
-interface ResourceBookmark {
-  resource: {
-    id: string;
-    originalFilename: string;
-    resourceType: string;
-    mimeType: string;
-  };
+interface DocItem {
+  id: string;
+  title: string;
+  fileType: string;
+  createdAt: string;
+  hasS3Key: boolean;
 }
 
 interface VideoItem {
@@ -119,7 +118,7 @@ export default function StudyLabPage() {
   const [activeTab, setActiveTab] = useState<"documents" | "videos">("documents")
   const [loading, setLoading] = useState(true)
 
-  const [docs, setDocs] = useState<ResourceBookmark[]>([])
+  const [docs, setDocs] = useState<DocItem[]>([])
   const [videos, setVideos] = useState<VideoItem[]>([])
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -267,30 +266,30 @@ export default function StudyLabPage() {
             </div>
           ) : (
             <div className="grid gap-2 max-h-[350px] overflow-y-auto rounded-2xl bg-white border border-[#F1F5F9] p-3 shadow-sm pr-2 custom-scrollbar">
-              {docs.map((bm) => (
+              {docs.map((doc) => (
                 <button
-                  key={bm.resource.id}
-                  onClick={() => setSelectedId(bm.resource.id)}
+                  key={doc.id}
+                  onClick={() => setSelectedId(doc.id)}
                   className={`flex items-center gap-4 w-full text-left rounded-xl px-4 py-3 transition-all duration-200 ${
-                    selectedId === bm.resource.id
+                    selectedId === doc.id
                       ? "bg-[#4F8EF7]/[0.08] border-2 border-[#4F8EF7] shadow-[0_0_12px_rgba(79,142,247,0.12)]"
                       : "bg-[#F8FAFC] border-2 border-transparent hover:bg-[#F1F5F9] hover:border-[#E2E8F0]"
                   }`}
                 >
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
-                    selectedId === bm.resource.id ? "bg-[#4F8EF7]/20" : "bg-white border border-[#E2E8F0]"
+                    selectedId === doc.id ? "bg-[#4F8EF7]/20" : "bg-white border border-[#E2E8F0]"
                   }`}>
-                    <FileText className={`h-5 w-5 ${selectedId === bm.resource.id ? "text-[#4F8EF7]" : "text-[#64748B]"}`} strokeWidth={1.75} />
+                    <FileText className={`h-5 w-5 ${selectedId === doc.id ? "text-[#4F8EF7]" : "text-[#64748B]"}`} strokeWidth={1.75} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-bold truncate ${selectedId === bm.resource.id ? "text-[#4F8EF7]" : "text-[#0F1117]"}`}>
-                      {bm.resource.originalFilename}
+                    <p className={`text-sm font-bold truncate ${selectedId === doc.id ? "text-[#4F8EF7]" : "text-[#0F1117]"}`}>
+                      {doc.title}
                     </p>
                     <p className="text-xs text-[#94A3B8] font-medium mt-0.5">
-                      {bm.resource.resourceType}
+                      {doc.fileType.includes("pdf") ? "PDF" : "Document"}
                     </p>
                   </div>
-                  {selectedId === bm.resource.id && (
+                  {selectedId === doc.id && (
                     <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#4F8EF7]">
                       <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -353,11 +352,6 @@ export default function StudyLabPage() {
                         <p className="text-xs text-[#64748B] font-medium mt-1">
                           {vid.channelName}
                         </p>
-                        {!vid.hasTranscript && (
-                          <span className="inline-block mt-2 text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                            No Captions
-                          </span>
-                        )}
                       </div>
                       {selectedId === vid.id && (
                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500 shrink-0 self-center mr-2">
@@ -396,7 +390,7 @@ export default function StudyLabPage() {
             <button
               key={tool.key}
               onClick={() => handleToolClick(tool.key)}
-              disabled={!selectedId || (activeTab === "videos" && !videos.find(v => v.id === selectedId)?.hasTranscript)}
+              disabled={!selectedId}
               className={`group relative flex flex-col rounded-2xl border p-6 text-left transition-all duration-300 ${
                 selectedId
                   ? "bg-white border-[#E2E8F0] shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 cursor-pointer"
@@ -427,17 +421,6 @@ export default function StudyLabPage() {
             </button>
           ))}
         </div>
-        
-        {/* Warning if video lacks captions */}
-        {activeTab === "videos" && selectedId && !videos.find(v => v.id === selectedId)?.hasTranscript && (
-          <div className="mt-4 p-4 border border-amber-200 bg-amber-50 rounded-xl flex items-start gap-3">
-            <span className="text-xl">⚠️</span>
-            <div>
-              <p className="text-sm font-semibold text-amber-800">Transcript Unavailable</p>
-              <p className="text-xs text-amber-700 mt-1">This video does not have English captions turned on. AI generation requires a text transcript to work.</p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* How it works */}

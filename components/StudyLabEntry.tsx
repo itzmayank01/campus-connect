@@ -497,15 +497,10 @@ export function StudyLabEntry({
                     <button
                       key={video.id}
                       onClick={() => {
-                        if (!video.hasTranscript) return;
                         setSelectedVideo(video);
                         setStage("tools");
                       }}
-                      className={`w-full flex items-center gap-3 p-3 bg-white border rounded-xl transition-colors text-left ${
-                        video.hasTranscript
-                          ? "border-[#E2E8F0] hover:border-red-200 hover:bg-red-50/30"
-                          : "border-[#F1F5F9] opacity-60 cursor-not-allowed"
-                      }`}
+                      className="w-full flex items-center gap-3 p-3 bg-white border border-[#E2E8F0] rounded-xl hover:border-red-200 hover:bg-red-50/30 transition-colors text-left"
                     >
                       {/* Thumbnail */}
                       <div className="w-14 h-10 rounded-lg overflow-hidden bg-[#F1F5F9] flex-shrink-0">
@@ -527,14 +522,12 @@ export function StudyLabEntry({
                           {video.channelName}
                         </p>
                         {!video.hasTranscript && (
-                          <p className="text-xs text-red-400 mt-0.5">
-                            No captions — AI tools unavailable
-                          </p>
+                          <span className="inline-block mt-1 text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                            No Captions
+                          </span>
                         )}
                       </div>
-                      {video.hasTranscript && (
-                        <ChevronRight className="w-4 h-4 text-[#CBD5E1] flex-shrink-0" />
-                      )}
+                      <ChevronRight className="w-4 h-4 text-[#CBD5E1] flex-shrink-0" />
                     </button>
                   ))}
                 </div>

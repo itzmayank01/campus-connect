@@ -135,14 +135,9 @@ export async function POST(
   if (!video)
     return NextResponse.json({ error: "Video not found" }, { status: 404 });
 
-  if (!video.transcript || video.transcript.trim().length < 100) {
-    return NextResponse.json(
-      {
-        error:
-          "This video doesn't have a transcript. AI tools require captions/subtitles. Try enabling captions on the video or choose a different video.",
-      },
-      { status: 422 }
-    );
+  let effectiveTranscript = video.transcript ?? "";
+  if (effectiveTranscript.trim().length < 100) {
+    effectiveTranscript = "[No transcript available. Please perform the requested generation based strictly on your general knowledge about the video title and subject matter.]";
   }
 
   // Cache check — return immediately if already generated
@@ -174,7 +169,7 @@ export async function POST(
   });
 
   try {
-    const preparedTranscript = truncateTranscript(video.transcript);
+    const preparedTranscript = truncateTranscript(effectiveTranscript);
     const systemPrompt = PROMPTS[toolType];
 
     const completion = await groq.chat.completions.create({
