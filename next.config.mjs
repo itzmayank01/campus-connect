@@ -27,7 +27,6 @@ const nextConfig = {
     'ioredis',
     'file-type',
     'jszip',
-    'youtube-transcript',
   ],
 }
 
