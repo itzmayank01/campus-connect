@@ -22,6 +22,14 @@ import {
   ChevronRight,
   ChevronLeft,
   X,
+  Headphones,
+  Presentation,
+  GitBranch,
+  BookOpen,
+  HelpCircle,
+  BarChart3,
+  Table2,
+  ArrowRight
 } from "lucide-react";
 import { AddVideoModal } from "./AddVideoModal";
 import { VideoToolModal } from "./VideoToolModal";
@@ -62,83 +70,95 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 // ── Document tool definitions ─────────────────────────────────────────────────
 
-const DOC_TOOLS: {
-  type: DocTool;
-  label: string;
-  icon: string;
-  desc: string;
-}[] = [
+const DOC_TOOLS = [
   {
     type: "AUDIO_OVERVIEW",
     label: "Audio",
-    icon: "🎙",
-    desc: "2-voice podcast",
+    description: "2-voice podcast",
+    icon: Headphones,
+    gradient: "from-violet-500 to-purple-600",
   },
   {
     type: "SLIDE_DECK",
     label: "Slides",
-    icon: "🖼",
-    desc: "10-slide deck",
+    description: "10-slide deck",
+    icon: Presentation,
+    gradient: "from-blue-500 to-cyan-500",
   },
   {
     type: "MIND_MAP",
     label: "Mind Map",
-    icon: "🧠",
-    desc: "Interactive map",
+    description: "Interactive map",
+    icon: GitBranch,
+    gradient: "from-emerald-500 to-teal-500",
   },
-  { type: "QUIZ", label: "Quiz", icon: "❓", desc: "18 questions" },
+  {
+    type: "QUIZ",
+    label: "Quiz",
+    description: "18 questions",
+    icon: HelpCircle,
+    gradient: "from-pink-500 to-rose-500",
+  },
   {
     type: "FLASHCARDS",
     label: "Flashcards",
-    icon: "📇",
-    desc: "20 cards + SRS",
+    description: "20 cards + SRS",
+    icon: BookOpen,
+    gradient: "from-indigo-500 to-blue-500",
   },
-  { type: "REPORT", label: "Report", icon: "📋", desc: "Study report" },
+  {
+    type: "REPORT",
+    label: "Report",
+    description: "Study report",
+    icon: FileText,
+    gradient: "from-amber-500 to-orange-500",
+  },
   {
     type: "VIDEO_OVERVIEW",
     label: "Video",
-    icon: "🎬",
-    desc: "Narrated slides",
+    description: "Narrated slides",
+    icon: Play,
+    gradient: "from-red-500 to-rose-600",
   },
   {
     type: "INFOGRAPHIC",
     label: "Infographic",
-    icon: "📊",
-    desc: "Visual facts",
+    description: "Visual facts",
+    icon: BarChart3,
+    gradient: "from-cyan-500 to-sky-500",
   },
   {
     type: "DATA_TABLE",
     label: "Data Table",
-    icon: "📦",
-    desc: "Structured data",
+    description: "Structured data",
+    icon: Table2,
+    gradient: "from-slate-500 to-gray-600",
   },
 ];
 
 // ── Video tool definitions ────────────────────────────────────────────────────
 
-const VIDEO_TOOLS: {
-  type: VideoTool;
-  label: string;
-  icon: string;
-  desc: string;
-}[] = [
+const VIDEO_TOOLS = [
   {
     type: "full-summary",
     label: "Full Summary",
-    icon: "📝",
-    desc: "Entire video in one summary",
+    description: "Entire video in one summary",
+    icon: FileText,
+    gradient: "from-violet-500 to-purple-600",
   },
   {
     type: "section-summaries",
     label: "Section Summaries",
-    icon: "🗂",
-    desc: "Chapter-by-chapter breakdown",
+    description: "Chapter-by-chapter breakdown",
+    icon: GitBranch,
+    gradient: "from-blue-500 to-cyan-500",
   },
   {
     type: "study-report",
     label: "Study Report",
-    icon: "📚",
-    desc: "Concepts, formulas, questions",
+    description: "Concepts, formulas, questions",
+    icon: BookOpen,
+    gradient: "from-amber-500 to-orange-500",
   },
 ];
 
@@ -538,27 +558,22 @@ export function StudyLabEntry({
           {/* ── STAGE: DOCUMENT TOOLS ── */}
           {stage === "tools" && activeTab === "documents" && selectedDoc && (
             <div>
-              <div className="grid grid-cols-3 gap-2">
-                {DOC_TOOLS.map(({ type, label, icon, desc }) => (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {DOC_TOOLS.map((tool) => (
                   <button
-                    key={type}
-                    onClick={() => handleDocToolClick(type)}
-                    className="flex flex-col items-center py-4 px-2 bg-white border border-[#E2E8F0] rounded-xl hover:border-[#93C5FD] hover:bg-blue-50/50 transition-colors group"
+                    key={tool.type}
+                    onClick={() => handleDocToolClick(tool.type as DocTool)}
+                    className="group relative flex flex-col rounded-2xl border p-4 text-left transition-all duration-300 bg-white border-[#E2E8F0] shadow-sm hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 cursor-pointer"
                   >
-                    <span
-                      style={{
-                        fontSize: "20px",
-                        lineHeight: 1,
-                        marginBottom: "6px",
-                      }}
-                    >
-                      {icon}
+                    <div className={`absolute -inset-[1px] rounded-2xl bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300 -z-10`} />
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-md mb-3 transform group-hover:scale-110 transition-transform duration-300 ease-out`}>
+                      <tool.icon className="h-4 w-4 text-white" strokeWidth={2} />
+                    </div>
+                    <span className="text-sm font-bold text-[#0F1117] group-hover:text-[#4F8EF7] transition-colors mb-1">
+                      {tool.label}
                     </span>
-                    <span className="text-xs font-medium text-[#334155] group-hover:text-blue-700">
-                      {label}
-                    </span>
-                    <span className="text-[10px] text-[#94A3B8] mt-0.5 text-center leading-tight">
-                      {desc}
+                    <span className="text-[11px] text-[#64748B] leading-snug">
+                      {tool.description}
                     </span>
                   </button>
                 ))}
@@ -570,45 +585,40 @@ export function StudyLabEntry({
           {stage === "tools" && activeTab === "videos" && selectedVideo && (
             <div>
               {/* Video preview */}
-              <div className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-xl mb-4">
+              <div className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-xl mb-4 border border-[#F1F5F9]">
                 <img
                   src={selectedVideo.thumbnailUrl}
                   alt=""
-                  className="w-14 h-10 rounded-lg object-cover"
+                  className="w-16 h-10 rounded-md object-cover shadow-sm"
                 />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#0F1117] truncate">
+                  <p className="text-sm font-semibold text-[#0F1117] truncate">
                     {selectedVideo.title}
                   </p>
-                  <p className="text-xs text-[#94A3B8]">
+                  <p className="text-xs text-[#64748B] mt-0.5">
                     {selectedVideo.channelName}
                   </p>
                 </div>
               </div>
               {/* 3 tool options */}
-              <div className="space-y-2">
-                {VIDEO_TOOLS.map(({ type, label, icon, desc }) => (
+              <div className="space-y-3">
+                {VIDEO_TOOLS.map((tool) => (
                   <button
-                    key={type}
-                    onClick={() => setActiveTool(type as VideoTool)}
-                    className="w-full flex items-center gap-4 p-4 bg-white border border-[#E2E8F0] rounded-xl hover:border-red-200 hover:bg-red-50/50 transition-colors text-left group"
+                    key={tool.type}
+                    onClick={() => setActiveTool(tool.type as VideoTool)}
+                    className="w-full flex items-center gap-4 p-4 bg-white border border-[#E2E8F0] rounded-2xl shadow-sm hover:shadow-md hover:border-red-200 transition-all text-left group relative overflow-hidden"
                   >
-                    <span
-                      style={{
-                        fontSize: "22px",
-                        lineHeight: 1,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {icon}
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-[#0F1117] group-hover:text-red-700">
-                        {label}
-                      </p>
-                      <p className="text-xs text-[#94A3B8]">{desc}</p>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-[0.03] transition-opacity`} />
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${tool.gradient} shadow-sm group-hover:scale-105 transition-transform duration-300`}>
+                      <tool.icon className="h-5 w-5 text-white" strokeWidth={2} />
                     </div>
-                    <ChevronRight className="w-4 h-4 text-[#CBD5E1] group-hover:text-red-400 flex-shrink-0" />
+                    <div className="flex-1 z-10">
+                      <p className="text-sm font-bold text-[#0F1117] group-hover:text-red-600 transition-colors">
+                        {tool.label}
+                      </p>
+                      <p className="text-xs text-[#64748B] mt-0.5">{tool.description}</p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-[#CBD5E1] group-hover:text-red-400 group-hover:translate-x-1 transition-all z-10" />
                   </button>
                 ))}
               </div>
