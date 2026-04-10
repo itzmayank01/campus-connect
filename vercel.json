@@ -5,6 +5,8 @@
     "app/api/study-tools/generate/route.ts": { "maxDuration": 120 },
     "app/api/study-tools/route.ts":          { "maxDuration": 60 },
     "app/api/study-tools/[id]/route.ts":     { "maxDuration": 30 },
-    "app/api/study-tools/[id]/stream/route.ts": { "maxDuration": 60 }
+    "app/api/study-tools/[id]/stream/route.ts": { "maxDuration": 60 },
+    "app/api/video-tools/[videoId]/[tool]/route.ts": { "maxDuration": 120 },
+    "app/api/videos/route.ts":               { "maxDuration": 30 }
   }
 }

@@ -100,6 +100,8 @@ model User {
   announcements      FacultyAnnouncement[]
   ratingReplies      RatingReply[]
   studyTools         StudyTool[]
+  videos             Video[]
+  videoStudyTools    VideoStudyTool[]
 
   @@map("users")
 }
@@ -504,4 +506,59 @@ model ResourceBookmark {
   @@unique([resourceId, userId])
   @@index([userId])
   @@map("resource_bookmarks")
+}
+
+// ─── VideoToolType enum ─────────────────────────────────────────────────────
+
+enum VideoToolType {
+  FULL_SUMMARY
+  SECTION_SUMMARIES
+  STUDY_REPORT
+}
+
+// ─── Video model (YouTube content added by users) ───────────────────────────
+
+model Video {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  youtubeUrl      String    @map("youtube_url")
+  youtubeId       String    @map("youtube_id")
+  title           String
+  channelName     String?   @map("channel_name")
+  durationSeconds Int?      @map("duration_seconds")
+  thumbnailUrl    String?   @map("thumbnail_url")
+  transcript      String?   @db.Text
+  transcriptFetched Boolean @default(false) @map("transcript_fetched")
+  subject         String?
+  semester        Int?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studyTools VideoStudyTool[]
+
+  @@index([userId])
+  @@index([youtubeId])
+  @@map("videos")
+}
+
+// ─── VideoStudyTool — AI outputs specific to videos ─────────────────────────
+
+model VideoStudyTool {
+  id           String        @id @default(cuid())
+  userId       String        @map("user_id")
+  videoId      String        @map("video_id")
+  type         VideoToolType
+  status       ToolStatus    @default(PENDING)
+  outputJson   String?       @db.Text @map("output_json")
+  errorMessage String?       @map("error_message")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId, type])
+  @@index([userId, videoId])
+  @@map("video_study_tools")
 }

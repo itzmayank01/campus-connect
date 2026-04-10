@@ -10,7 +10,8 @@ import { useState, useEffect, use } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, FileText, Download, Star, Eye, Clock, User, Loader2 } from "lucide-react";
-import { StudyLabPanel } from "@/components/StudyLabPanel";
+import { StudyLabEntry } from "@/components/StudyLabEntry";
+import { BookmarkButton } from "@/components/BookmarkButton";
 
 interface ResourceDetail {
   id: string;
@@ -120,9 +121,12 @@ export default function ResourceDetailPage({ params }: { params: Promise<{ id: s
             </div>
             {resource.description && <p className="text-xs text-[#64748B] mt-2">{resource.description}</p>}
           </div>
-          <a href={`/api/resources/${resource.id}/download`} className="flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-medium text-white bg-[#059669] hover:bg-[#047857] transition-colors shrink-0 no-underline">
-            <Download className="w-4 h-4" /> Download
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            <BookmarkButton resourceId={resource.id} />
+            <a href={`/api/resources/${resource.id}/download`} className="flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-medium text-white bg-[#059669] hover:bg-[#047857] transition-colors shrink-0 no-underline">
+              <Download className="w-4 h-4" /> Download
+            </a>
+          </div>
         </div>
       </div>
 
@@ -139,14 +143,15 @@ export default function ResourceDetailPage({ params }: { params: Promise<{ id: s
         </div>
       )}
 
-      {/* StudyLab — appears for PDF/DOCX/text resources */}
+      {/* StudyLab 2.0 — Documents (9 tools) + Videos (3 tools) */}
       {canUseStudyLab ? (
-        <StudyLabPanel resourceId={resource.id} resourceTitle={resource.originalFilename} defaultOpen={openLab} />
+        <StudyLabEntry
+          preselectedResourceId={resource.id}
+          preselectedResourceTitle={resource.originalFilename}
+          defaultOpen={openLab}
+        />
       ) : (
-        <div className="rounded-2xl border border-[#F1F5F9] bg-[#F8FAFC] p-5 text-center">
-          <p className="text-sm text-[#64748B]">StudyLab is available for PDF and Word documents</p>
-          <p className="text-xs text-[#94A3B8] mt-1">Upload a PDF or DOCX to use AI study tools</p>
-        </div>
+        <StudyLabEntry defaultOpen={openLab} />
       )}
     </div>
   );

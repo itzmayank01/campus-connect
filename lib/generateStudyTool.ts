@@ -8,6 +8,7 @@
 import { prisma } from "@/lib/prisma";
 import { StudyToolType } from "@/lib/generated/prisma";
 import { fetchFromS3, extractText, cleanAndChunk } from "@/lib/studyToolPipeline";
+// @ts-expect-error — youtube-transcript has no type declarations
 import { YoutubeTranscript } from "youtube-transcript";
 
 import { generateMindMap }       from "@/workers/tools/mindMapGenerator";
@@ -73,7 +74,7 @@ export async function generateStudyTool(
       console.log(`[generateStudyTool] Fetching YouTube transcript for videoId=${resource.youtubeVideoId}`);
       try {
         const transcript = await YoutubeTranscript.fetchTranscript(resource.youtubeVideoId);
-        const rawText = transcript.map(t => t.text).join(" ");
+        const rawText = transcript.map((t: { text: string }) => t.text).join(" ");
         text = cleanAndChunk(rawText);
 
         // Cache the transcript
