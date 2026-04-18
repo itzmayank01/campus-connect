@@ -111,10 +111,11 @@ OUTPUT — return ONLY a valid JSON array, nothing else:
 [
   {
     "front": "<question or term from document>",
-    "back": "<answer or definition from document, max 60 words>",
+    "back": "<highly informative answer or definition from document, max 60 words>",
     "hint": "<one-phrase hint from document content, max 8 words>",
     "difficulty": "easy" | "medium" | "hard",
-    "type": "definition" | "application" | "comparison" | "cause_effect"
+    "type": "definition" | "application" | "comparison" | "cause_effect",
+    "tags": ["<relevant tag 1>", "<relevant tag 2>"]
   }
 ]
 
@@ -232,7 +233,7 @@ OUTPUT — return ONLY a valid JSON object, nothing else:
     "significance": "<1-2 sentences: why this matters, as stated or implied in the document>"
   },
   "keyConcepts": [
-    { "term": "<term from document>", "definition": "<definition from document, max 50 words>", "importance": "<from document context, max 30 words>" }
+    { "term": "<term from document>", "definition": "<highly informative definition from document, max 50 words>", "importance": "<from document context, max 30 words>", "relatedTerms": ["<related term 1>", "<related term 2>"] }
   ],
   "keyFacts": ["<specific fact from document>"],
   "studyQuestions": ["<question answerable from document>"],
@@ -256,8 +257,8 @@ ${isRefresh ? `${nonce()} Highlight different aspects than any previous generati
 RULES (zero exceptions):
 1. ONLY extract numbers, statistics, and comparisons that are EXPLICITLY STATED in the document.
 2. If the document has NO numerical data, set headlineStat to a qualitative insight and stats to [].
-3. Do NOT invent statistics. Every value must be traceable to a specific sentence in the document.
-4. "keyQuote" must be a verbatim or near-verbatim sentence from the document.
+3. Do NOT invent statistics. Every value must be traceable to a specific sentence in the document. DO NOT PROVIDE IRRELEVANT DATA.
+4. "keyQuote" must be a highly informative verbatim sentence from the document.
 
 OUTPUT — return ONLY a valid JSON object, nothing else:
 {
@@ -286,9 +287,9 @@ function buildDataTablePrompt(content: string): string {
   return `You are a data table extractor. Read the document and extract any structured tabular data.
 
 RULES (zero exceptions):
-1. Only extract data that is EXPLICITLY STRUCTURED in the document (tables, lists with values, comparisons).
+1. Only extract highly informative data that is EXPLICITLY STRUCTURED in the document (tables, lists with values, comparisons).
 2. If no structured data exists, return { "hasData": false, "reason": "<what type of document this is>" }.
-3. Max 50 rows. Only include real data from the document.
+3. Max 50 rows. Only include real data from the document. DO NOT provide irrelevant data that is not related to the given document.
 4. Do NOT fabricate rows or values.
 
 OUTPUT — return ONLY a valid JSON object, nothing else:

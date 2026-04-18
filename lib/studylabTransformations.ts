@@ -74,10 +74,11 @@ OUTPUT FORMAT: Return ONLY valid JSON. No markdown. No explanation.
     {
       "id": "card_01",
       "front": "string — question or prompt (max 25 words)",
-      "back": "string — complete answer (max 70 words)",
+      "back": "string — highly informative complete answer (max 70 words)",
       "hint": "string — one-phrase hint (max 8 words)",
       "difficulty": "easy",
-      "type": "definition"
+      "type": "definition",
+      "tags": ["string", "string"]
     }
   ]
 }
@@ -191,7 +192,7 @@ OUTPUT FORMAT: Return ONLY valid JSON. No markdown. No explanation.
     "significance": "string — why this matters (1-2 sentences)"
   },
   "keyConcepts": [
-    { "term": "string", "definition": "string (max 50 words)", "importance": "string (max 30 words)" }
+    { "term": "string", "definition": "string (highly informative, max 50 words)", "importance": "string (max 30 words)", "relatedTerms": ["string", "string"] }
   ],
   "keyFacts": ["string — specific verifiable fact from document"],
   "timeline": [{ "date": "string", "event": "string" }],
@@ -235,7 +236,7 @@ color values: "blue" | "green" | "amber" | "red" | "purple"
 comparison value: 0-100 scale
 
 RULES: stats: 4-6. comparison: 3-5. timeline: 3-6 or [].
-NEVER invent statistics. Only numbers actually in the document.
+NEVER invent statistics. Only numbers actually in the document. DO NOT provide irrelevant data that is not related to the given document. Provide highly informative visual data summary.
 
 OUTPUT ONLY VALID JSON. NOTHING ELSE.`,
   },
@@ -263,7 +264,7 @@ column type values: "string" | "number" | "date" | "percentage"
 If NO structured data exists:
 { "hasData": false, "reason": "string — what type of document this is instead" }
 
-RULES: Max 50 rows. Only real data from document. No guessing. No invented data.
+RULES: Max 50 rows. Only real highly informative data from document. No guessing. No invented data. DO NOT provide irrelevant data.
 
 OUTPUT ONLY VALID JSON. NOTHING ELSE.`,
   },
