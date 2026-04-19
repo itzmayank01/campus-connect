@@ -3,8 +3,8 @@ import { Github, Linkedin } from "lucide-react"
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-card px-6 py-12">
-      <div className="mx-auto flex max-w-7xl flex-col items-center gap-8 md:flex-row md:justify-between">
+    <footer className="border-t border-border bg-card py-12">
+      <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center gap-8 px-4 sm:px-6 md:px-8 md:flex-row md:justify-between">
         {/* Logo & copyright */}
         <div className="flex flex-col items-center gap-2 md:items-start">
           <Link href="/" className="flex items-center gap-2">
@@ -51,7 +51,7 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="mx-auto mt-8 max-w-7xl border-t border-border pt-6 text-center">
+      <div className="mx-auto mt-8 w-full max-w-[1600px] border-t border-border px-4 sm:px-6 md:px-8 pt-6 text-center">
         <p className="text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} Campus Connect. All rights reserved.
         </p>

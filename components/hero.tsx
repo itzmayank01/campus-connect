@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-6 pt-10 pb-20 lg:pt-16 lg:pb-32">
+    <section className="relative w-full overflow-hidden pt-10 pb-20 lg:pt-16 lg:pb-32">
       {/* Subtle background dot pattern */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
@@ -14,7 +14,7 @@ export function Hero() {
         }}
       />
 
-      <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-14 lg:flex-row lg:items-center lg:gap-20">
+      <div className="relative mx-auto flex w-full max-w-[1600px] flex-col items-center gap-10 px-4 sm:px-6 md:px-8 lg:flex-row lg:items-center lg:gap-20">
         {/* Left content */}
         <div className="flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm text-muted-foreground shadow-sm">
@@ -22,7 +22,7 @@ export function Hero() {
             AI-Powered Academic Platform
           </div>
 
-          <h1 className="text-balance text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+          <h1 className="text-balance text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl xl:text-7xl">
             Smarter Academic Resource Platform for{" "}
             <span className="text-primary">Engineers</span>
           </h1>

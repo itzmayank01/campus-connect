@@ -52,8 +52,8 @@ function AnimatedNumber({ target, suffix }: { target: number; suffix: string }) 
 
 export function Statistics() {
   return (
-    <section id="stats" className="px-6 py-20 lg:py-28">
-      <div className="mx-auto max-w-5xl">
+    <section id="stats" className="py-20 w-full lg:py-28">
+      <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 md:px-8">
         <div className="grid gap-12 md:grid-cols-3">
           {stats.map((stat) => (
             <div key={stat.label} className="flex flex-col items-center text-center">

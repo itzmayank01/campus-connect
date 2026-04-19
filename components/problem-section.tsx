@@ -2,8 +2,8 @@ import Image from "next/image"
 
 export function ProblemSection() {
   return (
-    <section className="px-6 py-20 bg-white">
-      <div className="mx-auto max-w-6xl text-center">
+    <section className="py-20 w-full bg-white">
+      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 md:px-8 text-center">
 
         <div className="flex justify-center">
           <Image

@@ -3,9 +3,9 @@ import { ArrowRight } from "lucide-react"
 
 export function CallToAction() {
   return (
-    <section className="px-6 py-20 lg:py-28">
-      <div className="mx-auto max-w-4xl">
-        <div className="relative overflow-hidden rounded-3xl bg-primary px-8 py-16 text-center shadow-2xl shadow-primary/20 sm:px-16 sm:py-20">
+    <section className="py-20 w-full lg:py-28">
+      <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 md:px-8">
+        <div className="relative overflow-hidden rounded-3xl bg-primary px-8 py-16 text-center shadow-2xl shadow-primary/20 md:py-24 sm:px-16">
           {/* Decorative circles */}
           <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-primary-foreground/5" />
           <div className="pointer-events-none absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-primary-foreground/5" />
