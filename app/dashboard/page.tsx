@@ -250,7 +250,7 @@ export default async function DashboardPage() {
 
         {/* Right: Upcoming Exams + Trending */}
         <div className="space-y-5">
-          <StudyCalendar semesters={semesters} />
+          <StudyCalendar semesters={semesters} userSemester={dbUser?.semester} />
           <UpcomingExams exams={formattedExams} />
           <TrendingResources />
         </div>

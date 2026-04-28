@@ -12,12 +12,13 @@ import { toast } from "sonner"
 
 interface StudyCalendarProps {
   semesters: any[]
+  userSemester?: number | null
 }
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
-export function StudyCalendar({ semesters }: StudyCalendarProps) {
+export function StudyCalendar({ semesters, userSemester }: StudyCalendarProps) {
   const router = useRouter()
   const today = new Date()
   const [currentDate, setCurrentDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
@@ -25,6 +26,7 @@ export function StudyCalendar({ semesters }: StudyCalendarProps) {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedDateStr, setSelectedDateStr] = useState("")
+  const [selectedTimeStr, setSelectedTimeStr] = useState("10:00")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Form state
@@ -70,12 +72,15 @@ export function StudyCalendar({ semesters }: StudyCalendarProps) {
   const allSubjects = useMemo(() => {
     const subjects: any[] = []
     semesters.forEach(sem => {
+      // If userSemester is provided, only include subjects from that semester
+      if (userSemester && sem.number !== userSemester) return;
+      
       sem.subjects?.forEach((sub: any) => {
         subjects.push({ ...sub, semesterId: sem.id || sem.number }) // fallback to number if id missing
       })
     })
     return subjects
-  }, [semesters])
+  }, [semesters, userSemester])
 
   const handleScheduleExam = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,7 +102,7 @@ export function StudyCalendar({ semesters }: StudyCalendarProps) {
           name: examName,
           subjectId: subject.id,
           semesterId: subject.semesterId, // Assuming api expects this
-          date: selectedDateStr,
+          date: `${selectedDateStr}T${selectedTimeStr}:00`,
           type: examType
         })
       })
@@ -112,6 +117,7 @@ export function StudyCalendar({ semesters }: StudyCalendarProps) {
       setExamName("")
       setExamType("endterm")
       setSelectedSubject("")
+      setSelectedTimeStr("10:00")
       
       // Refresh the dashboard to show new exam
       router.refresh()
@@ -253,19 +259,30 @@ export function StudyCalendar({ semesters }: StudyCalendarProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="examType">Exam Type</Label>
-                <Select value={examType} onValueChange={setExamType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="midterm">Midterm</SelectItem>
-                    <SelectItem value="endterm">Endterm</SelectItem>
-                    <SelectItem value="quiz">Quiz</SelectItem>
-                    <SelectItem value="assignment">Assignment</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="examTime">Time</Label>
+                <Input 
+                  id="examTime" 
+                  type="time" 
+                  value={selectedTimeStr}
+                  onChange={(e) => setSelectedTimeStr(e.target.value)}
+                  required
+                />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="examType">Exam Type</Label>
+              <Select value={examType} onValueChange={setExamType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="midterm">Midterm</SelectItem>
+                  <SelectItem value="endterm">Endterm</SelectItem>
+                  <SelectItem value="quiz">Quiz</SelectItem>
+                  <SelectItem value="assignment">Assignment</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="pt-4 flex justify-end gap-3">
