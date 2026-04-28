@@ -68,18 +68,12 @@ function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate()
 }
 
-function getUpcoming5Days(today: Date): Date[] {
-  const year = today.getFullYear()
-  const month = today.getMonth()
-  const day = today.getDate()
-  const daysInMonth = getDaysInMonth(year, month)
-
+function getUpcomingDays(today: Date, count: number = 14): Date[] {
   const days: Date[] = []
-  for (let i = 0; i < 5; i++) {
-    const d = day + i
-    if (d <= daysInMonth) {
-      days.push(new Date(year, month, d))
-    }
+  for (let i = 0; i < count; i++) {
+    const d = new Date(today)
+    d.setDate(today.getDate() + i)
+    days.push(d)
   }
   return days
 }
@@ -106,10 +100,19 @@ function saveGoals(goals: DayGoals) {
 // ─── Component ─────────────────────────────────────────────────────────────────
 export function DailyGoals() {
   const today = useMemo(() => new Date(), [])
-  const upcomingDays = useMemo(() => getUpcoming5Days(today), [today])
   const todayKey = useMemo(() => getDateKey(today), [today])
-
   const [selectedDateKey, setSelectedDateKey] = useState(todayKey)
+  
+  const upcomingDays = useMemo(() => {
+    const days = getUpcomingDays(today, 14)
+    // Ensure selectedDateKey is in the list if it's outside the 14 days
+    if (!days.find(d => getDateKey(d) === selectedDateKey)) {
+      const [y, m, d] = selectedDateKey.split("-").map(Number)
+      days.unshift(new Date(y, m - 1, d))
+    }
+    return days.sort((a, b) => a.getTime() - b.getTime())
+  }, [today, selectedDateKey])
+
   const [allGoals, setAllGoals] = useState<DayGoals>({})
   const [isAdding, setIsAdding] = useState(false)
   const [newGoalText, setNewGoalText] = useState("")
@@ -231,8 +234,9 @@ export function DailyGoals() {
           </div>
         </div>
 
-        {/* Date Selector — 5 upcoming days */}
-        <div className="flex items-center justify-between mb-8 gap-2">
+        {/* Date Selector */}
+        <div className="flex items-center mb-8 gap-2 overflow-x-auto hide-scrollbar pb-2">
+          <div className="flex items-center gap-2 flex-1 min-w-max">
           {upcomingDays.map((d, i) => {
             const key = getDateKey(d)
             const isActive = key === selectedDateKey
@@ -247,7 +251,7 @@ export function DailyGoals() {
                 onClick={() => setSelectedDateKey(key)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`relative flex flex-col items-center justify-center flex-1 h-20 rounded-2xl transition-all duration-300 ${
+                className={`relative flex flex-col items-center justify-center w-[calc(20%-8px)] min-w-[70px] h-20 rounded-2xl transition-all duration-300 shrink-0 ${
                   isActive
                     ? "bg-gradient-to-br from-[#00C9FF] to-[#4facfe] shadow-lg shadow-[#00C9FF]/30 text-white transform scale-105"
                     : "text-[#64748B] hover:bg-[#F8FAFC] border border-transparent hover:border-[#E2E8F0]"
@@ -283,6 +287,25 @@ export function DailyGoals() {
               </motion.button>
             )
           })}
+          </div>
+          
+          <div className="relative shrink-0 ml-2">
+            <input
+              type="date"
+              value={selectedDateKey}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setSelectedDateKey(e.target.value)
+                }
+              }}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              title="Select any date"
+            />
+            <div className="w-12 h-20 rounded-2xl border border-dashed border-[#CBD5E1] flex flex-col items-center justify-center text-[#94A3B8] hover:bg-[#F8FAFC] transition-colors hover:text-[#64748B] hover:border-[#94A3B8] cursor-pointer">
+              <Calendar className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-semibold uppercase">More</span>
+            </div>
+          </div>
         </div>
 
         {/* Goals List */}

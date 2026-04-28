@@ -9,6 +9,7 @@ import { TrendingResources } from "@/components/dashboard/trending-resources"
 import { Upload } from "lucide-react"
 import { prisma } from "@/lib/prisma"
 import { RealtimeRefresh } from "@/components/dashboard/realtime-refresh"
+import { DailyGoalCard } from "@/components/dashboard/daily-goal-card"
 
 export const dynamic = "force-dynamic"
 
@@ -224,11 +225,8 @@ export default async function DashboardPage() {
               {todayHours > 0 ? `${todayHours}h\n${todayMins}m` : `${todayMins}m`}
             </p>
           </div>
-          {/* Week Goal */}
-          <div className="rounded-xl bg-[#4B73E2]/40 backdrop-blur-sm p-4 flex-1 md:flex-none min-w-[120px] self-stretch flex flex-col justify-between">
-            <p className="text-xs text-[#E0E7FF] mb-1">Week Goal</p>
-            <p className="text-3xl font-bold tracking-tight">{weekHours}/{goalHours}h</p>
-          </div>
+          {/* Daily Goals count (formerly Week Goal) */}
+          <DailyGoalCard />
         </div>
       </div>
 
