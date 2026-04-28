@@ -325,6 +325,9 @@ model UserStreak {
   passiveStreakDays  Int       @default(0) @map("passive_streak_days")
   lastActivityDate  DateTime? @map("last_activity_date")
   streakFreezes     Int       @default(2) @map("streak_freezes")
+  studyTimeToday    Int       @default(0) @map("study_time_today") // in minutes
+  studyTimeWeek     Int       @default(0) @map("study_time_week") // in minutes
+  weeklyGoal        Int       @default(2400) @map("weekly_goal") // Default: 40 hours = 2400 mins
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
   @@map("user_streaks")

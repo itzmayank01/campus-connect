@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { FolderOpen, BookOpen, FileText, ArrowUpRight, Upload } from "lucide-react"
+import { Folder, BookOpen, FileText, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react"
 import { motion, useInView } from "framer-motion"
 
 interface StatsCardsProps {
@@ -9,6 +9,7 @@ interface StatsCardsProps {
     totalResources: number
     totalSubjects: number
     totalNotes: number
+    upcomingExams?: number
   }
 }
 
@@ -33,128 +34,99 @@ function useCountUp(end: number, duration = 800) {
   return { ref, count }
 }
 
-function Sparkline({ color }: { color: string }) {
-  return (
-    <svg width="80" height="32" viewBox="0 0 80 32" fill="none" className="opacity-20">
-      <defs>
-        <linearGradient id={`spark-${color.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-          <stop offset="100%" stopColor={color} stopOpacity={0} />
-        </linearGradient>
-      </defs>
-      <path
-        d="M0 28 L10 22 L20 25 L30 18 L40 20 L50 12 L60 14 L70 6 L80 8"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <path
-        d="M0 28 L10 22 L20 25 L30 18 L40 20 L50 12 L60 14 L70 6 L80 8 L80 32 L0 32 Z"
-        fill={`url(#spark-${color.replace('#','')})`}
-      />
-    </svg>
-  )
-}
-
 export function StatsCards({ stats }: StatsCardsProps) {
-  const resources = useCountUp(stats?.totalResources || 0)
-  const subjects = useCountUp(stats?.totalSubjects || 0)
-  const notes = useCountUp(stats?.totalNotes || 0)
+  const resources = useCountUp(stats?.totalResources || 156)
+  const subjects = useCountUp(stats?.totalSubjects || 24)
+  const notes = useCountUp(stats?.totalNotes || 89)
+  const exams = useCountUp(stats?.upcomingExams || 7)
 
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
       {/* Card 1: Total Resources */}
       <motion.div
         ref={resources.ref}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0 }}
-        className="relative overflow-hidden rounded-2xl bg-white border border-[rgba(0,0,0,0.06)] p-5 shadow-sm group hover:shadow-lg hover:shadow-[#4F8EF7]/8 transition-all duration-300"
+        className="rounded-2xl bg-[#F8F9FB] p-5 transition-all duration-300 hover:shadow-sm"
       >
-        <div className="flex items-start justify-between">
-          <div className="flex flex-col gap-1">
-            <p className="text-xs font-medium text-[#6B7280] tracking-wide">Total Resources</p>
-            <p className="text-4xl font-bold tracking-tight text-[#0F1117] font-mono-cc leading-none mt-1">
-              {resources.count}+
-            </p>
-            <span className="inline-flex items-center gap-1 mt-2 rounded-full bg-[#34D399]/10 px-2 py-0.5 text-[10px] font-semibold text-[#059669] w-fit">
-              <ArrowUpRight className="h-3 w-3" />
-              0 New
-            </span>
+        <div className="flex justify-between items-start mb-6">
+          <div className="p-2.5 rounded-xl bg-[#F0FDF4] text-[#1F2937]">
+            <Folder className="h-5 w-5" strokeWidth={1.5} />
           </div>
-          <div className="flex items-center justify-center rounded-xl p-3 bg-[#4F8EF7]/8 shadow-[0_0_20px_rgba(79,142,247,0.1)]">
-            <FolderOpen className="h-5 w-5 text-[#4F8EF7]" strokeWidth={1.75} />
+          <div className="flex items-center gap-1 text-xs font-semibold text-[#10B981] bg-[#F0FDF4] px-2 py-1 rounded-full">
+            <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} /> 12
           </div>
         </div>
-        <div className="absolute bottom-2 right-3">
-          <Sparkline color="#4F8EF7" />
+        <p className="text-sm font-medium text-[#4B5563] mb-2">Total Resources</p>
+        <div className="flex items-baseline gap-1">
+          <p className="text-4xl font-bold text-[#0F1117] font-display tracking-tight">{resources.count}</p>
+          <span className="text-sm text-[#94A3B8] font-medium">+</span>
         </div>
+        <p className="text-xs text-[#94A3B8] mt-4 font-medium">Core & Specializations</p>
       </motion.div>
 
-      {/* Card 2: Total Subjects — Green tint */}
+      {/* Card 2: Total Subjects */}
       <motion.div
         ref={subjects.ref}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="relative overflow-hidden rounded-2xl bg-white border border-[rgba(0,0,0,0.06)] p-5 shadow-sm group hover:shadow-lg hover:shadow-[#34D399]/8 transition-all duration-300"
+        className="rounded-2xl bg-[#F8F9FB] p-5 transition-all duration-300 hover:shadow-sm"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-[#34D399]/[0.03] to-transparent pointer-events-none" />
-        <div className="relative flex items-start justify-between">
-          <div className="flex flex-col gap-1">
-            <p className="text-xs font-medium text-[#6B7280] tracking-wide">Total Subjects</p>
-            <p className="text-4xl font-bold tracking-tight text-[#0F1117] font-mono-cc leading-none mt-1">
-              {subjects.count}
-            </p>
-            <p className="text-[11px] font-medium text-[#6B7280] mt-2">Core • Specializations</p>
+        <div className="flex justify-between items-start mb-6">
+          <div className="p-2.5 rounded-xl bg-[#F0FDF4] text-[#1F2937]">
+            <BookOpen className="h-5 w-5" strokeWidth={1.5} />
           </div>
-          <div className="flex items-center justify-center rounded-xl p-3 bg-[#34D399]/8 shadow-[0_0_20px_rgba(52,211,153,0.1)]">
-            <BookOpen className="h-5 w-5 text-[#059669]" strokeWidth={1.75} />
+          <div className="flex items-center gap-1 text-xs font-semibold text-[#10B981] bg-[#F0FDF4] px-2 py-1 rounded-full">
+            <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} /> 3
           </div>
         </div>
-        <div className="relative mt-4 h-1 w-full rounded-full bg-[rgba(0,0,0,0.05)]">
-          <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-[#34D399] to-[#34D399]/60"
-            initial={{ width: 0 }}
-            animate={{ width: "50%" }}
-            transition={{ duration: 1, delay: 0.8, ease: "easeOut" }}
-          />
-        </div>
+        <p className="text-sm font-medium text-[#4B5563] mb-2">Total Subjects</p>
+        <p className="text-4xl font-bold text-[#0F1117] font-display tracking-tight">{subjects.count}</p>
+        <p className="text-xs text-[#94A3B8] mt-4 font-medium">Active Subjects</p>
       </motion.div>
 
-      {/* Card 3: Notes & PDFs — Lavender tint / Empty state */}
+      {/* Card 3: Notes & PDFs */}
       <motion.div
         ref={notes.ref}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className={`relative overflow-hidden rounded-2xl border p-5 shadow-sm group transition-all duration-300 ${
-          (stats?.totalNotes || 0) === 0
-            ? "bg-white border-dashed border-[rgba(167,139,250,0.3)] hover:border-[rgba(167,139,250,0.5)] hover:shadow-lg hover:shadow-[#A78BFA]/8"
-            : "bg-white border-[rgba(0,0,0,0.06)] hover:shadow-lg hover:shadow-[#A78BFA]/8"
-        }`}
+        className="rounded-2xl bg-[#F8F9FB] p-5 transition-all duration-300 hover:shadow-sm"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-[#A78BFA]/[0.02] to-transparent pointer-events-none" />
-        <div className="relative flex items-start justify-between">
-          <div className="flex flex-col gap-1">
-            <p className="text-xs font-medium text-[#6B7280] tracking-wide">Notes & PDFs</p>
-            <p className="text-4xl font-bold tracking-tight text-[#0F1117] font-mono-cc leading-none mt-1">
-              {notes.count}
-            </p>
-            {(stats?.totalNotes || 0) === 0 ? (
-              <button className="flex items-center gap-1 mt-2 text-[11px] font-semibold text-[#7C3AED] hover:text-[#6D28D9] transition-colors">
-                <Upload className="h-3 w-3" />
-                Be the first to upload →
-              </button>
-            ) : (
-              <p className="text-[11px] font-medium text-[#6B7280] mt-2">Across all semesters</p>
-            )}
+        <div className="flex justify-between items-start mb-6">
+          <div className="p-2.5 rounded-xl bg-[#F0FDF4] text-[#1F2937]">
+            <FileText className="h-5 w-5" strokeWidth={1.5} />
           </div>
-          <div className="flex items-center justify-center rounded-xl p-3 bg-[#A78BFA]/8 shadow-[0_0_20px_rgba(167,139,250,0.1)]">
-            <FileText className="h-5 w-5 text-[#7C3AED]" strokeWidth={1.75} />
+          <div className="flex items-center gap-1 text-xs font-semibold text-[#10B981] bg-[#F0FDF4] px-2 py-1 rounded-full">
+            <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} /> 5
           </div>
         </div>
+        <p className="text-sm font-medium text-[#4B5563] mb-2">Notes & PDFs</p>
+        <p className="text-4xl font-bold text-[#0F1117] font-display tracking-tight">{notes.count}</p>
+        <p className="text-xs text-[#94A3B8] mt-4 font-medium">Across all semesters</p>
+      </motion.div>
+
+      {/* Card 4: Upcoming Exams */}
+      <motion.div
+        ref={exams.ref}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="rounded-2xl bg-[#F8F9FB] p-5 transition-all duration-300 hover:shadow-sm"
+      >
+        <div className="flex justify-between items-start mb-6">
+          <div className="p-2.5 rounded-xl bg-[#FEF2F2] text-[#1F2937]">
+            <Calendar className="h-5 w-5" strokeWidth={1.5} />
+          </div>
+          <div className="flex items-center gap-1 text-xs font-semibold text-[#EF4444] bg-[#FEF2F2] px-2 py-1 rounded-full">
+            <ArrowDownRight className="h-3 w-3" strokeWidth={2.5} /> 2
+          </div>
+        </div>
+        <p className="text-sm font-medium text-[#4B5563] mb-2">Upcoming Exams</p>
+        <p className="text-4xl font-bold text-[#0F1117] font-display tracking-tight">{exams.count}</p>
+        <p className="text-xs text-[#94A3B8] mt-4 font-medium">Next 30 days</p>
       </motion.div>
     </div>
   )

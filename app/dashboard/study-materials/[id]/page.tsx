@@ -12,6 +12,7 @@ import Link from "next/link";
 import { ArrowLeft, FileText, Download, Star, Eye, Clock, User, Loader2 } from "lucide-react";
 import { StudyLabEntry } from "@/components/StudyLabEntry";
 import { BookmarkButton } from "@/components/BookmarkButton";
+import { StudyTimer } from "@/components/study-timer";
 
 interface ResourceDetail {
   id: string;
@@ -91,6 +92,7 @@ export default function ResourceDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="max-w-[900px] mx-auto space-y-5">
+      <StudyTimer />
       {/* Back link */}
       <Link href="/dashboard/study-materials" className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#4F8EF7] transition-colors no-underline">
         <ArrowLeft className="w-3.5 h-3.5" /> Back to Study Materials

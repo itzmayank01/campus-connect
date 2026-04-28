@@ -3,7 +3,8 @@ import { StatsCards } from "@/components/dashboard/stats-cards"
 import { SemesterCards } from "@/components/dashboard/semester-cards"
 import { StudyMaterials } from "@/components/dashboard/study-materials"
 import { UpcomingExams } from "@/components/dashboard/upcoming-exams"
-
+import { StudyCalendar } from "@/components/dashboard/study-calendar"
+import { QuickActions } from "@/components/dashboard/quick-actions"
 import { TrendingResources } from "@/components/dashboard/trending-resources"
 import { Upload } from "lucide-react"
 import { prisma } from "@/lib/prisma"
@@ -166,14 +167,29 @@ export default async function DashboardPage() {
 
   // Pull active user from Postgres rather than stale Supabase JWT metadata
   let dbUser = null
+  let userStreak = null
   if (user) {
     try {
       dbUser = await prisma.user.findUnique({
         where: { supabaseId: user.id },
-        select: { name: true, semester: true }
+        select: { id: true, name: true, semester: true }
       })
+      if (dbUser) {
+        userStreak = await prisma.userStreak.findUnique({
+          where: { userId: dbUser.id }
+        })
+      }
     } catch {}
   }
+
+  const studyTimeTodayMins = userStreak?.studyTimeToday || 0
+  const studyTimeWeekMins = userStreak?.studyTimeWeek || 0
+  const weeklyGoalMins = userStreak?.weeklyGoal || 2400
+
+  const todayHours = Math.floor(studyTimeTodayMins / 60)
+  const todayMins = studyTimeTodayMins % 60
+  const weekHours = Math.floor(studyTimeWeekMins / 60)
+  const goalHours = Math.floor(weeklyGoalMins / 60)
 
   const displayName = dbUser?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Student"
   const currentSemester = dbUser?.semester ? `Semester ${dbUser.semester}` : "Select Semester in Profile"
@@ -190,31 +206,40 @@ export default async function DashboardPage() {
       <RealtimeRefresh />
 
       {/* Welcome Banner */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-[28px] font-bold tracking-tight text-[#0F1117] font-display">
-            {greeting}, {displayName}! 👋
+      <div className="rounded-2xl bg-[#1E50D7] p-6 sm:p-8 text-white flex flex-col md:flex-row items-start md:items-center justify-between shadow-md">
+        <div className="space-y-2 mb-6 md:mb-0">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight font-display">
+            Welcome back, {displayName}! 👋
           </h1>
-          <p className="text-sm text-[#6B7280] mt-1">
-            {dateStr} • {currentSemester}
+          <p className="text-[#E0E7FF] text-sm sm:text-base">
+            You're on a 7-day study streak. {currentSemester} • Keep it up!
           </p>
         </div>
-        <button
-          className="relative overflow-hidden gap-2 rounded-xl bg-[#4F8EF7] text-white font-medium px-5 py-2.5 shadow-lg shadow-[#4F8EF7]/20 transition-all duration-200 hover:bg-[#3B7AE0] flex items-center group sm:hidden"
-          id="upload-material-btn"
-        >
-          <Upload className="h-4 w-4" />
-          Upload Material
-          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent group-hover:animate-shimmer pointer-events-none" />
-        </button>
+        
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          {/* Study Time */}
+          <div className="rounded-xl bg-[#4B73E2]/40 backdrop-blur-sm p-4 flex-1 md:flex-none min-w-[120px]">
+            <p className="text-xs text-[#E0E7FF] mb-1 leading-tight">Study<br/>Time<br/>Today</p>
+            <p className="text-3xl font-bold mt-2 tracking-tight whitespace-pre-line">
+              {todayHours > 0 ? `${todayHours}h\n${todayMins}m` : `${todayMins}m`}
+            </p>
+          </div>
+          {/* Week Goal */}
+          <div className="rounded-xl bg-[#4B73E2]/40 backdrop-blur-sm p-4 flex-1 md:flex-none min-w-[120px] self-stretch flex flex-col justify-between">
+            <p className="text-xs text-[#E0E7FF] mb-1">Week Goal</p>
+            <p className="text-3xl font-bold tracking-tight">{weekHours}/{goalHours}h</p>
+          </div>
+        </div>
       </div>
+
+      <QuickActions />
 
       {/* Main content + Right panel */}
       <div className="grid gap-5 lg:grid-cols-[1fr_280px] items-start">
         {/* Left: Main content column */}
         <div className="space-y-5">
-          {/* Row 1: 3 Stat Cards */}
-          <StatsCards stats={stats} />
+          {/* Row 1: 4 Stat Cards */}
+          <StatsCards stats={{...stats, upcomingExams: formattedExams.length}} />
 
           {/* Row 2: Study Materials — full width */}
           <StudyMaterials initialMaterials={formattedNotes} />
@@ -227,6 +252,7 @@ export default async function DashboardPage() {
 
         {/* Right: Upcoming Exams + Trending */}
         <div className="space-y-5">
+          <StudyCalendar semesters={semesters} />
           <UpcomingExams exams={formattedExams} />
           <TrendingResources />
         </div>

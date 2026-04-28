@@ -16,6 +16,7 @@ import {
   FlaskConical,
   Download,
   Eraser,
+  Target,
 } from "lucide-react"
 import {
   Sidebar,
@@ -163,12 +164,34 @@ export function DashboardSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
+                  isActive={pathname === "/dashboard/upload"}
                   tooltip="Your Uploads"
-                  className="bg-[#4F8EF7]/[0.06] text-[#4F8EF7] hover:bg-[#4F8EF7]/[0.12] hover:text-[#4F8EF7] font-medium rounded-lg transition-all duration-150 ease-out"
+                  className={
+                    pathname === "/dashboard/upload"
+                      ? "border-l-2 border-[#4F8EF7] bg-[#4F8EF7]/[0.06] text-[#4F8EF7] hover:bg-[#4F8EF7]/[0.1] font-semibold rounded-lg transition-all duration-150 ease-out"
+                      : "text-[#6B7280] hover:text-[#0F1117] hover:bg-[rgba(0,0,0,0.03)] rounded-lg transition-all duration-150 ease-out"
+                  }
                 >
                   <Link href="/dashboard/upload">
                     <Upload className="h-5 w-5" strokeWidth={1.75} />
                     <span>Your Uploads</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/dashboard/daily-goals"}
+                  tooltip="Daily Goals"
+                  className={
+                    pathname === "/dashboard/daily-goals"
+                      ? "border-l-2 border-[#4F8EF7] bg-[#4F8EF7]/[0.06] text-[#4F8EF7] hover:bg-[#4F8EF7]/[0.1] font-semibold rounded-lg transition-all duration-150 ease-out"
+                      : "text-[#6B7280] hover:text-[#0F1117] hover:bg-[rgba(0,0,0,0.03)] rounded-lg transition-all duration-150 ease-out"
+                  }
+                >
+                  <Link href="/dashboard/daily-goals">
+                    <Target className="h-5 w-5" strokeWidth={1.75} />
+                    <span>Daily Goals</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
