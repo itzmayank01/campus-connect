@@ -10,6 +10,7 @@ import {
 import { AiSummaryPanel } from "@/components/dashboard/ai-summary-panel"
 import { ExamPredictor } from "@/components/dashboard/exam-predictor"
 import { CourseOverview } from "@/components/dashboard/course-overview"
+import { StudyBotChat } from "@/components/dashboard/study-bot-chat"
 
 interface ResourceData {
   id: string
@@ -691,6 +692,15 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
             </div>
           </div>
         </div>
+      )}
+
+      {/* AI StudyBot Floating Chat */}
+      {subject && (
+        <StudyBotChat
+          subjectId={subject.id}
+          subjectName={subject.name}
+          hasSyllabus={resources.some(r => r.resourceType === "SYLLABUS")}
+        />
       )}
     </div>
   )
