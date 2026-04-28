@@ -13,10 +13,10 @@ import { config } from "dotenv";
 
 config(); // load .env
 
-const region    = process.env.AWS_REGION;
+const region = process.env.AWS_REGION;
 const accessKey = process.env.AWS_ACCESS_KEY_ID;
 const secretKey = process.env.AWS_SECRET_ACCESS_KEY;
-const bucket    = process.env.AWS_S3_BUCKET;
+const bucket = process.env.AWS_S3_BUCKET;
 
 console.log("═══ AWS Connection Test ═══");
 console.log(`Region:  ${region}`);
@@ -30,7 +30,7 @@ if (!region || !accessKey || !secretKey || !bucket) {
 }
 
 const creds = {
-  accessKeyId:     accessKey,
+  accessKeyId: accessKey,
   secretAccessKey: secretKey,
 };
 
@@ -41,9 +41,9 @@ const textract = new TextractClient({ region, credentials: creds });
 try {
   const testKey = "test/connection-test.txt";
   await s3.send(new PutObjectCommand({
-    Bucket:      bucket,
-    Key:         testKey,
-    Body:        Buffer.from(`Campus Connect AWS test — ${new Date().toISOString()}`),
+    Bucket: bucket,
+    Key: testKey,
+    Body: Buffer.from(`Campus Connect AWS test — ${new Date().toISOString()}`),
     ContentType: "text/plain",
   }));
   console.log("✅ S3 write: SUCCESS");
