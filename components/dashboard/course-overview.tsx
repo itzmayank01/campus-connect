@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { ClipboardList, ChevronDown, ChevronUp, Plus, Target } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { ClipboardList, ChevronDown, ChevronUp, Plus, Target, Loader2, Upload, CheckCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import Link from "next/link"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface Unit {
   unit_number: number
@@ -34,9 +35,13 @@ const importanceColors = {
 }
 
 export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) {
+  const router = useRouter()
   const [data, setData] = useState<TopicsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchTopics = async (force = false) => {
     setLoading(true)
@@ -55,6 +60,71 @@ export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) 
   useEffect(() => {
     fetchTopics()
   }, [subjectId])
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const validTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+    if (!validTypes.includes(file.type) && !file.name.endsWith(".pdf") && !file.name.endsWith(".docx")) {
+      toast.error("Please select a PDF or DOCX file")
+      return
+    }
+
+    // Validate file size (max 20MB)
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("File size must be under 20MB")
+      return
+    }
+
+    setUploading(true)
+    try {
+      // Get subject info for semester
+      const subjectRes = await fetch(`/api/subjects/${subjectId}/resources`)
+      const subjectData = await subjectRes.json()
+      const semester = subjectData.subject?.semester?.number || 1
+
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("title", file.name)
+      formData.append("subjectId", subjectId)
+      formData.append("semester", String(semester))
+      formData.append("type", "syllabus")
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!res.ok) {
+        throw new Error("Upload failed")
+      }
+
+      const result = await res.json()
+      if (result.success) {
+        setUploadSuccess(true)
+        toast.success("Syllabus uploaded successfully! Analyzing topics...")
+        
+        // Refresh the topics data after a short delay
+        setTimeout(async () => {
+          await fetchTopics(true)
+          setUploadSuccess(false)
+          router.refresh()
+        }, 2000)
+      } else {
+        throw new Error(result.error || "Upload failed")
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload syllabus. Please try again.")
+    } finally {
+      setUploading(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
+  }
 
   if (loading) {
     return (
@@ -87,13 +157,42 @@ export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) 
               Upload the course syllabus or course plan to see AI-extracted important topics and unit-wise breakdown.
             </p>
           </div>
-          <Link 
-            href={`/dashboard/upload/new?subjectId=${subjectId}&type=SYLLABUS`}
-            className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[#3B82F6] px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_12px_rgba(59,130,246,0.3)] hover:bg-[#2563EB] transition-all no-underline"
-          >
-           <Plus className="h-4 w-4" />
-           Upload Syllabus
-          </Link>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+
+          {uploadSuccess ? (
+            <div className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[#10B981] px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)]">
+              <CheckCircle className="h-4 w-4" />
+              Uploaded! Analyzing...
+            </div>
+          ) : (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[#3B82F6] px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_12px_rgba(59,130,246,0.3)] hover:bg-[#2563EB] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  Upload Syllabus (PDF)
+                </>
+              )}
+            </button>
+          )}
+
+          <p className="text-[10px] text-[#94A3B8]">Supports PDF and DOCX files up to 20MB</p>
         </div>
       </div>
     )
