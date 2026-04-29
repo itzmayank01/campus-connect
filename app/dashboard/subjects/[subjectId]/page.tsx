@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use, useRef, useCallback } from "react"
+import { useState, useEffect, use } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
@@ -8,9 +8,8 @@ import {
   Star, ArrowLeft, Loader2, Upload, ExternalLink, Play, Archive, Clock,
 } from "lucide-react"
 import { AiSummaryPanel } from "@/components/dashboard/ai-summary-panel"
-import { ExamPredictor } from "@/components/dashboard/exam-predictor"
 import { CourseOverview } from "@/components/dashboard/course-overview"
-import { StudyBotChat } from "@/components/dashboard/study-bot-chat"
+import { StudyAssistant } from "@/components/dashboard/study-assistant"
 
 interface ResourceData {
   id: string
@@ -86,7 +85,6 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({})
   const [ratingMap, setRatingMap] = useState<Record<string, number>>({})
   const [hoverRating, setHoverRating] = useState<Record<string, number>>({})
-  const studyBotRef = useRef<{ openWithMessage: (msg: string) => void } | null>(null)
 
   const searchParams = useSearchParams()
   const highlightId = searchParams?.get("highlight")
@@ -304,15 +302,23 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
         <CourseOverview
           subjectId={subject.id}
           subjectName={subject.name}
-          onAskQuestions={(topic: string) => {
-            studyBotRef.current?.openWithMessage(`Give me 6-7 most important exam questions about "${topic}" for this subject`)
-          }}
         />
       )}
 
-      {/* Exam Question Predictor */}
+      {/* AI Study Assistant — ChatGPT-style */}
       {subject && (
-        <ExamPredictor subjectId={subject.id} subjectName={subject.name} />
+        <StudyAssistant
+          subjectId={subject.id}
+          subjectName={subject.name}
+          subjectCode={subject.code}
+          syllabusResources={resources.filter(r => r.resourceType === "SYLLABUS").map(r => ({
+            id: r.id,
+            originalFilename: r.originalFilename,
+            createdAt: r.createdAt,
+            uploader: r.uploader ? { name: r.uploader.name, email: r.uploader.email } : undefined
+          }))}
+          onUploadSyllabus={() => router.push('/dashboard/upload/new')}
+        />
       )}
 
       {/* Type Tabs */}
@@ -701,15 +707,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
         </div>
       )}
 
-      {/* AI StudyBot Floating Chat */}
-      {subject && (
-        <StudyBotChat
-          ref={studyBotRef}
-          subjectId={subject.id}
-          subjectName={subject.name}
-          hasSyllabus={resources.some(r => r.resourceType === "SYLLABUS")}
-        />
-      )}
+
     </div>
   )
 }
