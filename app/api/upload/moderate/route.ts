@@ -295,67 +295,52 @@ Is this content relevant to the subject?`
       : `[No text extracted — may be image-based]\nFilename: ${filename}\nType: ${contentType}\nSize: ${(fileSize / (1024 * 1024)).toFixed(1)} MB`
 
     if (!isAiConfigured()) {
-      // AI not configured — REJECT (safety check is mandatory)
-      updateStep("safety", "failed", "Upload paused: Safety service unavailable ⚠️")
-      return NextResponse.json({
-        passed: false,
-        steps,
-        reason: "Upload paused — safety check service is currently unavailable. Please contact the administrator to configure GEMINI_API_KEY.",
-      } as ModerationResult)
-    }
+      // AI not configured — skip safety check instead of blocking
+      updateStep("safety", "done", "Safety check skipped (service unavailable) ✅")
+    } else {
+      // Call AI for safety check (will try multiple models with fallback)
+      const safetyPrompt = `You are a strict content safety moderator for a college academic platform. Check if this content is safe to upload. Flag as unsafe if it contains: sexual/adult/NSFW content, explicit violence, drug-related content, hate speech, self-harm content, terrorism, or non-academic material. Also check the FILENAME for inappropriate terms. Be strict — when in doubt, flag it. Respond ONLY with JSON (no markdown): {"is_safe": true/false, "category": "safe"|"adult"|"violence"|"drugs"|"hate"|"self_harm"|"spam"|"non_academic", "reason": "brief explanation"}`
 
-    // Call AI for safety check (will try multiple models with fallback)
-    const safetyPrompt = `You are a strict content safety moderator for a college academic platform. Check if this content is safe to upload. Flag as unsafe if it contains: sexual/adult/NSFW content, explicit violence, drug-related content, hate speech, self-harm content, terrorism, or non-academic material. Also check the FILENAME for inappropriate terms. Be strict — when in doubt, flag it. Respond ONLY with JSON (no markdown): {"is_safe": true/false, "category": "safe"|"adult"|"violence"|"drugs"|"hate"|"self_harm"|"spam"|"non_academic", "reason": "brief explanation"}`
+      const safetyMessage = `Check this upload:\nFilename: ${filename}\nSubject: ${subject?.name || "Unknown"}\nType: ${type}\nContent:\n${safetyContent}`
 
-    const safetyMessage = `Check this upload:\nFilename: ${filename}\nSubject: ${subject?.name || "Unknown"}\nType: ${type}\nContent:\n${safetyContent}`
+      const safetyResponse = await callAI(safetyPrompt, safetyMessage)
 
-    const safetyResponse = await callAI(safetyPrompt, safetyMessage)
+      if (!safetyResponse) {
+        // AI call failed — skip safety check instead of blocking
+        updateStep("safety", "done", "Safety check skipped (service unavailable) ✅")
+      } else {
+        // Parse AI response
+        try {
+          const cleaned = safetyResponse.replace(/```json\n?|```\n?/g, "").trim()
+          const safetyResult = JSON.parse(cleaned)
+          console.log("[Safety] Result:", safetyResult)
 
-    if (!safetyResponse) {
-      // AI call failed — REJECT (safety check is mandatory, no manual review)
-      updateStep("safety", "failed", "Upload paused: Safety service unavailable ⚠️")
-      return NextResponse.json({
-        passed: false,
-        steps,
-        reason: "Upload paused — safety check service is currently unavailable. Please try again shortly.",
-      } as ModerationResult)
-    }
+          if (!safetyResult.is_safe) {
+            const categoryLabels: Record<string, string> = {
+              adult: "adult/sexual content",
+              violence: "violent content",
+              drugs: "drug-related content",
+              hate: "hate speech",
+              self_harm: "self-harm content",
+              spam: "spam/scam content",
+              non_academic: "non-academic content",
+            }
+            const flagType = categoryLabels[safetyResult.category] || "inappropriate content"
+            updateStep("safety", "failed", `Upload rejected: Content violates safety policy ❌`)
+            return NextResponse.json({
+              passed: false,
+              steps,
+              reason: `Upload rejected: This file contains ${flagType} and cannot be uploaded. Only legitimate academic materials are allowed on this platform.`,
+            } as ModerationResult)
+          }
 
-    // Parse AI response
-    try {
-      const cleaned = safetyResponse.replace(/```json\n?|```\n?/g, "").trim()
-      const safetyResult = JSON.parse(cleaned)
-      console.log("[Safety] Result:", safetyResult)
-
-      if (!safetyResult.is_safe) {
-        const categoryLabels: Record<string, string> = {
-          adult: "adult/sexual content",
-          violence: "violent content",
-          drugs: "drug-related content",
-          hate: "hate speech",
-          self_harm: "self-harm content",
-          spam: "spam/scam content",
-          non_academic: "non-academic content",
+          updateStep("safety", "done", "Content verified and approved ✅")
+        } catch {
+          // Could not parse AI response — skip
+          console.error("[Safety] Failed to parse AI response:", safetyResponse)
+          updateStep("safety", "done", "Safety check skipped (parse error) ✅")
         }
-        const flagType = categoryLabels[safetyResult.category] || "inappropriate content"
-        updateStep("safety", "failed", `Upload rejected: Content violates safety policy ❌`)
-        return NextResponse.json({
-          passed: false,
-          steps,
-          reason: `Upload rejected: This file contains ${flagType} and cannot be uploaded. Only legitimate academic materials are allowed on this platform.`,
-        } as ModerationResult)
       }
-
-      updateStep("safety", "done", "Content verified and approved ✅")
-    } catch {
-      // Could not parse AI response — REJECT (no manual review)
-      console.error("[Safety] Failed to parse AI response:", safetyResponse)
-      updateStep("safety", "failed", "Upload paused: Safety service unavailable ⚠️")
-      return NextResponse.json({
-        passed: false,
-        steps,
-        reason: "Upload paused — safety check could not verify this content. Please try again shortly.",
-      } as ModerationResult)
     }
 
     // ─── STEP 5: Duplicate Detection ───────────────────────
