@@ -7,8 +7,21 @@ export const maxDuration = 60;
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! })
 
-async function getSyllabusContext(subjectId: string): Promise<string> {
-  // First try cached syllabus topics
+async function getResourceContext(subjectId: string, resourceId?: string): Promise<string> {
+  // If specific resource requested, fetch it directly
+  if (resourceId) {
+    try {
+      const resource = await prisma.resource.findUnique({
+        where: { id: resourceId },
+        select: { extractedText: true, originalFilename: true, resourceType: true }
+      })
+      if (resource?.extractedText) {
+        return `Context from ${resource.resourceType} file "${resource.originalFilename}":\n${resource.extractedText.slice(0, 8000)}`
+      }
+    } catch {}
+  }
+
+  // Fallback: try cached syllabus topics
   try {
     const cached = await prisma.subjectAiCache.findUnique({
       where: {
@@ -51,7 +64,7 @@ async function getSyllabusContext(subjectId: string): Promise<string> {
       select: { extractedText: true, originalFilename: true }
     })
     if (syllabus?.extractedText) {
-      return syllabus.extractedText.slice(0, 8000)
+      return `Context from SYLLABUS "${syllabus.originalFilename}":\n${syllabus.extractedText.slice(0, 8000)}`
     }
   } catch {}
 
@@ -72,7 +85,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { topic, mode = "questions" } = body
+    const { topic, mode = "questions", resourceId } = body
     // mode: "questions" = just questions, "questions_answers" = questions + answers
 
     // Get subject info
@@ -85,8 +98,8 @@ export async function POST(
       return NextResponse.json({ error: "Subject not found" }, { status: 404 })
     }
 
-    // Get syllabus context
-    const syllabusContext = await getSyllabusContext(subjectId)
+    // Get context from selected resource or fallback
+    const resourceContext = await getResourceContext(subjectId, resourceId)
 
     // Also fetch exam predictor cache for extra context
     let examPredictorContext = ""
@@ -112,7 +125,7 @@ export async function POST(
 
     const topicInstruction = topic 
       ? `Generate 6-7 most likely exam questions SPECIFICALLY about the topic "${topic}" for the course "${subject.name}".`
-      : `Generate 6-7 most likely exam questions for the course "${subject.name}" covering the most important topics from the syllabus.`
+      : `Generate 6-7 most likely exam questions for the course "${subject.name}" based on the provided study material.`
 
     const answerInstruction = mode === "questions_answers"
       ? `For each question, also provide a concise but detailed answer (3-5 sentences or key points).`
@@ -122,7 +135,7 @@ export async function POST(
 ${topicInstruction}
 ${answerInstruction}
 
-${syllabusContext ? `COURSE SYLLABUS & TOPICS:\n${syllabusContext}\n` : ""}
+${resourceContext ? `PROVIDED STUDY MATERIAL CONTEXT:\n${resourceContext}\n` : ""}
 ${examPredictorContext ? `EXAM PREDICTION DATA:\n${examPredictorContext}\n` : ""}
 
 Return ONLY valid JSON, no markdown. Use this format:
@@ -140,7 +153,7 @@ Return ONLY valid JSON, no markdown. Use this format:
   ],
   "total_questions": 7,
   "focus_topic": "${topic || "All important topics"}",
-  "based_on": "syllabus analysis" | "general knowledge"
+  "based_on": "study material analysis" | "general knowledge"
 }`
 
     const completion = await groq.chat.completions.create({

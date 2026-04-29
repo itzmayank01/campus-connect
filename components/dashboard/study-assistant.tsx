@@ -17,7 +17,7 @@ interface ChatMessage {
   timestamp: Date
 }
 
-interface SyllabusResource {
+interface StudyMaterial {
   id: string
   originalFilename: string
   createdAt: string
@@ -35,8 +35,8 @@ interface StudyAssistantProps {
   subjectId: string
   subjectName: string
   subjectCode: string
-  syllabusResources: SyllabusResource[]
-  onUploadSyllabus: () => void
+  studyMaterials: StudyMaterial[]
+  onUploadMaterial: () => void
 }
 
 const SUGGESTIONS = [
@@ -58,38 +58,38 @@ function formatMarkdown(text: string): string {
   return html
 }
 
-export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusResources, onUploadSyllabus }: StudyAssistantProps) {
+export function StudyAssistant({ subjectId, subjectName, subjectCode, studyMaterials, onUploadMaterial }: StudyAssistantProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [topics, setTopics] = useState<TopicData | null>(null)
   const [topicsLoading, setTopicsLoading] = useState(false)
-  const [selectedSyllabus, setSelectedSyllabus] = useState<string>("")
-  const [showSyllabusDropdown, setShowSyllabusDropdown] = useState(false)
+  const [selectedMaterial, setSelectedMaterial] = useState<string>("")
+  const [showMaterialDropdown, setShowMaterialDropdown] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Auto-select first syllabus
+  // Auto-select first material
   useEffect(() => {
-    if (syllabusResources.length > 0 && !selectedSyllabus) {
-      setSelectedSyllabus(syllabusResources[0].id)
+    if (studyMaterials.length > 0 && !selectedMaterial) {
+      setSelectedMaterial(studyMaterials[0].id)
     }
-  }, [syllabusResources])
+  }, [studyMaterials])
 
-  // Fetch topics when syllabus selected
+  // Fetch topics when material selected
   useEffect(() => {
-    if (selectedSyllabus) {
+    if (selectedMaterial) {
       fetchTopics()
     }
-  }, [selectedSyllabus])
+  }, [selectedMaterial])
 
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowSyllabusDropdown(false)
+        setShowMaterialDropdown(false)
       }
     }
     document.addEventListener("mousedown", handler)
@@ -134,6 +134,7 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
         body: JSON.stringify({
           message: text.trim(),
           history: messages.map(m => ({ role: m.role, content: m.content })),
+          resourceId: selectedMaterial || undefined
         }),
       })
       const data = await res.json()
@@ -171,8 +172,8 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"
   }
 
-  const selectedSyllabusName = syllabusResources.find(s => s.id === selectedSyllabus)?.originalFilename || ""
-  const hasSyllabus = syllabusResources.length > 0
+  const selectedMaterialName = studyMaterials.find(s => s.id === selectedMaterial)?.originalFilename || ""
+  const hasMaterial = studyMaterials.length > 0
 
   return (
     <div className="rounded-2xl bg-white border border-[#E2E8F0] shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden mb-6">
@@ -204,45 +205,45 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
         </div>
       </div>
 
-      {/* Syllabus Selector Bar */}
+      {/* Material Selector Bar */}
       <div className="px-6 py-3 bg-gradient-to-r from-[#F8FAFC] to-[#F1F5F9] border-b border-[#E2E8F0] flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-[12px] font-semibold text-[#475569]">
           <FileText className="h-4 w-4 text-[#3B82F6]" />
-          Syllabus:
+          Context:
         </div>
 
-        {hasSyllabus ? (
+        {hasMaterial ? (
           <div className="relative" ref={dropdownRef}>
             <button
-              onClick={() => setShowSyllabusDropdown(!showSyllabusDropdown)}
+              onClick={() => setShowMaterialDropdown(!showMaterialDropdown)}
               className="flex items-center gap-2 rounded-lg bg-white border border-[#D1D5DB] px-3 py-1.5 text-[12px] font-medium text-[#1E293B] hover:border-[#3B82F6] transition-all shadow-sm max-w-[300px]"
             >
               <CheckCircle className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-              <span className="truncate">{selectedSyllabusName || "Select syllabus..."}</span>
+              <span className="truncate">{selectedMaterialName || "Select study material..."}</span>
               <ChevronDown className="h-3.5 w-3.5 text-[#94A3B8] shrink-0" />
             </button>
             <AnimatePresence>
-              {showSyllabusDropdown && (
+              {showMaterialDropdown && (
                 <motion.div
                   initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
                   className="absolute top-full left-0 mt-1 w-[340px] bg-white rounded-xl border border-[#E2E8F0] shadow-xl z-30 overflow-hidden"
                 >
                   <div className="p-2 border-b border-[#F1F5F9]">
-                    <p className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider px-2">Available Syllabi</p>
+                    <p className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider px-2">Uploaded Study Materials</p>
                   </div>
                   <div className="max-h-[200px] overflow-y-auto">
-                    {syllabusResources.map(s => (
+                    {studyMaterials.map(s => (
                       <button
                         key={s.id}
-                        onClick={() => { setSelectedSyllabus(s.id); setShowSyllabusDropdown(false); }}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-[#F8FAFC] transition-colors ${selectedSyllabus === s.id ? "bg-[#EFF6FF]" : ""}`}
+                        onClick={() => { setSelectedMaterial(s.id); setShowMaterialDropdown(false); }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-[#F8FAFC] transition-colors ${selectedMaterial === s.id ? "bg-[#EFF6FF]" : ""}`}
                       >
-                        <FileText className={`h-4 w-4 shrink-0 ${selectedSyllabus === s.id ? "text-[#3B82F6]" : "text-[#94A3B8]"}`} />
+                        <FileText className={`h-4 w-4 shrink-0 ${selectedMaterial === s.id ? "text-[#3B82F6]" : "text-[#94A3B8]"}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-[12px] font-medium text-[#1E293B] truncate">{s.originalFilename}</p>
                           <p className="text-[10px] text-[#94A3B8]">by {s.uploader?.name || s.uploader?.email} • {new Date(s.createdAt).toLocaleDateString()}</p>
                         </div>
-                        {selectedSyllabus === s.id && <CheckCircle className="h-4 w-4 text-[#3B82F6] shrink-0" />}
+                        {selectedMaterial === s.id && <CheckCircle className="h-4 w-4 text-[#3B82F6] shrink-0" />}
                       </button>
                     ))}
                   </div>
@@ -251,15 +252,15 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
             </AnimatePresence>
           </div>
         ) : (
-          <span className="text-[12px] text-[#94A3B8]">No syllabus uploaded yet</span>
+          <span className="text-[12px] text-[#94A3B8]">No study material uploaded yet</span>
         )}
 
         <button
-          onClick={onUploadSyllabus}
+          onClick={onUploadMaterial}
           className="ml-auto flex items-center gap-1.5 rounded-lg bg-[#3B82F6] text-white px-3 py-1.5 text-[11px] font-semibold hover:bg-[#2563EB] transition-all shadow-sm"
         >
           <Upload className="h-3.5 w-3.5" />
-          Upload Syllabus
+          Upload Material
         </button>
       </div>
 
@@ -268,7 +269,7 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
         <div className="px-6 py-3 bg-[#FEFCE8]/50 border-b border-[#FDE68A]/30">
           <div className="flex items-center gap-2 mb-2">
             <Target className="h-3.5 w-3.5 text-[#D97706]" />
-            <span className="text-[11px] font-bold text-[#92400E]">🎯 KEY TOPICS FROM SYLLABUS</span>
+            <span className="text-[11px] font-bold text-[#92400E]">🎯 KEY TOPICS FROM THIS DOCUMENT</span>
             <span className="text-[9px] text-[#D97706]/60">— click any topic to ask AI</span>
             {!topicsLoading && (
               <button onClick={() => fetchTopics(true)} className="ml-auto text-[10px] text-[#D97706] hover:text-[#92400E] flex items-center gap-1 transition-colors">
@@ -295,7 +296,7 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
       {topicsLoading && (
         <div className="px-6 py-3 bg-[#FEFCE8]/30 border-b border-[#FDE68A]/20 flex items-center gap-2">
           <Loader2 className="h-3.5 w-3.5 text-[#D97706] animate-spin" />
-          <span className="text-[11px] text-[#92400E]">Extracting important topics from syllabus...</span>
+          <span className="text-[11px] text-[#92400E]">Extracting important topics from this document...</span>
         </div>
       )}
 
@@ -316,13 +317,13 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
               <Image src="/ai-bot.png" alt="StudyBot" width={64} height={64} className="rounded-2xl object-cover" />
             </motion.div>
 
-            {hasSyllabus ? (
+            {hasMaterial ? (
               <>
                 <h4 className="text-lg font-bold text-[#1E293B] mb-1">
                   Ask me anything about {subjectName} 👋
                 </h4>
                 <p className="text-[13px] text-[#64748B] max-w-md mb-8 leading-relaxed">
-                  I&apos;ve analyzed your syllabus. Ask me about important topics, generate exam questions, get answers — just like ChatGPT!
+                  I&apos;ve analyzed the selected document. Ask me about important topics, generate exam questions, get answers — just like ChatGPT!
                 </p>
                 {/* Suggestion Cards */}
                 <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
@@ -350,27 +351,27 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
                 </div>
               </>
             ) : (
-              /* No Syllabus — Upload Required */
+              /* No Material — Upload Required */
               <>
                 <h4 className="text-lg font-bold text-[#1E293B] mb-2">
-                  Upload Syllabus to Get Started 📄
+                  Upload Study Material to Get Started 📄
                 </h4>
                 <p className="text-[13px] text-[#64748B] max-w-md mb-6 leading-relaxed">
-                  I need your course syllabus to generate accurate topics, exam questions, and study material.
-                  Upload a syllabus PDF — or if someone else already uploaded one, it will appear automatically.
+                  I need some study material to generate accurate topics, exam questions, and study guides.
+                  Upload Notes, a Syllabus, or a Question Paper — or select one already uploaded by someone else.
                 </p>
                 <div className="flex flex-col items-center gap-3">
                   <button
-                    onClick={onUploadSyllabus}
+                    onClick={onUploadMaterial}
                     className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#3B82F6] to-[#7C3AED] text-white font-bold px-8 py-3.5 text-sm shadow-xl shadow-[#3B82F6]/25 hover:shadow-2xl hover:scale-[1.02] transition-all"
                   >
                     <Upload className="h-5 w-5" />
-                    Upload Syllabus (PDF)
+                    Upload Study Material
                   </button>
                   <p className="text-[10px] text-[#94A3B8]">Supports PDF and DOCX • Up to 20MB</p>
                 </div>
                 <div className="mt-8 p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] max-w-md">
-                  <p className="text-[12px] text-[#475569] font-semibold mb-2">✨ What I can do with your syllabus:</p>
+                  <p className="text-[12px] text-[#475569] font-semibold mb-2">✨ What I can do with your materials:</p>
                   <ul className="text-[11px] text-[#64748B] space-y-1.5 text-left">
                     <li className="flex items-center gap-2"><Target className="h-3.5 w-3.5 text-[#EF4444] shrink-0" /> Extract most important topics by unit</li>
                     <li className="flex items-center gap-2"><HelpCircle className="h-3.5 w-3.5 text-[#7C3AED] shrink-0" /> Generate 6-7 most likely exam questions</li>
@@ -454,17 +455,17 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
 
       {/* Input Area */}
       <div className="px-6 py-4 border-t border-[#E2E8F0] bg-white">
-        {!hasSyllabus ? (
+        {!hasMaterial ? (
           <div className="flex items-center justify-center gap-2 text-[12px] text-[#94A3B8] py-2">
             <FileText className="h-4 w-4" />
-            Upload a syllabus to start chatting with AI
+            Upload a study material to start chatting with AI
           </div>
         ) : (
           <>
             {messages.length === 0 && (
               <div className="flex items-center gap-1.5 text-[10px] text-[#10B981] font-medium mb-2.5 px-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
-                Syllabus loaded — AI responses are syllabus-aware
+                Document loaded — AI responses are based on the selected material
               </div>
             )}
             <form onSubmit={handleSubmit} className="flex items-end gap-3">

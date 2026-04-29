@@ -311,13 +311,13 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
           subjectId={subject.id}
           subjectName={subject.name}
           subjectCode={subject.code}
-          syllabusResources={resources.filter(r => r.resourceType === "SYLLABUS").map(r => ({
+          studyMaterials={resources.filter(r => r.resourceType !== "VIDEOS").map(r => ({
             id: r.id,
             originalFilename: r.originalFilename,
             createdAt: r.createdAt,
             uploader: r.uploader ? { name: r.uploader.name, email: r.uploader.email } : undefined
           }))}
-          onUploadSyllabus={() => router.push('/dashboard/upload/new')}
+          onUploadMaterial={() => router.push('/dashboard/upload/new')}
         />
       )}
 
