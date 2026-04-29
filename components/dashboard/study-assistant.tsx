@@ -315,40 +315,71 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
             >
               <Image src="/ai-bot.png" alt="StudyBot" width={64} height={64} className="rounded-2xl object-cover" />
             </motion.div>
-            <h4 className="text-lg font-bold text-[#1E293B] mb-1">
-              Ask me anything about {subjectName} 👋
-            </h4>
-            <p className="text-[13px] text-[#64748B] max-w-md mb-8 leading-relaxed">
-              {hasSyllabus
-                ? "I've analyzed the syllabus. Ask me about important topics, generate exam questions, get answers — just like ChatGPT!"
-                : "Upload a syllabus first for best results, or ask me anything about this subject."
-              }
-            </p>
 
-            {/* Suggestion Cards */}
-            <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
-              {SUGGESTIONS.map((s, i) => (
-                <motion.button
-                  key={i}
-                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.07 }}
-                  onClick={() => sendMessage(s.prompt)}
-                  className="flex items-start gap-3 rounded-2xl p-4 bg-white border border-[#E2E8F0] hover:border-[#3B82F6]/30 hover:shadow-lg transition-all text-left group"
-                >
-                  <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${s.gradient} flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md transition-shadow`}>
-                    <s.icon className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <span className="text-[12px] font-bold text-[#334155] group-hover:text-[#1E293B] leading-tight block">
-                      {s.label}
-                    </span>
-                    <span className="text-[10px] text-[#94A3B8] mt-0.5 block leading-snug">
-                      {s.prompt.slice(0, 50)}...
-                    </span>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
+            {hasSyllabus ? (
+              <>
+                <h4 className="text-lg font-bold text-[#1E293B] mb-1">
+                  Ask me anything about {subjectName} 👋
+                </h4>
+                <p className="text-[13px] text-[#64748B] max-w-md mb-8 leading-relaxed">
+                  I&apos;ve analyzed your syllabus. Ask me about important topics, generate exam questions, get answers — just like ChatGPT!
+                </p>
+                {/* Suggestion Cards */}
+                <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
+                  {SUGGESTIONS.map((s, i) => (
+                    <motion.button
+                      key={i}
+                      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 + i * 0.07 }}
+                      onClick={() => sendMessage(s.prompt)}
+                      className="flex items-start gap-3 rounded-2xl p-4 bg-white border border-[#E2E8F0] hover:border-[#3B82F6]/30 hover:shadow-lg transition-all text-left group"
+                    >
+                      <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${s.gradient} flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md transition-shadow`}>
+                        <s.icon className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <span className="text-[12px] font-bold text-[#334155] group-hover:text-[#1E293B] leading-tight block">
+                          {s.label}
+                        </span>
+                        <span className="text-[10px] text-[#94A3B8] mt-0.5 block leading-snug">
+                          {s.prompt.slice(0, 50)}...
+                        </span>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              /* No Syllabus — Upload Required */
+              <>
+                <h4 className="text-lg font-bold text-[#1E293B] mb-2">
+                  Upload Syllabus to Get Started 📄
+                </h4>
+                <p className="text-[13px] text-[#64748B] max-w-md mb-6 leading-relaxed">
+                  I need your course syllabus to generate accurate topics, exam questions, and study material.
+                  Upload a syllabus PDF — or if someone else already uploaded one, it will appear automatically.
+                </p>
+                <div className="flex flex-col items-center gap-3">
+                  <button
+                    onClick={onUploadSyllabus}
+                    className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#3B82F6] to-[#7C3AED] text-white font-bold px-8 py-3.5 text-sm shadow-xl shadow-[#3B82F6]/25 hover:shadow-2xl hover:scale-[1.02] transition-all"
+                  >
+                    <Upload className="h-5 w-5" />
+                    Upload Syllabus (PDF)
+                  </button>
+                  <p className="text-[10px] text-[#94A3B8]">Supports PDF and DOCX • Up to 20MB</p>
+                </div>
+                <div className="mt-8 p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] max-w-md">
+                  <p className="text-[12px] text-[#475569] font-semibold mb-2">✨ What I can do with your syllabus:</p>
+                  <ul className="text-[11px] text-[#64748B] space-y-1.5 text-left">
+                    <li className="flex items-center gap-2"><Target className="h-3.5 w-3.5 text-[#EF4444] shrink-0" /> Extract most important topics by unit</li>
+                    <li className="flex items-center gap-2"><HelpCircle className="h-3.5 w-3.5 text-[#7C3AED] shrink-0" /> Generate 6-7 most likely exam questions</li>
+                    <li className="flex items-center gap-2"><BookOpen className="h-3.5 w-3.5 text-[#3B82F6] shrink-0" /> Provide detailed answers for each question</li>
+                    <li className="flex items-center gap-2"><Lightbulb className="h-3.5 w-3.5 text-[#10B981] shrink-0" /> Create exam preparation strategy</li>
+                  </ul>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           /* Messages */
@@ -359,7 +390,6 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
               >
-                {/* Avatar */}
                 {msg.role === "assistant" ? (
                   <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center shrink-0 shadow-md mt-1">
                     <Image src="/ai-bot.png" alt="Bot" width={26} height={26} className="rounded-lg object-cover" />
@@ -369,8 +399,6 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
                     <GraduationCap className="w-4.5 h-4.5 text-white" />
                   </div>
                 )}
-
-                {/* Bubble */}
                 <div className={`max-w-[80%] rounded-2xl px-5 py-3.5 text-[13px] leading-relaxed ${
                   msg.role === "user"
                     ? "bg-gradient-to-br from-[#3B82F6] to-[#2563EB] text-white rounded-tr-md shadow-lg shadow-[#3B82F6]/15"
@@ -388,7 +416,6 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
               </motion.div>
             ))}
 
-            {/* Typing indicator */}
             {isLoading && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center shrink-0 shadow-md">
@@ -407,7 +434,6 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
               </motion.div>
             )}
 
-            {/* Follow-up suggestions after bot response */}
             {!isLoading && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
               <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-2 pl-12">
                 <button onClick={() => sendMessage("Give me more questions on this topic")} className="text-[11px] font-medium text-[#7C3AED] bg-[#7C3AED]/5 border border-[#7C3AED]/15 px-3 py-1.5 rounded-full hover:bg-[#7C3AED]/10 transition-all">
@@ -428,37 +454,46 @@ export function StudyAssistant({ subjectId, subjectName, subjectCode, syllabusRe
 
       {/* Input Area */}
       <div className="px-6 py-4 border-t border-[#E2E8F0] bg-white">
-        {hasSyllabus && messages.length === 0 && (
-          <div className="flex items-center gap-1.5 text-[10px] text-[#10B981] font-medium mb-2.5 px-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
-            Syllabus loaded — AI responses are syllabus-aware
+        {!hasSyllabus ? (
+          <div className="flex items-center justify-center gap-2 text-[12px] text-[#94A3B8] py-2">
+            <FileText className="h-4 w-4" />
+            Upload a syllabus to start chatting with AI
           </div>
+        ) : (
+          <>
+            {messages.length === 0 && (
+              <div className="flex items-center gap-1.5 text-[10px] text-[#10B981] font-medium mb-2.5 px-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                Syllabus loaded — AI responses are syllabus-aware
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="flex items-end gap-3">
+              <div className="flex-1 relative">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={handleTextareaInput}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask about topics, generate questions, get exam tips..."
+                  disabled={isLoading}
+                  rows={1}
+                  className="w-full bg-[#F8FAFC] rounded-2xl px-5 py-3 text-[13px] font-medium text-[#1E293B] border border-[#E2E8F0] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/10 outline-none transition-all placeholder:text-[#94A3B8] disabled:opacity-50 resize-none min-h-[44px] max-h-[120px]"
+                  style={{ height: "44px" }}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!input.trim() || isLoading}
+                className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] text-white flex items-center justify-center shadow-lg shadow-[#3B82F6]/20 disabled:opacity-40 disabled:shadow-none hover:shadow-xl transition-all shrink-0"
+              >
+                {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Send className="w-4.5 h-4.5" />}
+              </button>
+            </form>
+            <p className="text-[9px] text-[#CBD5E1] text-center mt-2">
+              AI can make mistakes. Verify important information with your faculty.
+            </p>
+          </>
         )}
-        <form onSubmit={handleSubmit} className="flex items-end gap-3">
-          <div className="flex-1 relative">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={handleTextareaInput}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about topics, generate questions, get exam tips..."
-              disabled={isLoading}
-              rows={1}
-              className="w-full bg-[#F8FAFC] rounded-2xl px-5 py-3 text-[13px] font-medium text-[#1E293B] border border-[#E2E8F0] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/10 outline-none transition-all placeholder:text-[#94A3B8] disabled:opacity-50 resize-none min-h-[44px] max-h-[120px]"
-              style={{ height: "44px" }}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={!input.trim() || isLoading}
-            className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] text-white flex items-center justify-center shadow-lg shadow-[#3B82F6]/20 disabled:opacity-40 disabled:shadow-none hover:shadow-xl transition-all shrink-0"
-          >
-            {isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Send className="w-4.5 h-4.5" />}
-          </button>
-        </form>
-        <p className="text-[9px] text-[#CBD5E1] text-center mt-2">
-          AI can make mistakes. Verify important information with your faculty.
-        </p>
       </div>
     </div>
   )
