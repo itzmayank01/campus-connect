@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { ClipboardList, ChevronDown, ChevronUp, Plus, Target, Loader2, Upload, CheckCircle } from "lucide-react"
+import { ClipboardList, ChevronDown, ChevronUp, Plus, Target, Loader2, Upload, CheckCircle, HelpCircle, Sparkles } from "lucide-react"
+import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -26,6 +27,7 @@ interface TopicsData {
 interface CourseOverviewProps {
   subjectId: string
   subjectName: string
+  onAskQuestions?: (topic: string) => void
 }
 
 const importanceColors = {
@@ -34,7 +36,7 @@ const importanceColors = {
   low: "bg-[#10B981]",
 }
 
-export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) {
+export function CourseOverview({ subjectId, subjectName, onAskQuestions }: CourseOverviewProps) {
   const router = useRouter()
   const [data, setData] = useState<TopicsData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -244,15 +246,26 @@ export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) 
           <div className="flex items-center gap-2 text-[13px] font-bold text-[#475569]">
             <Target className="h-4 w-4 text-[#EF4444]" />
             🎯 Most Important Topics
+            <div className="flex items-center gap-1.5 ml-auto">
+              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center shadow-sm">
+                <Image src="/ai-bot.png" alt="AI" width={18} height={18} className="rounded-sm object-cover" />
+              </div>
+              <span className="text-[9px] font-bold text-[#7C3AED] bg-[#7C3AED]/8 px-1.5 py-0.5 rounded-full">Click topic to ask AI</span>
+            </div>
           </div>
           {data?.error ? (
              <div className="text-[13px] text-red-500 italic px-2">{data.error}</div>
           ) : (
              <div className="flex flex-wrap gap-2">
                {data?.most_important_overall?.map((topic: string, iIndex: number) => (
-                 <span key={iIndex} className="rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] px-3.5 py-1.5 text-xs font-medium shadow-sm">
+                 <button
+                   key={iIndex}
+                   onClick={() => onAskQuestions?.(topic)}
+                   className="group rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] px-3.5 py-1.5 text-xs font-medium shadow-sm hover:bg-[#3B82F6] hover:text-white hover:border-[#3B82F6] hover:shadow-md hover:shadow-[#3B82F6]/20 transition-all cursor-pointer flex items-center gap-1.5"
+                 >
                    {topic}
-                 </span>
+                   <HelpCircle className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                 </button>
                ))}
              </div>
           )}
@@ -286,9 +299,19 @@ export function CourseOverview({ subjectId, subjectName }: CourseOverviewProps) 
                   </div>
                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5 ml-4">
                     {unit.topics?.map((topic: string, tIndex: number) => (
-                      <li key={tIndex} className="text-sm text-[#64748B] flex items-start gap-2 leading-relaxed">
+                      <li key={tIndex} className="text-sm text-[#64748B] flex items-start gap-2 leading-relaxed group/topic">
                         <span className="text-[#CBD5E1] mt-1.5">•</span>
-                        {topic}
+                        <span className="flex-1">{topic}</span>
+                        {onAskQuestions && (
+                          <button
+                            onClick={() => onAskQuestions(topic)}
+                            className="shrink-0 opacity-0 group-hover/topic:opacity-100 flex items-center gap-1 text-[9px] font-semibold text-[#7C3AED] bg-[#7C3AED]/8 hover:bg-[#7C3AED]/15 px-2 py-0.5 rounded-md transition-all mt-0.5"
+                            title={`Ask AI about "${topic}"`}
+                          >
+                            <Sparkles className="h-2.5 w-2.5" />
+                            Ask AI
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>

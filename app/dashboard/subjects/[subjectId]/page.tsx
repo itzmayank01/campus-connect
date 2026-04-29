@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect, use, useRef, useCallback } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
@@ -86,6 +86,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({})
   const [ratingMap, setRatingMap] = useState<Record<string, number>>({})
   const [hoverRating, setHoverRating] = useState<Record<string, number>>({})
+  const studyBotRef = useRef<{ openWithMessage: (msg: string) => void } | null>(null)
 
   const searchParams = useSearchParams()
   const highlightId = searchParams?.get("highlight")
@@ -300,7 +301,13 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
 
       {/* Course Overview & Syllabus Extraction */}
       {subject && (
-        <CourseOverview subjectId={subject.id} subjectName={subject.name} />
+        <CourseOverview
+          subjectId={subject.id}
+          subjectName={subject.name}
+          onAskQuestions={(topic: string) => {
+            studyBotRef.current?.openWithMessage(`Give me 6-7 most important exam questions about "${topic}" for this subject`)
+          }}
+        />
       )}
 
       {/* Exam Question Predictor */}
@@ -697,6 +704,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ subjec
       {/* AI StudyBot Floating Chat */}
       {subject && (
         <StudyBotChat
+          ref={studyBotRef}
           subjectId={subject.id}
           subjectName={subject.name}
           hasSyllabus={resources.some(r => r.resourceType === "SYLLABUS")}

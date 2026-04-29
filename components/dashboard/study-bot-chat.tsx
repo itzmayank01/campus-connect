@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   MessageCircle, X, Send, Loader2, Sparkles, BookOpen,
@@ -48,7 +48,7 @@ function formatMarkdown(text: string): string {
   return html
 }
 
-export function StudyBotChat({ subjectId, subjectName, hasSyllabus }: StudyBotChatProps) {
+export const StudyBotChat = forwardRef<{ openWithMessage: (msg: string) => void }, StudyBotChatProps>(function StudyBotChat({ subjectId, subjectName, hasSyllabus }, ref) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
@@ -57,6 +57,7 @@ export function StudyBotChat({ subjectId, subjectName, hasSyllabus }: StudyBotCh
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const pendingMessageRef = useRef<string | null>(null)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -70,7 +71,15 @@ export function StudyBotChat({ subjectId, subjectName, hasSyllabus }: StudyBotCh
 
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 300)
+      setTimeout(() => {
+        inputRef.current?.focus()
+        // If there's a pending message from external trigger, send it
+        if (pendingMessageRef.current) {
+          const msg = pendingMessageRef.current
+          pendingMessageRef.current = null
+          sendMessage(msg)
+        }
+      }, 300)
     }
   }, [isOpen])
 
@@ -80,6 +89,18 @@ export function StudyBotChat({ subjectId, subjectName, hasSyllabus }: StudyBotCh
       setShowScrollDown(scrollHeight - scrollTop - clientHeight > 100)
     }
   }
+
+  // Expose openWithMessage via ref for external triggers
+  useImperativeHandle(ref, () => ({
+    openWithMessage: (msg: string) => {
+      if (!isOpen) {
+        pendingMessageRef.current = msg
+        setIsOpen(true)
+      } else {
+        sendMessage(msg)
+      }
+    }
+  }), [isOpen])
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return
@@ -401,4 +422,4 @@ export function StudyBotChat({ subjectId, subjectName, hasSyllabus }: StudyBotCh
       </AnimatePresence>
     </>
   )
-}
+})
