@@ -147,57 +147,7 @@ export function CourseOverview({ subjectId, subjectName, onAskQuestions }: Cours
   }
 
   if (data && !data.has_syllabus) {
-    return (
-      <div className="rounded-2xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-8 text-center mb-6">
-        <div className="flex flex-col items-center gap-4">
-          <div className="p-3 bg-white rounded-xl shadow-sm border border-[#E2E8F0]">
-            <ClipboardList className="h-6 w-6 text-[#94A3B8]" />
-          </div>
-          <div className="space-y-1">
-            <h4 className="text-base font-semibold text-[#475569]">📋 No Syllabus Available</h4>
-            <p className="text-sm text-[#94A3B8] max-w-sm mx-auto">
-              Upload the course syllabus or course plan to see AI-extracted important topics and unit-wise breakdown.
-            </p>
-          </div>
-
-          {/* Hidden file input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-
-          {uploadSuccess ? (
-            <div className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[#10B981] px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)]">
-              <CheckCircle className="h-4 w-4" />
-              Uploaded! Analyzing...
-            </div>
-          ) : (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[#3B82F6] px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_12px_rgba(59,130,246,0.3)] hover:bg-[#2563EB] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {uploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4" />
-                  Upload Syllabus (PDF)
-                </>
-              )}
-            </button>
-          )}
-
-          <p className="text-[10px] text-[#94A3B8]">Supports PDF and DOCX files up to 20MB</p>
-        </div>
-      </div>
-    )
+    return null
   }
 
   return (
