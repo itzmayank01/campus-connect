@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { SNSClient, PublishCommand } from "@aws-sdk/client-sns"
+import { SESClient, SendEmailCommand, VerifyEmailIdentityCommand } from "@aws-sdk/client-ses"
 
-const snsClient = new SNSClient({
+const sesClient = new SESClient({
   region: process.env.AWS_REGION || "ap-south-1",
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+    accessKeyId: process.env.SNS_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.SNS_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || "",
   },
 })
 
@@ -18,79 +18,89 @@ export async function GET(request: Request) {
     }
 
     const now = new Date()
-    // Find exams happening exactly between 24 and 25 hours from now
+    
+    // Find exams exactly between 24 and 25 hours from now
     const tomorrowStart = new Date(now.getTime() + 24 * 60 * 60 * 1000)
     const tomorrowEnd = new Date(now.getTime() + 25 * 60 * 60 * 1000)
 
-    const exams = await (prisma as any).exam.findMany({
-      where: {
-        date: {
-          gte: tomorrowStart,
-          lt: tomorrowEnd,
-        },
-      },
-      include: {
-        subject: true,
-        semester: true,
-      },
-    })
+    // Find exams exactly between 1 and 2 hours from now
+    const oneHourStart = new Date(now.getTime() + 1 * 60 * 60 * 1000)
+    const oneHourEnd = new Date(now.getTime() + 2 * 60 * 60 * 1000)
 
-    if (exams.length === 0) {
-      return NextResponse.json({ message: "No exams scheduled for tomorrow." })
+    const [exams24h, exams1h] = await Promise.all([
+      (prisma as any).exam.findMany({
+        where: { date: { gte: tomorrowStart, lt: tomorrowEnd } },
+        include: { subject: true, semester: true },
+      }),
+      (prisma as any).exam.findMany({
+        where: { date: { gte: oneHourStart, lt: oneHourEnd } },
+        include: { subject: true, semester: true },
+      })
+    ])
+
+    if (exams24h.length === 0 && exams1h.length === 0) {
+      return NextResponse.json({ message: "No exams scheduled for 24h or 1h alerts." })
     }
 
     let notificationsSent = 0
+    const senderEmail = process.env.AWS_SES_SENDER_EMAIL
 
-    for (const exam of exams) {
-      // Find users in this semester
-      const users = await prisma.user.findMany({
-        where: { semester: exam.semester.number },
-        select: { email: true, name: true },
-      })
+    if (!senderEmail) {
+      console.error("Missing AWS_SES_SENDER_EMAIL in env vars.")
+      return NextResponse.json({ error: "Missing AWS_SES_SENDER_EMAIL in env vars" }, { status: 500 })
+    }
 
-      const examTime = exam.date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-      const examDate = exam.date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
+    const sendAlerts = async (exams: any[], is1Hour: boolean) => {
+      for (const exam of exams) {
+        const users = await prisma.user.findMany({
+          where: { semester: exam.semester.number },
+          select: { email: true, name: true },
+        })
 
-      const message = `Reminder: You have an upcoming ${exam.type} for ${exam.subject?.name || "your subject"} on ${examDate} at ${examTime}. Good luck!`
+        const examTime = exam.date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+        const examDate = exam.date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
 
-      // Send to all users
-      for (const user of users) {
-        if (!user.email) continue
+        const timeframeText = is1Hour ? "1 hour" : "24 hours"
+        const message = `Alert: You have an upcoming ${exam.type} for ${exam.subject?.name || "your subject"} in ${timeframeText}!\nDate: ${examDate}\nTime: ${examTime}. Good luck!`
+        const subject = is1Hour ? `HIGHLY IMPORTANT EXAM MAIL: ${exam.subject?.name}` : `Reminder: Exam in 24 hours - ${exam.subject?.name}`
 
-        // Here we're using AWS SNS Direct Publish to Email endpoints.
-        // In a real production environment, you might publish to a Topic instead,
-        // but for this implementation we simulate publishing to the user directly
-        // or logging the action if SNS isn't fully configured.
-        
-        try {
-          // Typically you'd need the TargetArn of the user's email endpoint or SMS,
-          // or you publish to a TopicArn that the users are subscribed to.
-          // For demonstration, we'll try to publish assuming an email topic or just pass.
+        for (const user of users) {
+          if (!user.email) continue
           
-          if (process.env.AWS_SNS_TOPIC_ARN) {
-             const command = new PublishCommand({
-               TopicArn: process.env.AWS_SNS_TOPIC_ARN,
-               Message: `Hi ${user.name || "Student"},\n\n${message}`,
-               Subject: `Upcoming Exam: ${exam.subject?.name || "Subject"}`,
-               MessageAttributes: {
-                 email: {
-                   DataType: "String",
-                   StringValue: user.email,
-                 }
-               }
-             })
-             await snsClient.send(command)
-          } else {
-             console.log(`[SNS Mock] Sending to ${user.email}: ${message}`)
+          try {
+            const command = new SendEmailCommand({
+              Source: senderEmail,
+              Destination: { ToAddresses: [user.email] },
+              Message: {
+                Subject: { Data: subject },
+                Body: { Text: { Data: `Hi ${user.name || "Student"},\n\n${message}` } },
+              },
+            })
+            await sesClient.send(command)
+            notificationsSent++
+          } catch (err: any) {
+            console.error(`Failed to send SES to ${user.email}:`, err.message)
+            if (err.name === 'MessageRejected' || err.message?.includes('not verified') || err.message?.includes('Sandbox') || err.message?.includes('Unverified')) {
+              console.log(`Auto-sending verification email to: ${user.email}`)
+              try {
+                await sesClient.send(new VerifyEmailIdentityCommand({ EmailAddress: user.email }))
+              } catch (vErr) {
+                console.error("Could not send verification email:", vErr)
+              }
+            }
           }
-          notificationsSent++
-        } catch (err) {
-          console.error(`Failed to send SNS to ${user.email}:`, err)
         }
       }
     }
 
-    return NextResponse.json({ message: `Successfully sent ${notificationsSent} notifications.`, examsProcessed: exams.length })
+    await sendAlerts(exams24h, false)
+    await sendAlerts(exams1h, true)
+
+    return NextResponse.json({ 
+      message: `Successfully sent ${notificationsSent} notifications.`, 
+      exams24hProcessed: exams24h.length,
+      exams1hProcessed: exams1h.length 
+    })
   } catch (error) {
     console.error("Cron Error:", error)
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })

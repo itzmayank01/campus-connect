@@ -89,7 +89,7 @@ export default async function DashboardPage() {
   }
 
   // Fetch upcoming exams from DB (graceful fallback if table doesn't exist yet)
-  let formattedExams: { subject: string; date: string; daysLeft: number; totalDays: number; type: string }[] = []
+  let formattedExams: { id?: string; subject: string; date: string; time?: string; daysLeft: number; totalDays: number; type: string }[] = []
   try {
     const now = new Date()
     const exams = await (prisma as any).exam.findMany({
@@ -108,8 +108,10 @@ export default async function DashboardPage() {
       const diffMs = examDate.getTime() - now.getTime()
       const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
       return {
+        id: exam.id,
         subject: exam.subject?.name || exam.name,
         date: examDate.toLocaleDateString("en-IN", { day: "numeric", month: "long" }),
+        time: examDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
         daysLeft,
         totalDays: 30,
         type: exam.type || "endterm",

@@ -1,11 +1,15 @@
 "use client"
 
-import { CalendarDays } from "lucide-react"
+import { CalendarDays, Trash2 } from "lucide-react"
 import { motion } from "framer-motion"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 interface ExamItem {
+  id?: string
   subject: string
   date: string
+  time?: string
   daysLeft: number
   totalDays: number
   type?: string
@@ -23,6 +27,21 @@ function getUrgencyColor(days: number) {
 
 export function UpcomingExams({ exams = [] }: UpcomingExamsProps) {
   const displayExams = exams.length > 0 ? exams : []
+  const router = useRouter()
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const handleDelete = async (id: string | undefined) => {
+    if (!id) return
+    setDeletingId(id)
+    try {
+      await fetch(`/api/exams/${id}`, { method: 'DELETE' })
+      router.refresh()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   return (
     <div className="rounded-2xl bg-white border border-[rgba(0,0,0,0.06)] p-5 shadow-sm h-full">
@@ -54,7 +73,7 @@ export function UpcomingExams({ exams = [] }: UpcomingExamsProps) {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: i * 0.08 }}
-                className="relative pl-6 py-3 group"
+                className={`relative pl-6 py-3 group ${deletingId === exam.id ? 'opacity-50 pointer-events-none' : ''}`}
               >
                 {/* Timeline dot */}
                 <div className="absolute left-0 top-[18px]">
@@ -68,7 +87,9 @@ export function UpcomingExams({ exams = [] }: UpcomingExamsProps) {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-[#0F1117] truncate">{exam.subject}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <p className="text-[11px] text-[#6B7280]">{exam.date}</p>
+                      <p className="text-[11px] text-[#6B7280]">
+                        {exam.date} {exam.time && `• ${exam.time}`}
+                      </p>
                       {exam.type && (
                         <span className="text-[9px] font-bold uppercase tracking-wider text-[#94A3B8] bg-[#F1F5F9] px-1.5 py-0.5 rounded">
                           {exam.type}
@@ -88,10 +109,19 @@ export function UpcomingExams({ exams = [] }: UpcomingExamsProps) {
                     </div>
                   </div>
 
-                  {/* Badge */}
-                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${urgency.badge}`}>
-                    {exam.daysLeft}d left
-                  </span>
+                  {/* Badge & Actions */}
+                  <div className="flex flex-col items-end gap-1.5">
+                    <button 
+                      onClick={() => handleDelete(exam.id)}
+                      className="text-[#CBD5E1] hover:text-red-500 transition-colors p-1"
+                      title="Delete Exam"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${urgency.badge}`}>
+                      {exam.daysLeft}d left
+                    </span>
+                  </div>
                 </div>
               </motion.div>
             )
