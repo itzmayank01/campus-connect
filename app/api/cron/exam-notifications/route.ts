@@ -5,8 +5,8 @@ import { SESClient, SendEmailCommand, VerifyEmailIdentityCommand } from "@aws-sd
 const sesClient = new SESClient({
   region: process.env.AWS_REGION || "ap-south-1",
   credentials: {
-    accessKeyId: process.env.SNS_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.SNS_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || "",
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || process.env.SNS_AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || process.env.SNS_AWS_SECRET_ACCESS_KEY || "",
   },
 })
 

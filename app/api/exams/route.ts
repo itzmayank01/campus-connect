@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { SESClient, SendEmailCommand, VerifyEmailIdentityCommand } from "@aws-sdk/client-ses"
+import { createClient } from "@/lib/supabase/server"
 
 const sesClient = new SESClient({
   region: process.env.AWS_REGION || "ap-south-1",
   credentials: {
-    accessKeyId: process.env.SNS_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.SNS_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || "",
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || process.env.SNS_AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || process.env.SNS_AWS_SECRET_ACCESS_KEY || "",
   },
 })
 
@@ -45,8 +46,21 @@ export async function POST(request: NextRequest) {
     try {
       const users = await prisma.user.findMany({
         where: { semester: exam.semester.number },
-        select: { email: true, name: true },
+        select: { email: true, name: true, supabaseId: true },
       })
+
+      const supabase = await createClient()
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+
+      if (authUser && !users.find(u => u.supabaseId === authUser.id)) {
+        const currentUser = await prisma.user.findUnique({
+          where: { supabaseId: authUser.id },
+          select: { email: true, name: true, supabaseId: true }
+        })
+        if (currentUser) {
+          users.push(currentUser)
+        }
+      }
 
       const examDateObj = new Date(date)
       const examTime = examDateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
