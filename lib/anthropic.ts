@@ -17,7 +17,7 @@ function getClient(): GoogleGenerativeAI | null {
 const AI_TIMEOUT_MS = 30000 // 30 seconds
 
 // Models to try in order (fallback chain)
-const MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash-exp"]
+const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
 
 // Safety settings to allow the model to analyze problematic content without being blocked
 const SAFETY_SETTINGS = [
