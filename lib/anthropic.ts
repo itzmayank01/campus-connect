@@ -30,6 +30,7 @@ const SAFETY_SETTINGS = [
 export async function callAI(
   systemPrompt: string,
   userMessage: string,
+  fileAttachment?: { buffer: Buffer; mimeType: string }
 ): Promise<string | null> {
   const client = getClient()
   if (!client) {
@@ -40,6 +41,25 @@ export async function callAI(
   // Combine system prompt into the user message for maximum compatibility
   const combinedPrompt = `${systemPrompt}\n\n---\n\n${userMessage}`
 
+  // Prepare parts array
+  const parts: any[] = [{ text: combinedPrompt }]
+  
+  // Attach file if provided, supported, and under 19MB (Gemini inline data limit is ~20MB)
+  const SUPPORTED_MIMES = ["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]
+  if (
+    fileAttachment && 
+    SUPPORTED_MIMES.includes(fileAttachment.mimeType) && 
+    fileAttachment.buffer.length < 19 * 1024 * 1024
+  ) {
+    parts.unshift({
+      inlineData: {
+        data: fileAttachment.buffer.toString("base64"),
+        mimeType: fileAttachment.mimeType,
+      }
+    })
+    console.log(`[AI] Attaching file inline: ${fileAttachment.mimeType} (${Math.round(fileAttachment.buffer.length/1024)}KB)`)
+  }
+
   for (const modelName of MODELS) {
     try {
       console.log(`[AI] Trying model: ${modelName}`)
@@ -47,7 +67,7 @@ export async function callAI(
 
       const result = await Promise.race([
         model.generateContent({
-          contents: [{ role: "user", parts: [{ text: combinedPrompt }] }],
+          contents: [{ role: "user", parts }],
           safetySettings: SAFETY_SETTINGS,
         }),
         new Promise<never>((_, reject) =>

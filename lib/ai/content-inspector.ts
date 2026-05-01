@@ -218,7 +218,8 @@ export async function inspectSafety(
   mimeType: string,
   fileSize: number,
   subjectName: string,
-  resourceType: string
+  resourceType: string,
+  fileBuffer?: Buffer
 ): Promise<InspectionVerdict & { safetyResult?: SafetyResult }> {
   // ──── FAIL-CLOSED: AI MUST be available ────
   if (!isAiConfigured()) {
@@ -262,16 +263,19 @@ Content Type: ${mimeType}
 CONTENT TO SCAN:
 ${safetyContent.slice(0, 3000)}`
 
+  const attachment = fileBuffer ? { buffer: fileBuffer, mimeType } : undefined
+
   // Call AI — up to 2 attempts
   let safetyResponse: string | null = null
   for (let attempt = 1; attempt <= 2; attempt++) {
-    safetyResponse = await callAI(safetyPrompt, safetyMessage)
+    safetyResponse = await callAI(safetyPrompt, safetyMessage, attachment)
     if (safetyResponse) break
     
     // On second attempt, try a "lightweight" prompt with less content if the first one timed out/failed
     if (attempt === 1) {
       console.warn(`[Anti-Gravity] Safety scan attempt 1 failed, trying lightweight fallback...`)
       const lightweightMessage = `INSPECT THIS UPLOAD (Lightweight fallback):\nFilename: ${filename}\nSubject: ${subjectName}\nType: ${resourceType}\n\nContent snippet:\n${safetyContent.slice(0, 500)}`
+      // Omit attachment on fallback in case the attachment was too large/complex and caused the timeout
       safetyResponse = await callAI(safetyPrompt, lightweightMessage)
       if (safetyResponse) break
     }
@@ -514,7 +518,8 @@ export async function runFullInspection(
     params.detectedMime,
     params.fileSize,
     params.subjectName,
-    params.resourceType
+    params.resourceType,
+    params.buffer
   )
   if (!safetyResult.passed) {
     return failResult("safety", safetyResult.category, safetyResult.reason)

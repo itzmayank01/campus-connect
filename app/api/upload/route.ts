@@ -90,7 +90,15 @@ export async function POST(request: NextRequest) {
     });
 
     // Step 4: AI safety scan (MANDATORY — fail-closed)
-    const safetyCheck = await inspectSafety(inspectionText, rawFilename, rawMimeType, rawFileSize, subjectForCheck?.name || "Unknown", type);
+    const safetyCheck = await inspectSafety(
+      inspectionText, 
+      rawFilename, 
+      rawMimeType, 
+      rawFileSize, 
+      subjectForCheck?.name || "Unknown", 
+      type,
+      rawBuffer
+    );
     if (!safetyCheck.passed) {
       console.warn(`[Anti-Gravity/direct] ✖ Safety rejected: ${safetyCheck.category}`);
       return NextResponse.json({ error: safetyCheck.reason }, { status: 403 });
