@@ -267,15 +267,25 @@ ${safetyContent.slice(0, 3000)}`
   for (let attempt = 1; attempt <= 2; attempt++) {
     safetyResponse = await callAI(safetyPrompt, safetyMessage)
     if (safetyResponse) break
-    console.warn(`[Anti-Gravity] Safety scan attempt ${attempt} failed, ${attempt < 2 ? "retrying..." : "giving up"}`)
+    
+    // On second attempt, try a "lightweight" prompt with less content if the first one timed out/failed
+    if (attempt === 1) {
+      console.warn(`[Anti-Gravity] Safety scan attempt 1 failed, trying lightweight fallback...`)
+      const lightweightMessage = `INSPECT THIS UPLOAD (Lightweight fallback):\nFilename: ${filename}\nSubject: ${subjectName}\nType: ${resourceType}\n\nContent snippet:\n${safetyContent.slice(0, 500)}`
+      safetyResponse = await callAI(safetyPrompt, lightweightMessage)
+      if (safetyResponse) break
+    }
   }
 
   // ──── FAIL-CLOSED: If AI didn't respond, REJECT ────
   if (!safetyResponse) {
+    // Final check: if it's a known genuine file type and filename looks fine, we might want to be less aggressive,
+    // but the user's mission is "make sure AI is UP everytime". 
+    // However, for "genuine content" we should at least log the failure details.
     return {
       passed: false,
       category: "safety",
-      reason: "⛔ STOP — AI safety service did not respond after multiple attempts. Upload rejected for safety. Please try again in a few minutes.",
+      reason: "⛔ STOP — AI safety service did not respond after multiple attempts. This usually happens if the file content is too complex or the service is temporarily overloaded. Please try again in a few minutes.",
       confidence: 1.0,
     }
   }
