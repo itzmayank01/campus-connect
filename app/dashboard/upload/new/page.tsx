@@ -253,9 +253,10 @@ export default function UploadNewPage() {
     // Show moderation progress UI
     const initialSteps = [
       { id: "file_type", label: "File type verification", status: "running" as const },
+      { id: "metadata", label: "Metadata & filename scan", status: "pending" as const },
       { id: "upload_s3", label: "Uploading to secure storage", status: "pending" as const },
-      { id: "relevance", label: "Checking content relevance", status: "pending" as const },
-      { id: "safety", label: "Safety check", status: "pending" as const },
+      { id: "safety", label: "AI safety inspection", status: "pending" as const },
+      { id: "relevance", label: "Content relevance check", status: "pending" as const },
       { id: "duplicate", label: "Duplicate detection", status: "pending" as const },
       { id: "save", label: "Saving resource", status: "pending" as const },
     ]

@@ -1,36 +1,44 @@
+/**
+ * @file route.ts — POST /api/upload/moderate
+ *
+ * ANTI-GRAVITY CONTENT INSPECTION PIPELINE
+ * ═════════════════════════════════════════
+ *
+ * Zero-tolerance, fail-closed upload moderation.
+ * Every file is scanned by AI before being accepted.
+ * If AI is down → upload REJECTED (not approved).
+ * If ANY check fails → upload REJECTED immediately.
+ *
+ * Pipeline:
+ *   1. Auth check
+ *   2. File type gate (magic bytes + extension)
+ *   3. Metadata & filename scan
+ *   4. Upload to S3
+ *   5. AI safety inspection (MANDATORY)
+ *   6. AI relevance check (MANDATORY)
+ *   7. Duplicate detection
+ *   8. Save resource + audit log
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import { s3Client, buildS3Key, S3_BUCKET } from "@/lib/s3"
-import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
-import { callAI, isAiConfigured } from "@/lib/anthropic"
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"
 import { generateTags } from "@/lib/ai/tag-generator"
+import { isAiConfigured } from "@/lib/anthropic"
 import { extractTextFromBuffer } from "@/lib/pdf-extractor"
+import {
+  runFullInspection,
+  type InspectionStep,
+  type FullInspectionResult,
+} from "@/lib/ai/content-inspector"
 
 export const maxDuration = 60;
 
-// Allowed MIME types
-const ALLOWED_MIMES: Record<string, string[]> = {
-  "application/pdf": [".pdf"],
-  "application/zip": [".zip"],
-  "application/x-zip-compressed": [".zip"],
-  "application/msword": [".doc"],
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-  "application/vnd.ms-powerpoint": [".ppt"],
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
-  "video/mp4": [".mp4"],
-}
-
-interface ModerationStep {
-  id: string
-  label: string
-  status: "pending" | "running" | "done" | "failed"
-  message?: string
-}
-
 interface ModerationResult {
   passed: boolean
-  steps: ModerationStep[]
+  steps: InspectionStep[]
   reason?: string
   tags?: string[]
   resourceId?: string
@@ -49,24 +57,9 @@ interface ModerationResult {
   }
 }
 
-// POST /api/upload/moderate — full moderation pipeline
+// POST /api/upload/moderate — Anti-Gravity inspection pipeline
 export async function POST(request: NextRequest) {
-  const steps: ModerationStep[] = [
-    { id: "file_type", label: "File type verification", status: "pending" },
-    { id: "upload_s3", label: "Uploading to secure storage", status: "pending" },
-    { id: "relevance", label: "Checking content relevance", status: "pending" },
-    { id: "safety", label: "Safety check", status: "pending" },
-    { id: "duplicate", label: "Duplicate detection", status: "pending" },
-    { id: "save", label: "Saving resource", status: "pending" },
-  ]
-
-  function updateStep(id: string, status: ModerationStep["status"], message?: string) {
-    const step = steps.find((s) => s.id === id)
-    if (step) {
-      step.status = status
-      if (message) step.message = message
-    }
-  }
+  const pipelineStart = Date.now()
 
   try {
     // ─── Auth check ──────────────────────────────────────────
@@ -76,28 +69,27 @@ export async function POST(request: NextRequest) {
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
       if (authError || !authUser) {
         return NextResponse.json(
-          { error: "Please log in again to upload files", steps },
+          { error: "Please log in again to upload files", steps: [] },
           { status: 401 }
         )
       }
       user = authUser
     } catch (authErr: unknown) {
       const msg = authErr instanceof Error ? authErr.message : "Unknown auth error"
-      console.error("[Moderation] Auth error:", msg)
-      // The Supabase SDK throws "The string did not match the expected pattern"
-      // when NEXT_PUBLIC_SUPABASE_URL is empty or malformed
+      console.error("[Anti-Gravity] Auth error:", msg)
       if (msg.includes("expected pattern") || msg.includes("configuration missing")) {
         return NextResponse.json(
-          { error: "Authentication service is not configured. Please contact the administrator.", steps },
+          { error: "Authentication service is not configured. Please contact the administrator.", steps: [] },
           { status: 503 }
         )
       }
       return NextResponse.json(
-        { error: "Authentication failed. Please log in again.", steps },
+        { error: "Authentication failed. Please log in again.", steps: [] },
         { status: 401 }
       )
     }
 
+    // ─── Parse form data ─────────────────────────────────────
     const formData = await request.formData()
     const fileItem = formData.get("file")
     const title = formData.get("title") as string
@@ -107,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     if (!fileItem || !subjectId || !title) {
       return NextResponse.json(
-        { error: "Missing required fields", steps },
+        { error: "Missing required fields", steps: [] },
         { status: 400 }
       )
     }
@@ -117,48 +109,88 @@ export async function POST(request: NextRequest) {
     const filename = file.name
     const contentType = file.type || "application/octet-stream"
     const fileSize = file.size
-    const ext = "." + filename.split(".").pop()?.toLowerCase()
 
-    // ─── STEP 1: File type validation ─────────────────────
-    updateStep("file_type", "running")
+    // ─── Fetch subject info ──────────────────────────────────
+    const subject = await prisma.subject.findUnique({
+      where: { id: subjectId },
+      include: { semester: true },
+    })
+    const semesterNumber = parseInt(semester) || subject?.semester?.number || 1
 
-    // Check via file-type library (deep MIME detection)
-    let detectedMime = contentType
+    // ─── Extract text for AI analysis ────────────────────────
+    let extractedText = ""
     try {
-      const { fileTypeFromBuffer } = await import("file-type")
-      const typeResult = await fileTypeFromBuffer(buffer)
-      if (typeResult) {
-        detectedMime = typeResult.mime
+      extractedText = await extractTextFromBuffer(buffer, filename, contentType)
+      if (extractedText.length > 3000) {
+        extractedText = extractedText.slice(0, 3000)
       }
     } catch {
-      // file-type may not detect all types, fallback to content-type header
+      extractedText = `File: ${filename} (${contentType})`
     }
 
-    // Validate MIME is allowed
-    const allowedExts = ALLOWED_MIMES[detectedMime] || ALLOWED_MIMES[contentType]
-    if (!allowedExts) {
-      updateStep("file_type", "failed", `File type "${detectedMime}" is not allowed`)
+    // ═══════════════════════════════════════════════════════
+    //   RUN ANTI-GRAVITY FULL INSPECTION (Steps 1-5)
+    // ═══════════════════════════════════════════════════════
+    console.log(`[Anti-Gravity] ▶ Starting inspection for "${filename}" (${contentType}, ${(fileSize / 1024).toFixed(0)} KB)`)
+
+    const inspection: FullInspectionResult = await runFullInspection({
+      buffer,
+      filename,
+      declaredMime: contentType,
+      detectedMime: contentType,
+      fileSize,
+      extractedText,
+      subjectName: subject?.name || "Unknown",
+      subjectCode: subject?.code || "N/A",
+      semester: semesterNumber,
+      resourceType: type,
+    })
+
+    // ─── If ANY check failed → STOP immediately ─────────────
+    if (!inspection.passed) {
+      console.warn(`[Anti-Gravity] ✖ REJECTED "${filename}" — step: ${inspection.failedStep}, category: ${inspection.failCategory}`)
+
+      // Build rejection info for relevance failures
+      let rejection: ModerationResult["rejection"] = undefined
+      if (inspection.failCategory === "irrelevant" && inspection.relevanceResult) {
+        rejection = {
+          subjectName: subject?.name || "Unknown",
+          subjectCode: subject?.code || "N/A",
+          detectedTopics: inspection.relevanceResult.detected_topics || [],
+          reason: inspection.relevanceResult.reason || "Content mismatch",
+        }
+      }
+
+      // Log the rejection
+      try {
+        let dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
+        if (dbUser) {
+          await prisma.$executeRaw`
+            INSERT INTO moderation_logs (id, uploader_id, filename, mime_type, file_size, passed, failed_step, fail_category, fail_reason, scan_results, processing_time_ms, created_at)
+            VALUES (gen_random_uuid(), ${dbUser.id}, ${filename}, ${contentType}, ${fileSize}, false, ${inspection.failedStep || null}, ${inspection.failCategory || null}, ${inspection.failReason || null}, ${JSON.stringify({ safety: inspection.safetyResult, relevance: inspection.relevanceResult })}::jsonb, ${inspection.processingTimeMs}, NOW())
+          `
+        }
+      } catch (logErr) {
+        console.warn("[Anti-Gravity] Failed to write moderation log:", logErr)
+      }
+
       return NextResponse.json({
         passed: false,
-        steps,
-        reason: `File type "${detectedMime}" is not allowed. Supported: PDF, ZIP, DOC, DOCX, PPT, PPTX, MP4`,
+        steps: inspection.steps,
+        reason: inspection.failReason || "Upload was rejected by content inspection",
+        rejection,
       } as ModerationResult)
     }
 
-    // Check extension matches detected MIME
-    if (!allowedExts.includes(ext) && detectedMime !== contentType) {
-      updateStep("file_type", "failed", "File type mismatch detected")
-      return NextResponse.json({
-        passed: false,
-        steps,
-        reason: `File type mismatch: extension is "${ext}" but content is "${detectedMime}"`,
-      } as ModerationResult)
-    }
+    // ═══════════════════════════════════════════════════════
+    //   ALL CHECKS PASSED — proceed with upload
+    // ═══════════════════════════════════════════════════════
 
-    updateStep("file_type", "done", "File type verified")
+    const steps = inspection.steps
 
-    // ─── STEP 2: Upload to S3 ──────────────────────────────
-    updateStep("upload_s3", "running")
+    // ─── Upload to S3 ────────────────────────────────────────
+    const s3Step = steps.find(s => s.id === "upload_s3")
+    if (s3Step) { s3Step.status = "running" }
 
     let dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
     if (!dbUser) {
@@ -171,12 +203,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const subject = await prisma.subject.findUnique({
-      where: { id: subjectId },
-      include: { semester: true },
-    })
-
-    const semesterNumber = parseInt(semester) || subject?.semester?.number || 1
     const s3Key = buildS3Key(dbUser.id, subjectId, filename)
 
     await s3Client.send(
@@ -188,168 +214,15 @@ export async function POST(request: NextRequest) {
       })
     )
 
-    updateStep("upload_s3", "done", "Uploaded to secure storage")
+    if (s3Step) { s3Step.status = "done"; s3Step.message = "Uploaded to secure storage" }
 
-    // ─── STEP 3: AI Relevance Check ────────────────────────
-    updateStep("relevance", "running")
-
-    let extractedText = ""
-    let relevanceResult: {
-      is_relevant: boolean
-      confidence: number
-      reason: string
-      detected_topics: string[]
-      verdict: string
-    } | null = null
-
-    // Extract content for AI analysis
-    try {
-      extractedText = await extractTextFromBuffer(buffer, filename, contentType)
-      if (extractedText.length > 2000) {
-        extractedText = extractedText.slice(0, 2000)
-      }
-    } catch {
-      extractedText = `File: ${filename} (${contentType})`
-    }
-
-    if (isAiConfigured() && extractedText.length > 20) {
-      const relevanceResponse = await callAI(
-        `You are an academic content moderator for an engineering college resource platform. Analyze if uploaded content is relevant to the specified academic subject. Respond ONLY with JSON: {"is_relevant": true/false, "confidence": 0.0-1.0, "reason": "one sentence explanation", "detected_topics": ["topic1", "topic2"], "verdict": "approved" | "rejected" | "review"}`,
-        `Subject: ${subject?.name || "Unknown"} (${subject?.code || "N/A"})
-Semester: ${semesterNumber}
-Resource Type: ${type}
-Filename: ${filename}
-
-Content preview:
-${extractedText}
-
-Is this content relevant to the subject?`
-      )
-
-      if (relevanceResponse) {
-        try {
-          const cleaned = relevanceResponse.replace(/```json\n?|```\n?/g, "").trim()
-          relevanceResult = JSON.parse(cleaned)
-        } catch {}
-      } else {
-        // AI call returned null (timeout or error) — auto-approve
-        updateStep("relevance", "done", "Content accepted (AI unavailable)")
-      }
-    }
-
-    let moderationPassed = true
-    let needsReview = false
-
-    if (relevanceResult) {
-      if (relevanceResult.confidence >= 0.8 && relevanceResult.is_relevant) {
-        updateStep("relevance", "done", "Content verified as relevant")
-      } else if (relevanceResult.confidence >= 0.6 && relevanceResult.is_relevant) {
-        updateStep("relevance", "done", "Uploaded — pending quick review")
-        needsReview = true
-      } else {
-        updateStep("relevance", "failed", relevanceResult.reason || "Content not relevant")
-        // Return rejection but still allow (soft block — return info but don't delete S3 object)
-        return NextResponse.json({
-          passed: false,
-          steps,
-          reason: relevanceResult.reason || "Content doesn't appear relevant to the subject",
-          rejection: {
-            subjectName: subject?.name || "Unknown",
-            subjectCode: subject?.code || "N/A",
-            detectedTopics: relevanceResult.detected_topics || [],
-            reason: relevanceResult.reason || "Content mismatch",
-          },
-        } as ModerationResult)
-      }
-    } else {
-      // AI not configured — accept the content but inform the user
-      updateStep("relevance", "done", "Content accepted (auto-approved)")
-    }
-
-    // ─── STEP 4: Safety Check (STRICT — fully automated, no manual review) ──
-    updateStep("safety", "running")
-
-    // 4a. Filename keyword check — instant block
-    const BLOCKED_FILENAME_KEYWORDS = [
-      "porn", "xxx", "sex", "nude", "naked", "nsfw", "adult", "erotic",
-      "hentai", "onlyfans", "playboy", "brazzers", "xvideos", "pornhub",
-      "milf", "lesbian", "fetish", "bdsm", "orgasm", "masturbat",
-      "cocaine", "heroin", "meth", "weed", "marijuana", "drug",
-      "gore", "murder", "torture", "terrorist", "bomb", "weapon",
-      "hack", "crack", "keygen", "pirat", "torrent", "warez",
-    ]
-    const filenameLower = filename.toLowerCase().replace(/[^a-z0-9]/g, "")
-    const blockedKeyword = BLOCKED_FILENAME_KEYWORDS.find(kw => filenameLower.includes(kw))
-    if (blockedKeyword) {
-      updateStep("safety", "failed", "Upload rejected: Content violates safety policy ❌")
-      return NextResponse.json({
-        passed: false,
-        steps,
-        reason: "Upload rejected: This file was blocked because its filename suggests inappropriate content. Only legitimate academic materials are allowed.",
-      } as ModerationResult)
-    }
-
-    // 4b. AI-powered content safety check (MANDATORY)
-    const safetyContent = extractedText.length > 10
-      ? extractedText
-      : `[No text extracted — may be image-based]\nFilename: ${filename}\nType: ${contentType}\nSize: ${(fileSize / (1024 * 1024)).toFixed(1)} MB`
-
-    if (!isAiConfigured()) {
-      // AI not configured — skip safety check instead of blocking
-      updateStep("safety", "done", "Safety check skipped (service unavailable) ✅")
-    } else {
-      // Call AI for safety check (will try multiple models with fallback)
-      const safetyPrompt = `You are a strict content safety moderator for a college academic platform. Check if this content is safe to upload. Flag as unsafe if it contains: sexual/adult/NSFW content, explicit violence, drug-related content, hate speech, self-harm content, terrorism, or non-academic material. Also check the FILENAME for inappropriate terms. Be strict — when in doubt, flag it. Respond ONLY with JSON (no markdown): {"is_safe": true/false, "category": "safe"|"adult"|"violence"|"drugs"|"hate"|"self_harm"|"spam"|"non_academic", "reason": "brief explanation"}`
-
-      const safetyMessage = `Check this upload:\nFilename: ${filename}\nSubject: ${subject?.name || "Unknown"}\nType: ${type}\nContent:\n${safetyContent}`
-
-      const safetyResponse = await callAI(safetyPrompt, safetyMessage)
-
-      if (!safetyResponse) {
-        // AI call failed — skip safety check instead of blocking
-        updateStep("safety", "done", "Safety check skipped (service unavailable) ✅")
-      } else {
-        // Parse AI response
-        try {
-          const cleaned = safetyResponse.replace(/```json\n?|```\n?/g, "").trim()
-          const safetyResult = JSON.parse(cleaned)
-          console.log("[Safety] Result:", safetyResult)
-
-          if (!safetyResult.is_safe) {
-            const categoryLabels: Record<string, string> = {
-              adult: "adult/sexual content",
-              violence: "violent content",
-              drugs: "drug-related content",
-              hate: "hate speech",
-              self_harm: "self-harm content",
-              spam: "spam/scam content",
-              non_academic: "non-academic content",
-            }
-            const flagType = categoryLabels[safetyResult.category] || "inappropriate content"
-            updateStep("safety", "failed", `Upload rejected: Content violates safety policy ❌`)
-            return NextResponse.json({
-              passed: false,
-              steps,
-              reason: `Upload rejected: This file contains ${flagType} and cannot be uploaded. Only legitimate academic materials are allowed on this platform.`,
-            } as ModerationResult)
-          }
-
-          updateStep("safety", "done", "Content verified and approved ✅")
-        } catch {
-          // Could not parse AI response — skip
-          console.error("[Safety] Failed to parse AI response:", safetyResponse)
-          updateStep("safety", "done", "Safety check skipped (parse error) ✅")
-        }
-      }
-    }
-
-    // ─── STEP 5: Duplicate Detection ───────────────────────
-    updateStep("duplicate", "running")
+    // ─── Duplicate Detection ─────────────────────────────────
+    const dupStep = steps.find(s => s.id === "duplicate")
+    if (dupStep) { dupStep.status = "running" }
 
     let duplicates: ModerationResult["duplicates"] = []
 
     try {
-      // Use Prisma query with case-insensitive filename matching
       const similarResources = await prisma.resource.findMany({
         where: {
           subjectId,
@@ -373,16 +246,17 @@ Is this content relevant to the subject?`
           downloadCount: r.downloadCount,
           averageRating: r.averageRating,
         }))
-        updateStep("duplicate", "done", `Found ${duplicates.length} similar resource(s)`)
+        if (dupStep) { dupStep.status = "done"; dupStep.message = `Found ${duplicates.length} similar resource(s)` }
       } else {
-        updateStep("duplicate", "done", "No duplicates found")
+        if (dupStep) { dupStep.status = "done"; dupStep.message = "No duplicates found" }
       }
     } catch {
-      updateStep("duplicate", "done", "Duplicate check completed")
+      if (dupStep) { dupStep.status = "done"; dupStep.message = "Duplicate check completed" }
     }
 
-    // ─── STEP 6: Save Resource ─────────────────────────────
-    updateStep("save", "running")
+    // ─── Save Resource ───────────────────────────────────────
+    const saveStep = steps.find(s => s.id === "save")
+    if (saveStep) { saveStep.status = "running" }
 
     const resourceTypeMap: Record<string, string> = {
       notes: "NOTES",
@@ -415,8 +289,8 @@ Is this content relevant to the subject?`
         resourceType: (resourceTypeMap[type] || "NOTES") as any,
         isPublic: true,
         resourceUrl: `https://${S3_BUCKET}.s3.amazonaws.com/${s3Key}`,
-        moderationPassed,
-        needsReview,
+        moderationPassed: true,
+        needsReview: false,
         aiTags,
       },
       include: { subject: true },
@@ -425,7 +299,7 @@ Is this content relevant to the subject?`
     // Update Daily Activity for uploads (10 points per upload)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    
+
     await prisma.dailyActivity.upsert({
       where: {
         userId_activityDate: {
@@ -447,7 +321,20 @@ Is this content relevant to the subject?`
       }
     })
 
-    updateStep("save", "done", "Resource saved successfully")
+    if (saveStep) { saveStep.status = "done"; saveStep.message = "Resource saved successfully" }
+
+    // ─── Audit log (successful) ──────────────────────────────
+    try {
+      await prisma.$executeRaw`
+        INSERT INTO moderation_logs (id, uploader_id, resource_id, filename, mime_type, file_size, passed, scan_results, ai_model_used, processing_time_ms, created_at)
+        VALUES (gen_random_uuid(), ${dbUser.id}, ${resource.id}, ${filename}, ${contentType}, ${fileSize}, true, ${JSON.stringify({ safety: inspection.safetyResult, relevance: inspection.relevanceResult })}::jsonb, ${"gemini"}, ${inspection.processingTimeMs}, NOW())
+      `
+    } catch (logErr) {
+      console.warn("[Anti-Gravity] Failed to write moderation log:", logErr)
+    }
+
+    const totalTime = Date.now() - pipelineStart
+    console.log(`[Anti-Gravity] ✔ APPROVED "${filename}" in ${totalTime}ms — tags: [${aiTags.join(", ")}]`)
 
     return NextResponse.json({
       passed: true,
@@ -459,7 +346,7 @@ Is this content relevant to the subject?`
       fileUrl: resource.resourceUrl,
     } as ModerationResult & { noteId: string; fileUrl: string | null })
   } catch (error: unknown) {
-    console.error("Moderation pipeline error:", error)
+    console.error("[Anti-Gravity] Pipeline error:", error)
     const rawMessage = error instanceof Error ? error.message : "Unknown error"
 
     // Map known cryptic errors to user-friendly messages
@@ -469,7 +356,7 @@ Is this content relevant to the subject?`
     } else if (rawMessage.includes("Access Denied") || rawMessage.includes("credentials") || rawMessage.includes("InvalidAccessKeyId")) {
       userMessage = "File storage is not configured properly. Please contact the administrator."
     } else if (rawMessage.includes("AI_TIMEOUT")) {
-      userMessage = "Content check timed out. Please try uploading again."
+      userMessage = "⛔ AI safety inspection timed out. Upload rejected — please try again."
     } else if (rawMessage.includes("ECONNREFUSED") || rawMessage.includes("fetch failed")) {
       userMessage = "Unable to reach required services. Please check your connection and try again."
     } else if (rawMessage.includes("body exceeded") || rawMessage.includes("too large") || rawMessage.includes("PayloadTooLargeError")) {
@@ -477,7 +364,7 @@ Is this content relevant to the subject?`
     }
 
     return NextResponse.json(
-      { error: userMessage, details: rawMessage, steps },
+      { error: userMessage, details: rawMessage, steps: [] },
       { status: 500 }
     )
   }

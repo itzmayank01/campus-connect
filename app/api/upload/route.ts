@@ -1,16 +1,19 @@
 /**
  * @file route.ts — POST/GET /api/upload
  *
- * UPDATED FLOW (Phase 1 — HEIC + Textract at upload time):
+ * ⚠️ ANTI-GRAVITY PROTECTED — All uploads run through AI content inspection.
+ *
+ * FLOW:
  * 1. Accept file via multipart form data
  * 2. Auth check (Supabase)
- * 3. Process file: convert HEIC → JPEG if needed (via sharp)
- * 4. Upload processed file to S3
- * 5. Run AWS Textract to extract text (handles handwriting)
- * 6. Save Resource to DB with extractedText cached
- * 7. Return resource ID to frontend
+ * 3. ★ Anti-Gravity inspection (file type + metadata + AI safety + relevance)
+ * 4. Process file: convert HEIC → JPEG if needed (via sharp)
+ * 5. Upload processed file to S3
+ * 6. Run AWS Textract to extract text (handles handwriting)
+ * 7. Save Resource to DB with extractedText cached
+ * 8. Return resource ID to frontend
  *
- * This eliminates re-downloading from S3 and re-extracting for each StudyLab tool.
+ * If AI is unavailable → upload REJECTED (fail-closed design).
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -21,6 +24,8 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { processUploadedFile, isImageFile } from "@/lib/imageProcessor";
 import { extractTextFromImageBuffer, extractTextWithTextract } from "@/lib/textract";
 import { extractText } from "@/lib/studyToolPipeline";
+import { inspectFileType, inspectMetadata, inspectSafety, inspectRelevance } from "@/lib/ai/content-inspector";
+import { extractTextFromBuffer } from "@/lib/pdf-extractor";
 
 // POST /api/upload — upload file + extract text + create DB record
 export async function POST(request: NextRequest) {
@@ -52,6 +57,53 @@ export async function POST(request: NextRequest) {
     const rawFilename = file.name;
     const rawMimeType = file.type || "application/octet-stream";
     const rawFileSize = file.size;
+
+    // ═══ ANTI-GRAVITY INSPECTION GATE ═══════════════════════════════════
+    // Every upload MUST pass AI content inspection. No exceptions.
+    console.log(`[Anti-Gravity/direct] ▶ Inspecting "${rawFilename}" (${rawMimeType}, ${(rawFileSize / 1024).toFixed(0)} KB)`);
+
+    // Step 1: File type gate
+    const fileTypeCheck = await inspectFileType(rawBuffer, rawFilename, rawMimeType);
+    if (!fileTypeCheck.passed) {
+      console.warn(`[Anti-Gravity/direct] ✖ File type rejected: ${fileTypeCheck.reason}`);
+      return NextResponse.json({ error: fileTypeCheck.reason }, { status: 400 });
+    }
+
+    // Step 2: Metadata & filename scan
+    const metadataCheck = inspectMetadata(rawFilename, rawFileSize, rawMimeType);
+    if (!metadataCheck.passed) {
+      console.warn(`[Anti-Gravity/direct] ✖ Metadata rejected: ${metadataCheck.reason}`);
+      return NextResponse.json({ error: metadataCheck.reason }, { status: 400 });
+    }
+
+    // Step 3: Extract text for AI analysis
+    let inspectionText = "";
+    try {
+      inspectionText = await extractTextFromBuffer(rawBuffer, rawFilename, rawMimeType);
+      if (inspectionText.length > 3000) inspectionText = inspectionText.slice(0, 3000);
+    } catch { inspectionText = `File: ${rawFilename} (${rawMimeType})`; }
+
+    // Fetch subject for relevance check
+    const subjectForCheck = await prisma.subject.findUnique({
+      where: { id: subjectId },
+      include: { semester: true },
+    });
+
+    // Step 4: AI safety scan (MANDATORY — fail-closed)
+    const safetyCheck = await inspectSafety(inspectionText, rawFilename, rawMimeType, rawFileSize, subjectForCheck?.name || "Unknown", type);
+    if (!safetyCheck.passed) {
+      console.warn(`[Anti-Gravity/direct] ✖ Safety rejected: ${safetyCheck.category}`);
+      return NextResponse.json({ error: safetyCheck.reason }, { status: 403 });
+    }
+
+    // Step 5: AI relevance check (MANDATORY — fail-closed)
+    const relevanceCheck = await inspectRelevance(inspectionText, rawFilename, subjectForCheck?.name || "Unknown", subjectForCheck?.code || "N/A", parseInt(semester) || 1, type);
+    if (!relevanceCheck.passed) {
+      console.warn(`[Anti-Gravity/direct] ✖ Relevance rejected: ${relevanceCheck.reason}`);
+      return NextResponse.json({ error: relevanceCheck.reason }, { status: 403 });
+    }
+
+    console.log(`[Anti-Gravity/direct] ✔ All checks passed for "${rawFilename}"`);
 
     // Find or create the user in our DB
     let dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } });

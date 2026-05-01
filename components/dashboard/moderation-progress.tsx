@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { CheckCircle2, XCircle, Loader2, Circle, AlertTriangle, Tag, ExternalLink } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, Circle, AlertTriangle, Tag, Shield, ShieldAlert, ShieldX } from "lucide-react"
 
 interface ModerationStep {
   id: string
@@ -51,6 +51,16 @@ function StepIcon({ status }: { status: ModerationStep["status"] }) {
   }
 }
 
+// Detect the type of STOP message to show
+function getStopType(reason?: string): "adult" | "harmful" | "irrelevant" | "generic" {
+  if (!reason) return "generic"
+  const lower = reason.toLowerCase()
+  if (lower.includes("adult") || lower.includes("nsfw") || lower.includes("explicit") || lower.includes("sexual")) return "adult"
+  if (lower.includes("illegal") || lower.includes("violence") || lower.includes("hate") || lower.includes("drug") || lower.includes("harm") || lower.includes("blocked & reported") || lower.includes("incident")) return "harmful"
+  if (lower.includes("irrelevant") || lower.includes("not match") || lower.includes("not relevant") || lower.includes("mismatch")) return "irrelevant"
+  return "generic"
+}
+
 export function ModerationProgress({
   visible,
   steps,
@@ -65,6 +75,9 @@ export function ModerationProgress({
 }: ModerationProgressProps) {
   if (!visible) return null
 
+  const stopType = getStopType(reason)
+  const hasFailed = passed === false && passed !== null
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <motion.div
@@ -74,16 +87,25 @@ export function ModerationProgress({
       >
         {/* Header */}
         <div className="px-6 pt-6 pb-4">
-          <h3 className="text-base font-bold text-[#0F1117]">
-            {passed === null
-              ? "Uploading your resource..."
-              : passed
-              ? "✅ Upload Successful"
-              : "Upload Issue"}
-          </h3>
+          <div className="flex items-center gap-2.5">
+            {passed === null ? (
+              <Shield className="h-5 w-5 text-[#4F8EF7]" />
+            ) : passed ? (
+              <CheckCircle2 className="h-5 w-5 text-[#059669]" />
+            ) : (
+              <ShieldX className="h-5 w-5 text-[#EF4444]" />
+            )}
+            <h3 className="text-base font-bold text-[#0F1117]">
+              {passed === null
+                ? "Anti-Gravity Inspection..."
+                : passed
+                ? "✅ Upload Approved"
+                : "⛔ Upload Rejected"}
+            </h3>
+          </div>
           {passed === null && (
-            <p className="text-sm text-[#64748B] mt-1">
-              AI is checking your content for quality and safety
+            <p className="text-sm text-[#64748B] mt-1 ml-[30px]">
+              AI is scanning your content for safety and relevance
             </p>
           )}
         </div>
@@ -125,25 +147,113 @@ export function ModerationProgress({
           </AnimatePresence>
         </div>
 
-        {/* Rejection Card */}
-        {rejection && (
-          <div className="mx-6 mt-4 rounded-xl p-4" style={{ backgroundColor: "#FEF2F2", border: "1px solid #FECACA" }}>
-            <h4 className="text-sm font-bold text-[#991B1B] mb-2">❌ Upload Rejected</h4>
-            <p className="text-sm text-[#7F1D1D] mb-2">
-              This file doesn&apos;t appear to match the selected subject.
-            </p>
-            <div className="text-xs text-[#7F1D1D] space-y-1">
-              <p><strong>Subject:</strong> {rejection.subjectName} ({rejection.subjectCode})</p>
-              {rejection.detectedTopics.length > 0 && (
-                <p><strong>Detected content:</strong> {rejection.detectedTopics.join(", ")}</p>
-              )}
-              <p><strong>Reason:</strong> {rejection.reason}</p>
+        {/* ═══ STOP MESSAGE: Adult / Explicit Content ═══ */}
+        {hasFailed && stopType === "adult" && !rejection && (
+          <div className="mx-6 mt-4 rounded-xl overflow-hidden border border-[#FCA5A5]">
+            <div className="bg-[#DC2626] px-4 py-2.5 flex items-center gap-2">
+              <ShieldX className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">⛔ STOP — UPLOAD REJECTED</span>
             </div>
-            <p className="text-xs text-[#7F1D1D] mt-2">Please check:</p>
-            <ul className="text-xs text-[#7F1D1D] list-disc pl-4 mt-1 space-y-0.5">
-              <li>Did you select the correct subject?</li>
-              <li>Is this related to the course?</li>
-            </ul>
+            <div className="bg-[#FEF2F2] px-4 py-3 space-y-2">
+              <p className="text-sm text-[#7F1D1D]">
+                Adult-rated or explicit content was detected in your file. This content is <strong>not permitted</strong> on this platform.
+              </p>
+              <p className="text-xs text-[#991B1B] font-medium">
+                This file has been permanently rejected. Do not attempt to re-upload this content.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ STOP MESSAGE: Harmful / Illegal Content ═══ */}
+        {hasFailed && stopType === "harmful" && !rejection && (
+          <div className="mx-6 mt-4 rounded-xl overflow-hidden border border-[#FCA5A5]">
+            <div className="bg-[#991B1B] px-4 py-2.5 flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">⛔ STOP — UPLOAD BLOCKED &amp; REPORTED</span>
+            </div>
+            <div className="bg-[#FEF2F2] px-4 py-3 space-y-2">
+              <p className="text-sm text-[#7F1D1D]">
+                This file contains content that violates legal and platform safety policies.
+              </p>
+              <p className="text-xs text-[#991B1B] font-medium">
+                This incident has been logged automatically. Continued violations may result in account suspension.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ STOP MESSAGE: Irrelevant Content (without subject rejection) ═══ */}
+        {hasFailed && stopType === "irrelevant" && !rejection && (
+          <div className="mx-6 mt-4 rounded-xl overflow-hidden border border-[#FDE68A]">
+            <div className="bg-[#D97706] px-4 py-2.5 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">⛔ STOP — UPLOAD REJECTED</span>
+            </div>
+            <div className="bg-[#FFFBEB] px-4 py-3 space-y-2">
+              <p className="text-sm text-[#78350F]">
+                The content in this file does not match the accepted topics for this platform.
+              </p>
+              <p className="text-xs text-[#92400E]">
+                Please upload only relevant academic materials.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ Rejection Card (subject mismatch — detailed) ═══ */}
+        {rejection && (
+          <div className="mx-6 mt-4 rounded-xl overflow-hidden border border-[#FCA5A5]">
+            <div className="bg-[#DC2626] px-4 py-2.5 flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">⛔ UPLOAD REJECTED — Content Mismatch</span>
+            </div>
+            <div className="bg-[#FEF2F2] px-4 py-3 space-y-2">
+              <p className="text-sm text-[#7F1D1D]">
+                This file doesn&apos;t match the selected subject.
+              </p>
+              <div className="text-xs text-[#7F1D1D] space-y-1">
+                <p><strong>Subject:</strong> {rejection.subjectName} ({rejection.subjectCode})</p>
+                {rejection.detectedTopics.length > 0 && (
+                  <p><strong>Detected content:</strong> {rejection.detectedTopics.join(", ")}</p>
+                )}
+                <p><strong>Reason:</strong> {rejection.reason}</p>
+              </div>
+              <p className="text-xs text-[#7F1D1D] mt-2">Please check:</p>
+              <ul className="text-xs text-[#7F1D1D] list-disc pl-4 mt-1 space-y-0.5">
+                <li>Did you select the correct subject?</li>
+                <li>Is this related to the course?</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ Generic failure reason (safety service down, parse error, etc.) ═══ */}
+        {hasFailed && stopType === "generic" && !rejection && (
+          <div className="mx-6 mt-4 rounded-xl p-4" style={{ backgroundColor: "#FEF2F2", border: "1px solid #FECACA" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <ShieldX className="h-4 w-4 text-[#DC2626]" />
+              <span className="text-sm font-bold text-[#991B1B]">Upload could not be processed</span>
+            </div>
+            <p className="text-sm text-[#991B1B]">{reason}</p>
+          </div>
+        )}
+
+        {/* ═══ APPROVED: All checks passed ═══ */}
+        {passed && (
+          <div className="mx-6 mt-4 rounded-xl overflow-hidden border border-[#A7F3D0]">
+            <div className="bg-[#059669] px-4 py-2.5 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-white" />
+              <span className="text-sm font-bold text-white">✅ UPLOAD APPROVED</span>
+            </div>
+            <div className="bg-[#ECFDF5] px-4 py-3">
+              <p className="text-sm text-[#065F46]">
+                All safety checks passed. Content verified as clean and relevant.
+              </p>
+              <p className="text-xs text-[#047857] mt-1">
+                Scanned: {steps.filter(s => s.status === "done").length} checks completed • No violations found
+              </p>
+            </div>
           </div>
         )}
 
@@ -177,13 +287,6 @@ export function ModerationProgress({
                 {tag}
               </span>
             ))}
-          </div>
-        )}
-
-        {/* Failure reason */}
-        {!passed && passed !== null && reason && !rejection && (
-          <div className="mx-6 mt-4 rounded-xl p-3" style={{ backgroundColor: "#FEF2F2", border: "1px solid #FECACA" }}>
-            <p className="text-sm text-[#991B1B] font-medium">{reason}</p>
           </div>
         )}
 

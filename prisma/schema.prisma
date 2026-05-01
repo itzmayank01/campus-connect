@@ -565,3 +565,27 @@ model VideoStudyTool {
   @@index([userId, videoId])
   @@map("video_study_tools")
 }
+
+// ─── Anti-Gravity Moderation Audit Log ──────────────────────────────────────
+
+model ModerationLog {
+  id               String   @id @default(uuid())
+  resourceId       String?  @map("resource_id")
+  uploaderId       String   @map("uploader_id")
+  filename         String
+  mimeType         String   @map("mime_type")
+  fileSize         Int      @map("file_size")
+  passed           Boolean
+  failedStep       String?  @map("failed_step")
+  failCategory     String?  @map("fail_category")
+  failReason       String?  @map("fail_reason") @db.Text
+  scanResults      Json     @map("scan_results")
+  aiModelUsed      String?  @map("ai_model_used")
+  processingTimeMs Int      @map("processing_time_ms")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([uploaderId])
+  @@index([passed])
+  @@index([createdAt])
+  @@map("moderation_logs")
+}
