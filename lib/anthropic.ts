@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai"
 
 let genAI: GoogleGenerativeAI | null = null
 
@@ -21,10 +21,10 @@ const MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash-exp
 
 // Safety settings to allow the model to analyze problematic content without being blocked
 const SAFETY_SETTINGS = [
-  { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-  { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-  { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-  { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
 ]
 
 export async function callAI(
@@ -48,7 +48,7 @@ export async function callAI(
       const result = await Promise.race([
         model.generateContent({
           contents: [{ role: "user", parts: [{ text: combinedPrompt }] }],
-          safetySettings: SAFETY_SETTINGS as any,
+          safetySettings: SAFETY_SETTINGS,
         }),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("AI_TIMEOUT")), AI_TIMEOUT_MS)
