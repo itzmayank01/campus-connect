@@ -8,6 +8,9 @@
  * 2. Async (StartDocumentTextDetection) — for PDFs, multi-page, S3-based.
  *    Re-exports the existing textract-ocr.ts function for this.
  *
+ * CREDENTIALS: Uses TEXTRACT_AWS_* env vars (separate account with Textract
+ * permissions). Falls back to AWS_* for backwards compatibility.
+ *
  * Cost: Textract free tier = 1000 pages/month free.
  */
 
@@ -23,16 +26,28 @@ import {
 // Re-export the async S3-based extractor for PDFs
 export { extractTextWithTextract } from "./textract-ocr";
 
+// ─── Shared Textract credentials helper ──────────────────────────────────────
+
+/** Returns the Textract-specific credentials (separate AWS account). */
+export function getTextractCredentials() {
+  return {
+    region:          process.env.TEXTRACT_AWS_REGION || process.env.AWS_REGION!,
+    accessKeyId:     process.env.TEXTRACT_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.TEXTRACT_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY!,
+  };
+}
+
 // ─── Client ───────────────────────────────────────────────────────────────────
 
 let _textract: TextractClient | null = null;
 function getTextract(): TextractClient {
   if (!_textract) {
+    const creds = getTextractCredentials();
     _textract = new TextractClient({
-      region: process.env.AWS_REGION!,
+      region: creds.region,
       credentials: {
-        accessKeyId:     process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+        accessKeyId:     creds.accessKeyId,
+        secretAccessKey: creds.secretAccessKey,
       },
     });
   }
