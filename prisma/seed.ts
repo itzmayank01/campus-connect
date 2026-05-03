@@ -231,6 +231,33 @@ async function main() {
     { name: "Computational Linguistics and NLP Lab (DS)", code: "CSEG4134PD", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(7), specializationId: specMap["DS"] },
     { name: "Generative Artificial Intelligence", code: "CSDS4001P", credits: 3, lectureHours: 3, tutorialHours: 0, practicalHours: 0, category: "ME", isLab: false, semesterId: semId(7), specializationId: specMap["DS"] },
     { name: "Generative Artificial Intelligence Lab", code: "CSDS4101P", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(7), specializationId: specMap["DS"] },
+
+    // ═══ MISSING CORE SUBJECT ═══
+    { name: "Indian Constitution", code: "SLLS2004", credits: 0, lectureHours: 0, tutorialHours: 0, practicalHours: 0, category: "LSC", isLab: false, semesterId: semId(4) },
+
+    // ═══ SPECIALIZATION: Internet of Things (IoT) — Track 8 ═══
+    { name: "Introduction to IoT, Sensors and Microcontrollers", code: "CSGG2110P_IOT", credits: 4, lectureHours: 4, tutorialHours: 0, practicalHours: 0, category: "ME", isLab: false, semesterId: semId(4), specializationId: specMap["IOT"] },
+    { name: "Introduction to IoT, Sensors and Microcontrollers Lab", code: "CSIS2112P", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(4), specializationId: specMap["IOT"] },
+    { name: "IoT Network Architecture and Communication Protocols", code: "CSIS3019P", credits: 4, lectureHours: 4, tutorialHours: 0, practicalHours: 0, category: "ME", isLab: false, semesterId: semId(5), specializationId: specMap["IOT"] },
+    { name: "IoT Network Architecture and Communication Protocols Lab", code: "CSIS3119P", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(5), specializationId: specMap["IOT"] },
+    { name: "Industrial IoT and ARM based Embedded Programming", code: "CSIS3020P", credits: 4, lectureHours: 4, tutorialHours: 0, practicalHours: 0, category: "ME", isLab: false, semesterId: semId(6), specializationId: specMap["IOT"] },
+    { name: "Industrial IoT and ARM based Embedded Programming Lab", code: "CSIS3120P", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(6), specializationId: specMap["IOT"] },
+    { name: "Single Board Computers and IoT Applications Development", code: "CSIS4011P", credits: 4, lectureHours: 4, tutorialHours: 0, practicalHours: 0, category: "ME", isLab: false, semesterId: semId(7), specializationId: specMap["IOT"] },
+    { name: "Single Board Computers and IoT Applications Development Lab", code: "CSIS4111P", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(7), specializationId: specMap["IOT"] },
+    { name: "Data Analytics for IoT", code: "CSIS4012P", credits: 3, lectureHours: 3, tutorialHours: 0, practicalHours: 0, category: "ME", isLab: false, semesterId: semId(7), specializationId: specMap["IOT"] },
+    { name: "Data Analytics for IoT Lab", code: "CSIS4012PL", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(7), specializationId: specMap["IOT"] },
+
+    // ═══ SPECIALIZATION: Graphics & Gaming — Track 9 ═══
+    { name: "Introduction to Graphics and Animation", code: "CSGG2011P", credits: 4, lectureHours: 4, tutorialHours: 0, practicalHours: 0, category: "ME", isLab: false, semesterId: semId(4), specializationId: specMap["GG"] },
+    { name: "Introduction to Interactive Design and 3D Animation Lab", code: "CSGG2110P", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(4), specializationId: specMap["GG"] },
+    { name: "Game Programming", code: "CSGG3019P", credits: 4, lectureHours: 4, tutorialHours: 0, practicalHours: 0, category: "ME", isLab: false, semesterId: semId(5), specializationId: specMap["GG"] },
+    { name: "Game Programming Lab", code: "CSGG3113P", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(5), specializationId: specMap["GG"] },
+    { name: "Computer Graphics", code: "CSGG3020P", credits: 4, lectureHours: 4, tutorialHours: 0, practicalHours: 0, category: "ME", isLab: false, semesterId: semId(6), specializationId: specMap["GG"] },
+    { name: "Computer Graphics Lab", code: "CSGG3120P", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(6), specializationId: specMap["GG"] },
+    { name: "Augmented and Virtual Reality Development", code: "CSGG4012P", credits: 4, lectureHours: 4, tutorialHours: 0, practicalHours: 0, category: "ME", isLab: false, semesterId: semId(7), specializationId: specMap["GG"] },
+    { name: "Augmented and Virtual Reality Development Lab", code: "CSGG4112P", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(7), specializationId: specMap["GG"] },
+    { name: "Web Programming for Interactive 3D Graphics", code: "CSGG4013P", credits: 3, lectureHours: 3, tutorialHours: 0, practicalHours: 0, category: "ME", isLab: false, semesterId: semId(7), specializationId: specMap["GG"] },
+    { name: "Web Programming for Interactive 3D Graphics Lab", code: "CSGG4113P", credits: 1, lectureHours: 0, tutorialHours: 0, practicalHours: 2, category: "ME", isLab: true, semesterId: semId(7), specializationId: specMap["GG"] },
   ]
 
   // Batch insert all subjects at once
