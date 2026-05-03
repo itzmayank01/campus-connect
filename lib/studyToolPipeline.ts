@@ -157,6 +157,13 @@ export async function extractText(
     return result.value;
   }
 
+  // If it is an image, extract using Textract directly
+  if (type.includes("image/")) {
+    const { extractTextFromImageBuffer } = await import("./textract");
+    const result = await extractTextFromImageBuffer(buffer, mimeType);
+    return result.extractedText;
+  }
+
   // Plain text fallback
   return buffer.toString("utf-8");
 }

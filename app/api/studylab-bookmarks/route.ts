@@ -44,15 +44,22 @@ export async function GET() {
     select: { resourceId: true },
   });
 
-  // 3. Merge unique resource IDs
+  // 3. Get uploaded resource IDs (to include handwritten notes and uploaded PDFs)
+  const uploadedResourceIds = await prisma.resource.findMany({
+    where: { uploaderId: userId },
+    select: { id: true },
+  });
+
+  // 4. Merge unique resource IDs
   const allResourceIds = [
     ...new Set([
       ...bookmarkedResourceIds.map((b) => b.resourceId),
       ...downloadedResourceIds.map((d) => d.resourceId),
+      ...uploadedResourceIds.map((u) => u.id),
     ]),
   ];
 
-  // 4. Fetch resource details (only PDF/DOCX types that StudyLab supports)
+  // 5. Fetch resource details (only supported types: PDF/DOCX/TXT/Images)
   const documents =
     allResourceIds.length > 0
       ? await prisma.resource.findMany({
@@ -65,6 +72,9 @@ export async function GET() {
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 "application/msword",
                 "text/plain",
+                "image/jpeg",
+                "image/png",
+                "image/webp",
               ],
             },
           },

@@ -166,7 +166,8 @@ export async function POST(req: NextRequest) {
     !process.env.VERCEL &&
     Boolean(process.env.OPEN_NOTEBOOK_API_URL) &&
     TOOL_MAP[type] !== undefined &&
-    type !== "AUDIO_OVERVIEW";
+    type !== "AUDIO_OVERVIEW" &&
+    !resource.mimeType.includes("image/");
 
   if (!useOpenNotebook) {
     // ── Legacy pipeline (Groq direct) ──────────────────────────────────────────

@@ -286,7 +286,7 @@ export default function StudyLabPage() {
                       {doc.title}
                     </p>
                     <p className="text-xs text-[#94A3B8] font-medium mt-0.5">
-                      {doc.fileType.includes("pdf") ? "PDF" : "Document"}
+                      {doc.fileType.includes("pdf") ? "PDF" : doc.fileType.includes("image") ? "Image" : "Document"}
                     </p>
                   </div>
                   {selectedId === doc.id && (
