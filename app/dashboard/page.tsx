@@ -44,7 +44,6 @@ export default async function DashboardPage() {
     semesters = await prisma.semester.findMany({
       include: {
         subjects: {
-          where: { specializationId: null },
           orderBy: { name: "asc" },
           include: {
             _count: {
