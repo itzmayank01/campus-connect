@@ -21,9 +21,9 @@ export default function StudyRoomPage(props: { params: Promise<{ id: string }> }
 
   useEffect(() => {
     fetchRoomAndMessages()
-    // Simple polling for real-time feel on Vercel
+    // Poll for real-time messages and member updates
     const interval = setInterval(() => {
-      fetchMessagesOnly()
+      fetchRoomAndMessages(true)
     }, 3000)
     
     return () => clearInterval(interval)
@@ -40,7 +40,7 @@ export default function StudyRoomPage(props: { params: Promise<{ id: string }> }
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const fetchRoomAndMessages = async () => {
+  const fetchRoomAndMessages = async (isPolling = false) => {
     try {
       const [roomRes, msgsRes] = await Promise.all([
         fetch(`/api/studyrooms/${params.id}`),
@@ -48,12 +48,12 @@ export default function StudyRoomPage(props: { params: Promise<{ id: string }> }
       ])
       
       const roomData = await roomRes.json()
-      if (!roomRes.ok) {
+      if (!roomRes.ok && !isPolling) {
         toast.error(roomData.error || "Room not found")
         router.push("/dashboard/studyrooms")
         return
       }
-      setRoom(roomData.room)
+      if (roomRes.ok) setRoom(roomData.room)
       
       const msgsData = await msgsRes.json()
       if (msgsRes.ok) setMessages(msgsData.messages)
@@ -61,17 +61,7 @@ export default function StudyRoomPage(props: { params: Promise<{ id: string }> }
     } catch (err) {
       console.error(err)
     } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchMessagesOnly = async () => {
-    try {
-      const res = await fetch(`/api/studyrooms/${params.id}/messages`)
-      const data = await res.json()
-      if (res.ok) setMessages(data.messages)
-    } catch (err) {
-      // ignore
+      if (!isPolling) setLoading(false)
     }
   }
 
@@ -88,7 +78,7 @@ export default function StudyRoomPage(props: { params: Promise<{ id: string }> }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: tempMessage })
       })
-      fetchMessagesOnly()
+      fetchRoomAndMessages(true)
     } catch (err) {
       toast.error("Failed to send message")
       setNewMessage(tempMessage)
@@ -175,10 +165,10 @@ export default function StudyRoomPage(props: { params: Promise<{ id: string }> }
 
         {/* Video Area (if in voice) */}
         {inVoice && (
-          <div className="h-[60vh] bg-[#000000] border-b border-[#1E1F22] shrink-0 relative">
+          <div className="h-[65vh] bg-[#000000] border-b border-[#1E1F22] shrink-0 relative">
             <iframe 
-              src={`https://meet.jit.si/campus-connect-${room.inviteCode}#config.prejoinPageEnabled=false`}
-              allow="camera; microphone; fullscreen; display-capture; autoplay"
+              src={`https://meet.jit.si/CampusConnectRoom${room.inviteCode.replace('-', '')}`}
+              allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-read; clipboard-write"
               className="w-full h-full border-none"
             />
             <button 
