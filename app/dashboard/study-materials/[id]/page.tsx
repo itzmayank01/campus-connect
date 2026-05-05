@@ -88,7 +88,7 @@ export default function ResourceDetailPage({ params }: { params: Promise<{ id: s
     );
   }
 
-  const canUseStudyLab = resource.s3Key && (resource.mimeType.includes("pdf") || resource.mimeType.includes("word") || resource.mimeType.includes("openxmlformats") || resource.mimeType.includes("text"));
+  const canUseStudyLab = resource.s3Key && (resource.mimeType.includes("pdf") || resource.mimeType.includes("word") || resource.mimeType.includes("openxmlformats") || resource.mimeType.includes("text") || resource.mimeType.includes("image/"));
 
   return (
     <div className="max-w-[900px] mx-auto space-y-5">
@@ -136,6 +136,12 @@ export default function ResourceDetailPage({ params }: { params: Promise<{ id: s
       {previewUrl && previewType === "pdf" && (
         <div className="rounded-2xl border border-[#F1F5F9] overflow-hidden bg-white">
           <iframe src={previewUrl} className="w-full h-[500px]" title="PDF Preview" />
+        </div>
+      )}
+
+      {previewUrl && previewType === "image" && (
+        <div className="rounded-2xl border border-[#F1F5F9] overflow-hidden bg-[#F8FAFC] p-4">
+          <img src={previewUrl} alt={resource.originalFilename} className="max-w-full max-h-[500px] mx-auto rounded-xl shadow-sm" />
         </div>
       )}
 

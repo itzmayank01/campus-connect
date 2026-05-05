@@ -16,17 +16,12 @@ services:
     volumes:
       - ./surreal_data:/mydata
     restart: always
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   open_notebook:
     image: lfnovo/open_notebook:v1-latest
     ports:
-      - "8502:8502"   # Web UI — admin access only, NOT for students
-      - "5055:5055"   # REST API — used by Campus Connect backend
+      - "8502:8502" # Web UI — admin access only, NOT for students
+      - "5055:5055" # REST API — used by Campus Connect backend
     environment:
       # A random 32-char secret — change this in production
       - OPEN_NOTEBOOK_ENCRYPTION_KEY=cc_studylab_secret_key_change_me_32c
@@ -43,11 +38,10 @@ services:
     volumes:
       - ./notebook_data:/app/data
     depends_on:
-      surrealdb:
-        condition: service_healthy
+      - surrealdb
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5055/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:5055/health" ]
       interval: 15s
       timeout: 10s
       retries: 10

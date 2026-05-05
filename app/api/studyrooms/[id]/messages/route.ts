@@ -3,8 +3,9 @@ import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 
 // GET /api/studyrooms/[id]/messages
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
+    const params = await props.params;
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -36,8 +37,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // POST /api/studyrooms/[id]/messages
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
+    const params = await props.params;
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 

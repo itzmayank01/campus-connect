@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, use } from "react"
 import { useRouter } from "next/navigation"
 import { Send, Users, Mic, Video, PhoneOff, Settings, Hash, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
-export default function StudyRoomPage({ params }: { params: { id: string } }) {
+export default function StudyRoomPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params)
   const router = useRouter()
   const [room, setRoom] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])

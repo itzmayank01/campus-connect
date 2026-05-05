@@ -29,7 +29,8 @@ import {
   HelpCircle,
   BarChart3,
   Table2,
-  ArrowRight
+  ArrowRight,
+  ImageIcon
 } from "lucide-react";
 import { AddVideoModal } from "./AddVideoModal";
 import { VideoToolModal } from "./VideoToolModal";
@@ -470,14 +471,18 @@ export function StudyLabEntry({
                       className="w-full flex items-center gap-3 p-3 bg-white border border-[#E2E8F0] rounded-xl hover:border-[#93C5FD] hover:bg-blue-50/30 transition-colors text-left"
                     >
                       <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-blue-500" />
+                        {doc.fileType.includes("image") ? (
+                          <ImageIcon className="w-4 h-4 text-blue-500" />
+                        ) : (
+                          <FileText className="w-4 h-4 text-blue-500" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-[#0F1117] truncate">
                           {doc.title}
                         </p>
                         <p className="text-xs text-[#94A3B8]">
-                          {doc.fileType.includes("pdf") ? "PDF" : "Document"}
+                          {doc.fileType.includes("pdf") ? "PDF" : doc.fileType.includes("image") ? "Handwritten / Image" : "Document"}
                         </p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-[#CBD5E1] flex-shrink-0" />

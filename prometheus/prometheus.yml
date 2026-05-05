@@ -7,10 +7,8 @@ scrape_configs:
       - targets: ['localhost:9090']
       
   - job_name: 'surrealdb'
+    metrics_path: '/health'
     static_configs:
       # Scraping SurrealDB internal health endpoint
       - targets: ['surrealdb:8000']
 
-  - job_name: 'open_notebook'
-    static_configs:
-      - targets: ['open_notebook:5055']

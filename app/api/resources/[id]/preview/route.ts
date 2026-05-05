@@ -50,7 +50,7 @@ export async function GET(
 
     return NextResponse.json({
       previewUrl,
-      type: resource.mimeType?.includes("pdf") ? "pdf" : "file",
+      type: resource.mimeType?.includes("pdf") ? "pdf" : resource.mimeType?.includes("image/") ? "image" : "file",
       resource,
     })
   } catch (error: unknown) {

@@ -3,8 +3,9 @@ import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 
 // GET /api/studyrooms/[id] - Get room details
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
+    const params = await props.params;
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 

@@ -6,7 +6,7 @@ import Link from "next/link"
 import {
   Headphones, Presentation, GitBranch, FileText, BookOpen,
   HelpCircle, BarChart3, Table2, Loader2, Sparkles,
-  FlaskConical, ArrowRight, Video, Youtube, Plus
+  FlaskConical, ArrowRight, Video, Youtube, Plus, ImageIcon
 } from "lucide-react"
 
 import { VideoToolModal } from "@/components/VideoToolModal"
@@ -279,14 +279,18 @@ export default function StudyLabPage() {
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
                     selectedId === doc.id ? "bg-[#4F8EF7]/20" : "bg-white border border-[#E2E8F0]"
                   }`}>
-                    <FileText className={`h-5 w-5 ${selectedId === doc.id ? "text-[#4F8EF7]" : "text-[#64748B]"}`} strokeWidth={1.75} />
+                    {doc.fileType.includes("image") ? (
+                      <ImageIcon className={`h-5 w-5 ${selectedId === doc.id ? "text-[#4F8EF7]" : "text-[#64748B]"}`} strokeWidth={1.75} />
+                    ) : (
+                      <FileText className={`h-5 w-5 ${selectedId === doc.id ? "text-[#4F8EF7]" : "text-[#64748B]"}`} strokeWidth={1.75} />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-bold truncate ${selectedId === doc.id ? "text-[#4F8EF7]" : "text-[#0F1117]"}`}>
                       {doc.title}
                     </p>
                     <p className="text-xs text-[#94A3B8] font-medium mt-0.5">
-                      {doc.fileType.includes("pdf") ? "PDF" : doc.fileType.includes("image") ? "Image" : "Document"}
+                      {doc.fileType.includes("pdf") ? "PDF" : doc.fileType.includes("image") ? "Handwritten / Image" : "Document"}
                     </p>
                   </div>
                   {selectedId === doc.id && (
