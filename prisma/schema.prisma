@@ -103,6 +103,10 @@ model User {
   videos             Video[]
   videoStudyTools    VideoStudyTool[]
 
+  createdRooms       StudyRoom[]        @relation("RoomCreator")
+  roomMemberships    StudyRoomMember[]  @relation("RoomMemberships")
+  roomMessages       StudyRoomMessage[]
+
   @@map("users")
 }
 
@@ -588,4 +592,51 @@ model ModerationLog {
   @@index([passed])
   @@index([createdAt])
   @@map("moderation_logs")
+}
+
+// ─── Study Rooms (Discord-like feature) ─────────────────────────────────────
+
+model StudyRoom {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  inviteCode  String   @unique @map("invite_code")
+  creatorId   String   @map("creator_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  creator     User               @relation("RoomCreator", fields: [creatorId], references: [id])
+  members     StudyRoomMember[]
+  messages    StudyRoomMessage[]
+
+  @@map("study_rooms")
+}
+
+model StudyRoomMember {
+  id        String   @id @default(uuid())
+  roomId    String   @map("room_id")
+  userId    String   @map("user_id")
+  role      String   @default("member") // 'owner' or 'member'
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  room      StudyRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User      @relation("RoomMemberships", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@map("study_room_members")
+}
+
+model StudyRoomMessage {
+  id        String   @id @default(uuid())
+  roomId    String   @map("room_id")
+  userId    String   @map("user_id")
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  room      StudyRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([createdAt])
+  @@map("study_room_messages")
 }

@@ -17,6 +17,7 @@ import {
   Download,
   Eraser,
   Target,
+  Users,
 } from "lucide-react"
 import {
   Sidebar,
@@ -44,6 +45,7 @@ const navItems = [
   { title: "Text Cleaner", href: "/dashboard/text-cleaner", icon: Eraser },
   { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { title: "Smart Feed", href: "/dashboard/smart-feed", icon: Sparkles, hasNewBadge: true },
+  { title: "Studyrooms", href: "/dashboard/studyrooms", icon: Users },
   { title: "Leaderboard", href: "/dashboard/leaderboard", icon: Trophy, hasLiveBadge: true },
 ]
 
