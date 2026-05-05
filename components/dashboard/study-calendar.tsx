@@ -188,9 +188,9 @@ export function StudyCalendar({ semesters, userSemester }: StudyCalendarProps) {
           })}
         </div>
         
-        {/* Quick Add Button */}
         <div className="mt-5 pt-4 border-t border-[rgba(0,0,0,0.06)]">
           <Button 
+            id="trigger-add-exam"
             onClick={() => {
               const formatted = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
               setSelectedDateStr(formatted)

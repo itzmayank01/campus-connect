@@ -16,7 +16,10 @@ export function QuickActions() {
         </button>
 
         {/* Schedule Exam */}
-        <button className="flex flex-col items-start justify-between min-h-[110px] rounded-xl bg-[#A855F7] p-4 text-left text-white shadow-lg shadow-[#A855F7]/20 transition-transform hover:-translate-y-1 hover:shadow-[#A855F7]/40">
+        <button 
+          onClick={() => document.getElementById('trigger-add-exam')?.click()}
+          className="flex flex-col items-start justify-between min-h-[110px] rounded-xl bg-[#A855F7] p-4 text-left text-white shadow-lg shadow-[#A855F7]/20 transition-transform hover:-translate-y-1 hover:shadow-[#A855F7]/40"
+        >
           <Clock className="h-6 w-6" strokeWidth={1.5} />
           <span className="text-sm font-semibold leading-tight pr-4">Schedule Exam</span>
         </button>
