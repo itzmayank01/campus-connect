@@ -169,7 +169,7 @@ export default function StudyRoomPage(props: { params: Promise<{ id: string }> }
           <div className="h-[65vh] bg-[#000000] border-b border-[#1E1F22] shrink-0 relative flex flex-col">
             <div className="flex-1 w-full h-full">
               <JitsiMeeting
-                domain="meet.jit.si"
+                domain="meet.ffmuc.net"
                 roomName={`CampusConnectRoom${room.inviteCode.replace('-', '')}`}
                 configOverwrite={{
                   startWithAudioMuted: false,
