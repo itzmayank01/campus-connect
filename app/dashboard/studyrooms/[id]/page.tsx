@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, use } from "react"
 import { useRouter } from "next/navigation"
 import { Send, Users, Mic, Video, PhoneOff, Settings, Hash, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { JitsiMeeting } from '@jitsi/react-sdk'
 
 export default function StudyRoomPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params)
@@ -165,15 +166,30 @@ export default function StudyRoomPage(props: { params: Promise<{ id: string }> }
 
         {/* Video Area (if in voice) */}
         {inVoice && (
-          <div className="h-[65vh] bg-[#000000] border-b border-[#1E1F22] shrink-0 relative">
-            <iframe 
-              src={`https://meet.jit.si/CampusConnectRoom${room.inviteCode.replace('-', '')}`}
-              allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-read; clipboard-write"
-              className="w-full h-full border-none"
-            />
+          <div className="h-[65vh] bg-[#000000] border-b border-[#1E1F22] shrink-0 relative flex flex-col">
+            <div className="flex-1 w-full h-full">
+              <JitsiMeeting
+                domain="meet.jit.si"
+                roomName={`CampusConnectRoom${room.inviteCode.replace('-', '')}`}
+                configOverwrite={{
+                  startWithAudioMuted: false,
+                  startWithVideoMuted: false,
+                  prejoinPageEnabled: true
+                }}
+                interfaceConfigOverwrite={{
+                  DISABLE_JOIN_LEAVE_NOTIFICATIONS: false,
+                  SHOW_CHROME_EXTENSION_BANNER: false
+                }}
+                getIFrameRef={(iframeRef) => {
+                  iframeRef.style.height = '100%';
+                  iframeRef.style.width = '100%';
+                  iframeRef.style.border = 'none';
+                }}
+              />
+            </div>
             <button 
               onClick={leaveVoice}
-              className="absolute top-4 right-4 bg-[#DA373C] px-4 py-2 text-sm font-bold text-white rounded-lg hover:bg-[#C9292D] transition-colors shadow-lg z-10 flex items-center gap-2"
+              className="absolute top-4 left-4 bg-[#DA373C] px-4 py-2 text-sm font-bold text-white rounded-lg hover:bg-[#C9292D] transition-colors shadow-lg z-10 flex items-center gap-2"
             >
               <PhoneOff className="h-4 w-4" /> Disconnect
             </button>
