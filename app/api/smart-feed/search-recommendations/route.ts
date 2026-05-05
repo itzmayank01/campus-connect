@@ -59,8 +59,6 @@ export async function GET(request: NextRequest) {
           OR: [
             { originalFilename: { contains: word, mode: "insensitive" as const } },
             { description: { contains: word, mode: "insensitive" as const } },
-            { subject: { name: { contains: word, mode: "insensitive" as const } } },
-            { subject: { code: { contains: word, mode: "insensitive" as const } } },
             { tags: { hasSome: [word] } },
             { aiTags: { hasSome: [word] } },
           ],
