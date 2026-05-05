@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, Plus, Hash, ArrowRight, Loader2, Copy, Check } from "lucide-react"
+import { Users, Plus, Hash, ArrowRight, Loader2, Copy, Check, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -88,6 +88,21 @@ export default function StudyroomsDashboard() {
     setCopiedCode(code)
     setTimeout(() => setCopiedCode(""), 2000)
     toast.success("Invite code copied!")
+  }
+
+  const handleLeaveRoom = async (roomId: string) => {
+    if (!confirm("Are you sure you want to leave/delete this room?")) return
+    try {
+      const res = await fetch(`/api/studyrooms/${roomId}`, { method: "DELETE" })
+      if (res.ok) {
+        toast.success("Room removed")
+        fetchRooms()
+      } else {
+        toast.error("Failed to remove room")
+      }
+    } catch {
+      toast.error("An error occurred")
+    }
   }
 
   return (
@@ -204,6 +219,13 @@ export default function StudyroomsDashboard() {
                       title="Copy Invite Code"
                     >
                       {copiedCode === room.inviteCode ? <Check className="h-4 w-4 text-[#10B981]" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                    <button 
+                      onClick={() => handleLeaveRoom(room.id)}
+                      className="p-2 border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#EF4444] hover:border-[#EF4444] transition-colors"
+                      title="Leave / Delete Room"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>

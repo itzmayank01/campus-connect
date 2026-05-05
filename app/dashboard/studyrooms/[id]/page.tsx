@@ -95,26 +95,12 @@ export default function StudyRoomPage(props: { params: Promise<{ id: string }> }
     }
   }
 
-  const joinVoice = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      setMediaStream(stream)
-      setInVoice(true)
-      toast.success("Joined Voice Channel!")
-    } catch (err: any) {
-      if (err.name === 'NotAllowedError') {
-        toast.error("Camera/Microphone permission denied. Please allow access in your browser.")
-      } else {
-        toast.error("Could not access camera/microphone.")
-      }
-    }
+  const joinVoice = () => {
+    setInVoice(true)
+    toast.success("Joined Voice Channel!")
   }
 
   const leaveVoice = () => {
-    if (mediaStream) {
-      mediaStream.getTracks().forEach(track => track.stop())
-      setMediaStream(null)
-    }
     setInVoice(false)
     toast.info("Left Voice Channel.")
   }
@@ -189,37 +175,18 @@ export default function StudyRoomPage(props: { params: Promise<{ id: string }> }
 
         {/* Video Area (if in voice) */}
         {inVoice && (
-          <div className="h-48 bg-[#000000] border-b border-[#1E1F22] p-4 flex gap-4 overflow-x-auto shrink-0">
-            <div className="relative h-full aspect-video bg-[#2B2D31] rounded-xl overflow-hidden border-2 border-[#23A559]">
-              <video 
-                ref={videoRef} 
-                autoPlay 
-                muted 
-                playsInline 
-                className="w-full h-full object-cover transform scale-x-[-1]" 
-              />
-              <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-white text-xs font-bold flex items-center gap-1">
-                <Mic className="h-3 w-3 text-[#23A559]" /> You
-              </div>
-              <button 
-                onClick={leaveVoice}
-                className="absolute bottom-2 right-2 bg-[#DA373C] p-1.5 rounded-full hover:bg-[#C9292D] transition-colors"
-                title="Disconnect"
-              >
-                <PhoneOff className="h-4 w-4 text-white" />
-              </button>
-            </div>
-            {/* Placeholders for other members */}
-            {room.members.filter((m: any) => m.userId !== 'me').slice(0, 4).map((m: any, i: number) => (
-              <div key={i} className="relative h-full aspect-video bg-[#2B2D31] rounded-xl overflow-hidden flex items-center justify-center border border-[#1E1F22]">
-                <div className="h-12 w-12 rounded-full bg-[#5865F2] flex items-center justify-center text-white text-lg font-bold">
-                  {m.user.name?.charAt(0) || '?'}
-                </div>
-                <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-white text-xs font-bold">
-                  {m.user.name?.split(' ')[0] || 'User'}
-                </div>
-              </div>
-            ))}
+          <div className="h-[60vh] bg-[#000000] border-b border-[#1E1F22] shrink-0 relative">
+            <iframe 
+              src={`https://meet.jit.si/campus-connect-${room.inviteCode}#config.prejoinPageEnabled=false`}
+              allow="camera; microphone; fullscreen; display-capture; autoplay"
+              className="w-full h-full border-none"
+            />
+            <button 
+              onClick={leaveVoice}
+              className="absolute top-4 right-4 bg-[#DA373C] px-4 py-2 text-sm font-bold text-white rounded-lg hover:bg-[#C9292D] transition-colors shadow-lg z-10 flex items-center gap-2"
+            >
+              <PhoneOff className="h-4 w-4" /> Disconnect
+            </button>
           </div>
         )}
 

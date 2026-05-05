@@ -37,3 +37,38 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }
+
+// DELETE /api/studyrooms/[id] - Leave or Delete room
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  try {
+    const params = await props.params;
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
+    if (!dbUser) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+    const room = await prisma.studyRoom.findUnique({
+      where: { id: params.id }
+    })
+
+    if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 })
+
+    if (room.creatorId === dbUser.id) {
+      // Owner is deleting the room completely
+      await prisma.studyRoom.delete({ where: { id: params.id } })
+      return NextResponse.json({ message: "Room deleted successfully" })
+    } else {
+      // Member is leaving the room
+      await prisma.studyRoomMember.delete({
+        where: { roomId_userId: { roomId: params.id, userId: dbUser.id } }
+      })
+      return NextResponse.json({ message: "Left room successfully" })
+    }
+  } catch (error) {
+    console.error("Error deleting/leaving room:", error)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+  }
+}
