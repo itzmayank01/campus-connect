@@ -25,7 +25,10 @@ export function QuickActions() {
         </button>
 
         {/* Upload Material */}
-        <button className="flex flex-col items-start justify-between min-h-[110px] rounded-xl bg-[#10B981] p-4 text-left text-white shadow-lg shadow-[#10B981]/20 transition-transform hover:-translate-y-1 hover:shadow-[#10B981]/40">
+        <button 
+          onClick={() => router.push('/dashboard/upload/new')}
+          className="flex flex-col items-start justify-between min-h-[110px] rounded-xl bg-[#10B981] p-4 text-left text-white shadow-lg shadow-[#10B981]/20 transition-transform hover:-translate-y-1 hover:shadow-[#10B981]/40"
+        >
           <BookText className="h-6 w-6" strokeWidth={1.5} />
           <span className="text-sm font-semibold leading-tight pr-4">Upload Material</span>
         </button>
