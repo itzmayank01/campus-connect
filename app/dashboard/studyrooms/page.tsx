@@ -84,10 +84,11 @@ export default function StudyroomsDashboard() {
   }
 
   const copyToClipboard = (code: string) => {
-    navigator.clipboard.writeText(code)
+    const inviteLink = `${window.location.origin}/dashboard/studyrooms/join/${code}`
+    navigator.clipboard.writeText(inviteLink)
     setCopiedCode(code)
     setTimeout(() => setCopiedCode(""), 2000)
-    toast.success("Invite code copied!")
+    toast.success("Direct Join Link copied!")
   }
 
   const handleLeaveRoom = async (roomId: string) => {
@@ -216,7 +217,7 @@ export default function StudyroomsDashboard() {
                     <button 
                       onClick={() => copyToClipboard(room.inviteCode)}
                       className="p-2 border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#5865F2] hover:border-[#5865F2] transition-colors"
-                      title="Copy Invite Code"
+                      title="Copy Direct Join Link"
                     >
                       {copiedCode === room.inviteCode ? <Check className="h-4 w-4 text-[#10B981]" /> : <Copy className="h-4 w-4" />}
                     </button>
