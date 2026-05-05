@@ -10,7 +10,10 @@ export function QuickActions() {
       <h2 className="text-xl font-bold text-[#0F1117] font-display mb-5">Quick Actions</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Start Study Session */}
-        <button className="flex flex-col items-start justify-between min-h-[110px] rounded-xl bg-[#2563EB] p-4 text-left text-white shadow-lg shadow-[#2563EB]/20 transition-transform hover:-translate-y-1 hover:shadow-[#2563EB]/40">
+        <button 
+          onClick={() => router.push('/dashboard/studyrooms')}
+          className="flex flex-col items-start justify-between min-h-[110px] rounded-xl bg-[#2563EB] p-4 text-left text-white shadow-lg shadow-[#2563EB]/20 transition-transform hover:-translate-y-1 hover:shadow-[#2563EB]/40"
+        >
           <Zap className="h-6 w-6" strokeWidth={1.5} />
           <span className="text-sm font-semibold leading-tight pr-4">Start Study Session</span>
         </button>
