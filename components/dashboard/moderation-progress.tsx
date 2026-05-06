@@ -97,7 +97,7 @@ export function ModerationProgress({
             )}
             <h3 className="text-base font-bold text-[#0F1117]">
               {passed === null
-                ? "Anti-Gravity Inspection..."
+                ? "Checking resource..."
                 : passed
                 ? "✅ Upload Approved"
                 : "⛔ Upload Rejected"}

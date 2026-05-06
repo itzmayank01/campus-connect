@@ -114,7 +114,7 @@ export default function StudyroomsDashboard() {
           <h1 className="text-3xl font-bold font-display">Studyrooms</h1>
         </div>
         <p className="text-white/80 max-w-2xl text-sm leading-relaxed">
-          Create small, focused study groups of up to 5 people. Chat in real-time, share resources, and hop into voice channels just like Discord.
+          Create small, focused study groups of up to 5 people. Chat in real-time, share resources, and hop into voice channels.
         </p>
       </div>
 
